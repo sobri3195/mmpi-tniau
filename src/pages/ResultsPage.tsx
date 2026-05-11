@@ -32,10 +32,10 @@ export const ResultsPage = ({ result, scoringConfig, goHome }: { result: Assessm
         {result.validityStatus?.reasons?.length ? <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm dark:bg-slate-800"><p className="font-bold">Catatan validitas</p><ul className="mt-2 list-disc pl-5">{result.validityStatus.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></div> : null}
         <div className="mt-6 grid gap-3 no-print sm:flex sm:flex-wrap"><Button onClick={() => exportResultJson(result)}>Export JSON</Button><Button variant="ghost" onClick={() => exportResultsCsv([result])}>Export CSV</Button><Button variant="secondary" onClick={printReport}>Cetak / PDF</Button><Button variant="ghost" onClick={goHome}>Beranda</Button></div>
       </Card>
-      <Card className="mb-6"><h2 className="mb-3 text-xl font-black">Executive Summary</h2><p className="text-sm leading-6">{report.executiveSummary}</p><div className="mt-3"><Badge tone={report.reviewStatus === 'Dapat ditelaah' ? 'teal' : report.reviewStatus === 'Perlu review/retest' ? 'rose' : 'amber'}>{report.reviewStatus}</Badge></div></Card>
+      {!report.isDemo && <Card className="mb-6"><h2 className="mb-3 text-xl font-black">Executive Summary</h2><p className="text-sm leading-6">{report.executiveSummary}</p><div className="mt-3"><Badge tone={report.reviewStatus === 'Dapat ditelaah' ? 'teal' : report.reviewStatus === 'Perlu review/retest' ? 'rose' : 'amber'}>{report.reviewStatus}</Badge></div></Card>}
       <Card className="mb-6"><ScoreCharts scores={result.scores} /></Card>
       <Card className="mb-6"><h2 className="mb-4 text-xl font-black">Tabel Skor dan Interpretasi</h2><ScoreTable scores={result.scores} /></Card>
-      <Card className="mb-6"><InterpretationReport result={result} scoringConfig={scoringConfig} /></Card>
+      {!report.isDemo && <Card className="mb-6"><InterpretationReport result={result} scoringConfig={scoringConfig} /></Card>}
     </div>
   );
 };
