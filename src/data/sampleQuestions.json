@@ -9093,5 +9093,549 @@
       }
     ],
     "required": true
+  },
+  {
+    "id": 536,
+    "code": "Q536",
+    "text": "Bila aku menjadi tegang, aku pasti mengalami sakit kepala.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 537,
+    "code": "Q537",
+    "text": "Aku suka tawar-menawar yang alot.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 538,
+    "code": "Q538",
+    "text": "Kebanyakan laki-laki tidak setia kepada isterinya, pada waktu sekarang dan juga waktu yang akan datang.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 539,
+    "code": "Q539",
+    "text": "Akhir-akhir ini aku telah hilang semangat untuk mengatasi masalah-masalahku,",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 540,
+    "code": "Q540",
+    "text": "Bila aku minum minuman beralkohol, aku menjadi marah-marah dan memecahkan piring gelas atau perabotan rumah tangga.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 541,
+    "code": "Q541",
+    "text": "Aku bekerja sangat baik bila aku diberikan batas waktu yang pasti.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 542,
+    "code": "Q542",
+    "text": "Bila aku sangat marah kepada seseorang, rasanya seolah-olah dadaku akan meledak.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 543,
+    "code": "Q543",
+    "text": "Ada kalanya muncul pikiran-pikiran yang menakutkan tentang keadaan keluargaku.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 544,
+    "code": "Q544",
+    "text": "Beberapa orang mengatakan bahwa aku mempunyai masalah dengan minuman beralkohol, tetapi aku tidak sependapat.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 545,
+    "code": "Q545",
+    "text": "Aku selalu punya waktu yang terlau sedikit untuk melaksanakan sesuatu.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 546,
+    "code": "Q546",
+    "text": "Pikiranku akhir-akhir ini makin cenderung ke alam kematian dan kehidupan di akhirat.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 547,
+    "code": "Q547",
+    "text": "Aku sering menyimpan barang-barang yang mungkin tidak pernah aku gunakan.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 548,
+    "code": "Q548",
+    "text": "Aku pernah sangat marah, sehingga aku melukai sesorang dalam suatu perkelahian.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 549,
+    "code": "Q549",
+    "text": "Apapun yang aku lakukan belakangan ini, aku merasa seperti sedang diuji.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 550,
+    "code": "Q550",
+    "text": "Sekarang ini hanya sedikit yang dapat aku lakukan bersama dengan keluargaku.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 551,
+    "code": "Q551",
+    "text": "Aku kadang-kadang mendengar pikiran-pikiranku berbicara keras.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 552,
+    "code": "Q552",
+    "text": "Ketika sedih, aku mengnjungi kawan-kawan dan selalu dapat menghilangkannya.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 553,
+    "code": "Q553",
+    "text": "Kebanyakan kejadian yang terjadi pada diriku sekarang ini tampaknya sudah pernah terjadi sebelumnya.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 554,
+    "code": "Q554",
+    "text": "Ketika hidupku menjadi sulit, ini membuat aku ingin menyerah saja.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 555,
+    "code": "Q555",
+    "text": "Aku tidak berani sendirian masuk ke kamar yang gelap, walaupun masih dalam rumah sendiri.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 556,
+    "code": "Q556",
+    "text": "Aku sangat mengkhawatirkan tentang keuangan.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 557,
+    "code": "Q557",
+    "text": "Laki-laki seharusnya menjadi kepala keluarga.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 558,
+    "code": "Q558",
+    "text": "Tempat satu-satunya dimana aku merasa tenang adalah di rumah sendiri.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 559,
+    "code": "Q559",
+    "text": "Orang-orang yang bekerja dengan aku tidak simpati dengan masalahku.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 560,
+    "code": "Q560",
+    "text": "Aku puas dengan jumlah uang yang aku hasilkan.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 561,
+    "code": "Q561",
+    "text": "Aku biasanya mempunyai tenaga yang cukup untuk melakukan pekerjaanku.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 562,
+    "code": "Q562",
+    "text": "Sulit bagiku untuk menerima pujian-pujian.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 563,
+    "code": "Q563",
+    "text": "Pada kebanyakan perkawinan, satu atau kedua pasangannya tidak bahagia.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 564,
+    "code": "Q564",
+    "text": "Aku hampir tidak pernah lepas kendali diri.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 565,
+    "code": "Q565",
+    "text": "Apa yang diberitahu orang kepadaku akhir-akhir ini, membutuhkan banyak usaha untuk mengingatnya.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 566,
+    "code": "Q566",
+    "text": "Ketika aku sedih atau murung, pekerjaan-ku menjadi terlantar.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 567,
+    "code": "Q567",
+    "text": "Kebanyak pasangan perkawinan tidak banyak menunjukan rasa kasih sayang satu sama lain.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
   }
 ]

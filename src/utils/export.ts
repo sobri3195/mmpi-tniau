@@ -11,9 +11,10 @@ export const downloadFile = (filename: string, content: string, mime = 'applicat
 };
 
 const escapeCsv = (value: unknown) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+const formatFinishTime = (submittedAt: string) => new Date(submittedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
 export const resultToCsv = (results: AssessmentResult[]) => {
-  const rows = [['id', 'nama', 'nomor_peserta', 'tanggal_lahir', 'usia', 'gender', 'status_perkawinan', 'pendidikan', 'pekerjaan', 'asal_satker', 'kesatuan', 'tanggal_submit', 'status', 'skor']];
+  const rows = [['id', 'nama', 'nomor_peserta', 'tanggal_lahir', 'usia', 'gender', 'status_perkawinan', 'pendidikan', 'pekerjaan', 'asal_satker', 'kesatuan', 'tanggal_submit', 'waktu_selesai', 'status', 'skor']];
   results.forEach((result) => rows.push([
     result.id,
     result.identity.name,
@@ -27,6 +28,7 @@ export const resultToCsv = (results: AssessmentResult[]) => {
     result.identity.originWorkUnit ?? '',
     result.identity.unit,
     result.submittedAt,
+    formatFinishTime(result.submittedAt),
     result.status,
     result.scores.map((score) => `${score.scaleId}:${score.rawScore}${score.tScore ? `/T${score.tScore}` : ''}`).join('; '),
   ]));
