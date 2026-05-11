@@ -1,0 +1,41 @@
+{
+  "instrumentName": "MMPI Custom Licensed Bank - Dummy Demo",
+  "version": "1.0-demo",
+  "scales": [
+    {
+      "id": "validity_l",
+      "name": "Validity Scale L (Demo)",
+      "description": "Contoh skala validitas. Ganti dengan konfigurasi resmi/berizin.",
+      "type": "validity",
+      "items": [
+        { "questionId": 1, "scoredResponse": true, "point": 1 },
+        { "questionId": 3, "scoredResponse": false, "point": 1 }
+      ],
+      "interpretationRules": [
+        { "min": 0, "max": 0, "label": "Rendah", "description": "Interpretasi demo. Wajib diganti dengan pedoman resmi/berizin." },
+        { "min": 1, "max": 1, "label": "Sedang", "description": "Interpretasi contoh untuk uji sistem." },
+        { "min": 2, "max": 999, "label": "Tinggi", "description": "Interpretasi contoh; perlu telaah profesional." }
+      ]
+    },
+    {
+      "id": "clinical_demo",
+      "name": "Clinical Demo Scale",
+      "description": "Contoh skala klinis dummy tanpa makna diagnostik.",
+      "type": "clinical",
+      "items": [
+        { "questionId": 2, "scoredResponse": true, "point": 1 },
+        { "questionId": 4, "scoredResponse": true, "point": 1 }
+      ],
+      "norms": [
+        { "raw": 0, "tScore": 40 },
+        { "raw": 1, "tScore": 50 },
+        { "raw": 2, "tScore": 60 }
+      ],
+      "interpretationRules": [
+        { "min": 0, "max": 0, "label": "Rendah", "description": "Interpretasi demo, bukan diagnosis." },
+        { "min": 1, "max": 1, "label": "Sedang", "description": "Interpretasi contoh untuk simulasi." },
+        { "min": 2, "max": 999, "label": "Tinggi", "description": "Interpretasi contoh; rekomendasi telaah profesional." }
+      ]
+    }
+  ]
+}
