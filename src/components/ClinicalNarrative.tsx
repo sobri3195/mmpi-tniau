@@ -4,7 +4,7 @@ import { Badge } from './ui';
 
 export const ClinicalNarrative = ({ result, scoringConfig }: { result: AssessmentResult; scoringConfig?: ScoringConfig | null }) => {
   const report = generateSpecialistInterpretation(result, scoringConfig);
-  if (report.isDemo) return <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">Mode Demo: belum dapat dibuat interpretasi spesialis.</p>;
+  if (report.isDemo) return null;
   return (
     <div className="space-y-5">
       <section>

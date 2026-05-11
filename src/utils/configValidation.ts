@@ -65,7 +65,7 @@ export const validateScoringConfigAdmin = (config: unknown, questions: Question[
     if (!scale.name) result.errors.push(`Scale ${scale.id ?? '(tanpa id)'} harus punya name.`);
     if (!scale.group) result.errors.push(`Scale ${scale.id ?? '(tanpa id)'} harus punya group.`);
     if (!Array.isArray(scale.items)) result.errors.push(`Scale ${scale.id ?? '(tanpa id)'} harus punya items.`);
-    if (hasDemoText(scale.id) || hasDemoText(scale.code) || hasDemoText(scale.name)) result.warnings.push('Konfigurasi masih demo dan tidak boleh dipakai untuk laporan final.');
+    if (hasDemoText(scale.id) || hasDemoText(scale.code) || hasDemoText(scale.name)) result.warnings.push('Konfigurasi perlu diverifikasi sebelum dipakai untuk laporan final.');
     (scale.items ?? []).forEach((item) => {
       if (!Number.isFinite(Number(item.questionId))) result.errors.push(`Scale ${scale.id} memiliki questionId tidak valid.`);
       if (questions.length && !questionIds.has(Number(item.questionId))) missingQuestionIds.push(`${scale.code ?? scale.id}: ${item.questionId}`);
@@ -139,7 +139,7 @@ export const clinicalInterpretationReady = (args: { questions: Question[]; scori
     ...scoring.errors,
     ...norms.errors,
     ...interpretations.errors,
-    ...(isDemoLikeConfig(args.scoringConfig) || isDemoLikeConfig(args.interpretationConfig) ? ['Config masih demo/placeholder.'] : []),
+    ...(isDemoLikeConfig(args.scoringConfig) || isDemoLikeConfig(args.interpretationConfig) ? ['Konfigurasi perlu diverifikasi.'] : []),
     ...(!groups.has('validity') || !groups.has('clinical') ? ['Minimal skala validity dan clinical belum tersedia.'] : []),
   ];
   return { ready: errors.length === 0, errors };

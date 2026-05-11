@@ -4,9 +4,7 @@ import { Badge } from './ui';
 
 export const SpecialistInterpretation = ({ result, scoringConfig }: { result: AssessmentResult; scoringConfig?: ScoringConfig | null }) => {
   const report = generateSpecialistInterpretation(result, scoringConfig);
-  if (report.isDemo) {
-    return <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"><h2 className="text-xl font-black">Mode Demo: belum dapat dibuat interpretasi spesialis.</h2><p className="mt-2">Konfigurasi yang digunakan masih demo/placeholder. Laporan ini tidak valid untuk interpretasi klinis atau personel.</p></div>;
-  }
+  if (report.isDemo) return null;
   return (
     <div className="space-y-5">
       <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">

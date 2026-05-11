@@ -169,7 +169,7 @@ const ScoringMissingPage = ({ message, goAdmin, saveDraft, backToTest }: { messa
       <h1 className="mt-2 text-2xl font-black">Konfigurasi scoring belum tersedia</h1>
       <p className="mt-3 leading-7 text-slate-700 dark:text-slate-200">Konfigurasi scoring belum tersedia. Admin harus mengimpor file scoringConfig terlebih dahulu sebelum hasil dapat dihitung.</p>
       {message && <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"><strong>Detail teknis:</strong> {message}</div>}
-      <p className="mt-4 text-sm text-slate-500">Jawaban peserta tetap aman di localStorage sebagai draft. Tidak ada jawaban yang dihapus.</p>
+      <p className="mt-4 text-sm text-slate-500">Jawaban peserta tetap tersimpan sebagai draft. Tidak ada jawaban yang dihapus.</p>
       <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap"><Button onClick={goAdmin}>Ke Admin Dashboard</Button><Button variant="secondary" onClick={saveDraft}>Simpan Draft</Button><Button variant="ghost" onClick={backToTest}>Kembali ke Tes</Button></div>
     </Card>
   </div>

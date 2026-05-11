@@ -4,7 +4,7 @@ import { Button, Card, Badge } from '../ui';
 import { downloadFile } from '../../utils/export';
 import { clearAdminDataKey, saveAdminScoringConfig } from '../../utils/adminStorage';
 import { validateScoringConfigAdmin, type ValidationResult } from '../../utils/configValidation';
-import { AlertBox, PanelTitle, TemplateButton, ValidationMessages } from './AdminCommon';
+import { PanelTitle, TemplateButton, ValidationMessages } from './AdminCommon';
 
 const templateScoring = { instrument: 'MMPI-2 Placeholder - ganti dengan konfigurasi resmi/berizin', totalItems: 567, scales: [{ id: 'placeholder_validity', code: 'VAL_PLACEHOLDER', name: 'Validity Placeholder', group: 'validity', items: [{ questionId: 1, scoredResponse: true, point: 1 }], interpretationRules: [], tScoreConversion: [] }, { id: 'placeholder_clinical', code: 'CLIN_PLACEHOLDER', name: 'Clinical Placeholder', group: 'clinical', items: [{ questionId: 2, scoredResponse: false, point: 1 }], interpretationRules: [], tScoreConversion: [] }] };
 
@@ -26,7 +26,6 @@ export const ImportScoringPanel = ({ questions, config, onRefresh, toast }: { qu
 
   return <Card>
     <PanelTitle title="Import Scoring Config" subtitle="Upload scoringConfig.json. Kunci scoring MMPI asli tidak boleh disimpan di source code." status={<Badge tone={validation?.valid ? 'teal' : 'amber'}>{scales.length} skala</Badge>} />
-    {validation?.warnings.some((warning) => warning.includes('Mode Demo') || warning.includes('demo')) && <div className="mb-4"><AlertBox tone="rose"><strong>Konfigurasi masih demo dan tidak boleh dipakai untuk laporan final.</strong></AlertBox></div>}
     <div className="grid gap-3 sm:flex sm:flex-wrap"><input className="block w-full text-sm sm:w-auto" type="file" accept=".json" onChange={(event) => importFile(event.target.files?.[0]).catch((error) => { setValidation({ valid: false, errors: [error instanceof Error ? error.message : 'Gagal membaca file.'], warnings: [] }); toast('Gagal import scoring config.', 'rose'); })} /><TemplateButton filename="template_scoringConfig.json" data={templateScoring} /><Button variant="ghost" onClick={() => { const result = validateScoringConfigAdmin(active, questions); setValidation(result); toast('Validasi scoring selesai.', result.valid ? 'teal' : 'rose'); }}>Validasi Ulang</Button></div>
     <div className="mt-4"><ValidationMessages result={validation} /></div>
     <div className="mt-5 grid gap-2 sm:grid-cols-3 lg:grid-cols-6">{['validity', 'clinical', 'rc', 'content', 'supplementary', 'psy5'].map((group) => <div key={group} className="rounded-2xl bg-slate-50 p-3 text-sm dark:bg-slate-950"><p className="font-bold">{group}</p><p className={groups.has(group) ? 'text-teal-700' : 'text-amber-700'}>{groups.has(group) ? 'Ada' : 'Belum ada'}</p></div>)}</div>

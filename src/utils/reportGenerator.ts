@@ -74,7 +74,7 @@ export const generateSpecialistInterpretation = (resultOrScores: AssessmentResul
   const reviewStatus = validity.status === 'valid' ? 'Dapat ditelaah' : validity.status === 'caution' ? 'Perlu kehati-hatian' : 'Perlu review/retest';
   const topScale = dominantScales[0] ? codeText(dominantScales[0]) : 'tidak tersedia';
   const executiveSummary = isDemo
-    ? 'Konfigurasi yang digunakan masih demo/placeholder. Laporan ini tidak valid untuk interpretasi klinis atau personel.'
+    ? 'Konfigurasi perlu diverifikasi sebelum digunakan untuk interpretasi klinis atau personel.'
     : `Profil respons menunjukkan status ${validity.label}. Skala yang paling menonjol adalah ${topScale}. Temuan utama berada pada domain ${elevatedDomains.join(', ') || 'tidak ada elevasi bermakna berdasarkan data yang tersedia'}. Hasil ini memerlukan konfirmasi melalui wawancara klinis dan data pendukung.`;
 
   const validityNarrative = validity.status === 'invalid'

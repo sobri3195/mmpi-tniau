@@ -11,7 +11,7 @@ export const InterpretationReport = ({ result, scoringConfig }: { result: Assess
     <div className="space-y-6">
       <div>
         <p className="text-sm font-bold uppercase tracking-wide text-teal-600 dark:text-teal-300">Executive Summary</p>
-        <h2 className="text-xl font-black">{report.isDemo ? 'Mode Demo: belum dapat dibuat interpretasi spesialis.' : 'Interpretasi Spesialis dan Rekomendasi Klinis'}</h2>
+        <h2 className="text-xl font-black">{report.isDemo ? 'Interpretasi spesialis belum tersedia.' : 'Interpretasi Spesialis dan Rekomendasi Klinis'}</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{report.executiveSummary}</p>
         <p className="mt-2 text-sm font-bold">Status telaah: {report.reviewStatus}</p>
       </div>
