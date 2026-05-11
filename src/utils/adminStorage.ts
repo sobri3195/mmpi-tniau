@@ -8,6 +8,8 @@ export const ADMIN_STORAGE_KEYS = {
   codeTypeConfig: 'sppg_mmpi2_code_type_config',
   results: 'sppg_mmpi2_results',
   currentSession: 'sppg_mmpi2_current_session',
+  accessTokens: 'sppg_mmpi2_access_tokens',
+  tokenSessions: 'sppg_mmpi2_token_sessions',
   adminSettings: 'sppg_mmpi2_admin_settings',
 } as const;
 
