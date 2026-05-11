@@ -183,7 +183,7 @@ export interface TokenSessionBinding {
   answers: Answers;
   startedAt: string;
   lastSavedAt: string;
-  status: 'in_progress' | 'completed';
+  status: 'in_progress' | 'completed' | SessionWorkflowStatus;
 }
 
 export interface CurrentSession {
@@ -197,7 +197,11 @@ export interface CurrentSession {
   answers: Answers;
   currentIndex: number;
   mode: 'single' | 'list';
-  status: 'Draft' | 'Selesai' | 'Perlu Review' | 'in_progress';
+  status: 'Draft' | 'Selesai' | 'Perlu Review' | 'in_progress' | SessionWorkflowStatus;
+  mmpiStatus?: SessionWorkflowStatus;
+  rhStatus?: RHStatus;
+  rhStartedAt?: string;
+  rhSubmittedAt?: string;
   startedAt?: string;
   startedDate?: string;
   startedTime?: string;
@@ -249,6 +253,7 @@ export interface SpecialistReview {
 export interface AssessmentResult {
   id: string;
   resultId?: string;
+  tokenId?: string;
   identity: ParticipantIdentity;
   participant?: ParticipantIdentity;
   assessment?: {
@@ -263,6 +268,7 @@ export interface AssessmentResult {
     submittedTime: string;
     durationSeconds: number;
     durationText: string;
+    status?: 'pending_rh' | 'completed';
   };
   answers: Answers;
   answeredCount: number;
@@ -284,4 +290,110 @@ export interface AssessmentResult {
   clinicalSummary?: string;
   recommendations?: string[];
   isDemoConfig?: boolean;
+  rhFormId?: string;
+  rhCompleted?: boolean;
+  rhSummary?: RHSummary;
+}
+
+
+export type SessionWorkflowStatus = 'mmpi_in_progress' | 'mmpi_completed_pending_rh' | 'rh_in_progress' | 'rh_completed' | 'completed';
+export type RHStatus = 'not_started' | 'in_progress' | 'completed';
+export type YesNo = '' | 'Ya' | 'Tidak';
+
+export interface RHHealthItem {
+  no: number;
+  complaint: string;
+  answer: YesNo;
+  note: string;
+  hospitalization?: {
+    date: string;
+    place: string;
+    duration: string;
+    disease: string;
+  };
+}
+
+export interface RHForm {
+  rhFormId: string;
+  resultId: string;
+  tokenId: string;
+  participantId: string;
+  createdAt: string;
+  submittedAt: string;
+  status: 'draft' | 'completed';
+  consent: {
+    noTest: string;
+    name: string;
+    birthPlaceDate: string;
+    unit: string;
+    homeAddress: string;
+    phone: string;
+    institutionRequest: string;
+    statementAccepted: boolean;
+    createdPlace: string;
+    createdDate: string;
+    signatureName: string;
+  };
+  identity: {
+    fullName: string;
+    birthPlace: string;
+    birthDateInput: string;
+    birthDateISO: string;
+    homeAddress: string;
+    phone: string;
+    religion: string;
+    gender: string;
+    examPurpose: string;
+  };
+  healthHistory: {
+    items: RHHealthItem[];
+    physicalCondition: string;
+    mentalCondition: string;
+    routineMedication: { answer: YesNo; medicineType: string; startDate: string };
+    sleepDifficulty: { answer: YesNo; needsMedication: YesNo };
+  };
+  educationHistory: Array<{ education: string; schoolName: string; years: string; graduationStatus: string }>;
+  workHistory: Array<{ workplace: string; year: string; description: string }>;
+  workQuestions: {
+    hasWorkDifficulty: YesNo;
+    workDifficultyExplanation: string;
+    positiveAspects: string;
+    negativeAspects: string;
+    willingToWork: YesNo;
+    willingToWorkExplanation: string;
+  };
+  familyHistory: {
+    spouses: Array<{ name: string; education: string; description: string }>;
+    children: Array<{ name: string; education: string; description: string }>;
+    livingWithFamily: YesNo;
+    livingWithFamilyReason: string;
+    hasFamilyProblem: YesNo;
+    familyProblemExplanation: string;
+    spouseSupportsCareer: YesNo;
+    spouseSupportExplanation: string;
+  };
+  socialHistory: {
+    hasSeriousProblem: YesNo;
+    seriousProblemExplanation: string;
+    receivedTreatmentForProblem: YesNo;
+    makingFriendsStyle: string;
+    difficultyWithFamily: YesNo;
+    difficultyWithSchoolFriends: YesNo;
+    difficultyWithCoworkers: YesNo;
+    freeTimeActivities: string;
+    substanceUseHistory: YesNo;
+    substanceUseExplanation?: string;
+    legalProblemHistory: YesNo;
+    legalProblemExplanation?: string;
+  };
+  riskFlags: string[];
+  reviewNotes: string;
+}
+
+export interface RHSummary {
+  hasMedicalRedFlags: boolean;
+  hasPsychiatricRedFlags: boolean;
+  hasSubstanceHistory: boolean;
+  hasLegalHistory: boolean;
+  needsSpecialistReview: boolean;
 }

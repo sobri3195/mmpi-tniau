@@ -6,6 +6,8 @@ import { ScoreTable } from '../components/ScoreTable';
 import { Badge, Button, Card, Select, Textarea } from '../components/ui';
 import { exportResultJson, exportResultsCsv, printReport } from '../utils/export';
 import { generateSpecialistInterpretation } from '../utils/interpretation';
+import { RHReportSection } from '../components/report/RHReportSection';
+import { getRHFormByResultId } from '../utils/storage';
 
 const DISCLAIMER = 'Interpretasi Rusdi Maslim dan Hubertus ditampilkan sebagai bahan telaah profesional. Perbedaan hasil atau penekanan interpretasi harus ditinjau oleh spesialis/dokter jiwa/psikolog klinis. Laporan otomatis ini bukan diagnosis final dan tidak boleh menjadi satu-satunya dasar keputusan klinis, administratif, atau personel.';
 
@@ -21,6 +23,8 @@ export const ResultsPage = ({ result, scoringConfig, goHome }: { result: Assessm
   const validityTone = result.validityStatus?.status === 'valid' ? 'teal' : result.validityStatus?.status === 'invalid' ? 'rose' : 'amber';
   const statusLabel = result.status === 'Perlu Review' ? 'Perlu telaah' : result.status;
   const dual = result.interpretations;
+  const rhForm = getRHFormByResultId(result.id);
+  const canPrintFinal = Boolean(result.rhCompleted && rhForm?.status === 'completed');
   const tabs = [
     ['summary', 'Ringkasan skor'], ['rusdi', 'Interpretasi Rusdi Maslim'], ['hubertus', 'Interpretasi Hubertus'], ['comparison', 'Perbandingan'], ['review', 'Catatan spesialis / finalisasi'],
   ] as const;
@@ -30,8 +34,10 @@ export const ResultsPage = ({ result, scoringConfig, goHome }: { result: Assessm
         <div className="flex flex-wrap justify-between gap-4"><div><p className="text-sm font-bold text-teal-600">TNI AU / SPPG</p><h1 className="text-2xl font-black sm:text-3xl">Laporan hasil asesmen MMPI TNI AU/SPPG</h1><p className="text-slate-500">Bagian kepala laporan TNI AU/SPPG — asesmen satu kali, interpretasi ditampilkan di halaman hasil.</p></div><div className="flex flex-col items-start gap-2 sm:items-end"><Badge tone={result.status === 'Perlu Review' ? 'amber' : 'teal'}>{statusLabel}</Badge><Badge tone={validityTone}>{result.validityStatus?.label ?? 'Validitas belum dinilai'}</Badge></div></div>
         <AdministrativeSummary result={result} submittedDateTime={submittedDateTime} startedDate={startedDate} startedTime={startedTime} submittedDate={submittedDate} submittedTime={submittedTime} />
         {result.validityStatus?.reasons?.length ? <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm dark:bg-slate-800"><p className="font-bold">Catatan validitas</p><ul className="mt-2 list-disc pl-5">{result.validityStatus.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></div> : null}
-        <div className="mt-6 grid gap-3 no-print sm:flex sm:flex-wrap"><Button onClick={() => exportResultJson(result)}>Ekspor JSON</Button><Button variant="ghost" onClick={() => exportResultsCsv([result])}>Ekspor CSV</Button><Button variant="secondary" onClick={printReport}>Cetak / PDF</Button><Button variant="ghost" onClick={goHome}>Beranda</Button></div>
+        <div className="mt-6 grid gap-3 no-print sm:flex sm:flex-wrap"><Button onClick={() => exportResultJson(result)}>Ekspor JSON</Button><Button variant="ghost" onClick={() => exportResultsCsv([result])}>Ekspor CSV</Button><Button variant="secondary" disabled={!canPrintFinal} onClick={printReport}>Cetak / PDF</Button><Button variant="ghost" onClick={goHome}>Beranda</Button></div>
       </Card>
+      {!canPrintFinal && <Card className="mb-6 border-rose-200"><p className="font-bold text-rose-700">Laporan final belum dapat dicetak karena RH Skrining belum lengkap.</p></Card>}
+      <RHReportSection form={rhForm} />
       <div className="no-print mb-6 flex flex-wrap gap-2">{tabs.map(([id, label]) => <button key={id} type="button" onClick={() => setTab(id)} className={`rounded-2xl px-4 py-2 text-sm font-bold ${tab === id ? 'bg-teal-600 text-white' : 'bg-white shadow-sm hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800'}`}>TAB {tabs.findIndex(([key]) => key === id) + 1}: {label}</button>)}</div>
 
       <section className={tab === 'summary' ? 'space-y-6' : 'hidden print:block print:space-y-6'}>

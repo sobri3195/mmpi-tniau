@@ -18,6 +18,7 @@ import { RoleBadge } from '../components/admin/RoleBadge';
 import { AuditLogPanel } from '../components/admin/AuditLogPanel';
 import { UserManagementPage } from './UserManagementPage';
 import { SpecialistReviewPage } from './SpecialistReviewPage';
+import { AdminRHPage } from './AdminRHPage';
 import { PermissionGuard } from '../components/auth/PermissionGuard';
 import { AccessDenied } from '../components/auth/ProtectedRoute';
 import { getCurrentUser, logoutUser } from '../utils/session';
@@ -80,6 +81,7 @@ export const AdminDashboard = ({ questions, config, results, refresh, openResult
     : currentPath === '/admin/interpretations' ? interpretationConfigPage
     : currentPath === '/admin/results' ? resultsPage
     : currentPath === '/admin/review' ? <PermissionGuard permission="review.create"><SpecialistReviewPage results={results} onRefresh={refresh} /></PermissionGuard>
+    : currentPath === '/admin/rh' ? <PermissionGuard permission="results.readAdministrative"><AdminRHPage results={results} /></PermissionGuard>
     : currentPath === '/admin/settings' ? <PermissionGuard permission="system.reset"><AdminSettingsPanel onRefresh={refresh} toast={() => undefined} /></PermissionGuard>
     : currentPath === '/admin/backup' ? <PermissionGuard permission="backup.export"><BackupRestorePanel onRefresh={refresh} toast={() => undefined} /></PermissionGuard>
     : currentPath === '/admin/audit' ? <PermissionGuard permission="audit.read"><AuditLogPanel /></PermissionGuard>
