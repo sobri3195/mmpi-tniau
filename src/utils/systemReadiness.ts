@@ -173,16 +173,18 @@ const validateSourceInterpretation = (config: unknown, expectedSource: 'Rusdi Ma
   }
   if (String(cfg.sourceName) !== expectedSource) result.errors.push(`sourceName wajib "${expectedSource}".`);
   if (cfg.isDemo !== false) result.errors.push('isDemo wajib false.');
-  if (hasDemoDeep(config)) result.errors.push('Konfigurasi interpretasi mengandung demo/sample/placeholder/dummy.');
-  ['validityInterpretations', 'scaleInterpretations', 'domainInterpretations', 'recommendationRules', 'appendix'].forEach((field) => {
+  if (cfg.isAutoDefault) result.warnings.push('Auto-default tersedia: valid secara struktur untuk preview teknis, tetapi perlu verifikasi admin/spesialis dan belum resmi/berizin.');
+  if (!cfg.isAutoDefault && hasDemoDeep(config)) result.errors.push('Konfigurasi interpretasi mengandung demo/sample/placeholder/dummy.');
+  ['validityInterpretations', 'scaleInterpretations', 'domainInterpretations', 'appendix'].forEach((field) => {
     if (!Object.keys(asRecord(cfg[field])).length) result.errors.push(`${field} wajib tersedia dan tidak kosong.`);
   });
+  if (!Object.keys(asRecord(cfg.recommendationRules)).length && !asArray(cfg.recommendationRules).length) result.errors.push('recommendationRules wajib tersedia dan tidak kosong.');
   const scaleInterpretations = asRecord(cfg.scaleInterpretations);
   const scaleCodes = getScaleCodes(scoringConfig);
   const missingScales = getMainScales(scoringConfig).filter((scale) => !scaleInterpretations[String(scale.code ?? '')] && !scaleInterpretations[String(scale.id)]).map((scale) => String(scale.code ?? scale.id));
   if (missingScales.length) result.missing.push(...missingScales.map((scale) => `Interpretasi skala ${scale} belum tersedia.`));
   Object.keys(scaleInterpretations).forEach((code) => { if (scaleCodes.size && !scaleCodes.has(code)) result.errors.push(`Interpretasi mengacu ke kode skala tidak valid: ${code}.`); });
-  result.details.push(`Validasi ${expectedSource} menolak demo/placeholder dan tidak mengarang teks klinis.`);
+  result.details.push(cfg.isAutoDefault ? 'Config auto-default tersedia untuk preview teknis, belum diverifikasi sebagai interpretasi resmi.' : `Validasi ${expectedSource} menolak demo/placeholder dan tidak mengarang teks klinis.`);
   result.status = result.errors.length || result.missing.length ? 'not_ready' : 'ready';
   return finish(result);
 };

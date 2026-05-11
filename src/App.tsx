@@ -22,7 +22,7 @@ import { writeAuditLog } from './utils/auditLog';
 import { buildStartTiming, buildSubmitTiming } from './utils/time';
 import { orderQuestionsForSession } from './utils/questions';
 import { normalizeAnswers } from './utils/answerFormat';
-import { buildDualInterpretations } from './utils/sourceInterpretations';
+import { buildDualInterpretations, ensureInterpretationConfigsExist, initializeDefaultInterpretationConfigs } from './utils/sourceInterpretations';
 import { buildSummaryAnalysis, loadSummaryAnalysisConfig } from './utils/summaryAnalysis';
 
 export type Page = 'landing' | 'access' | 'identity' | 'instructions' | 'test' | 'result' | 'rh-skrining' | 'rh-review' | 'admin' | 'scoring-missing';
@@ -87,6 +87,8 @@ export default function App() {
   const [activeResult, setActiveResult] = useState<AssessmentResult | null>(() => { const path = window.location.pathname; const id = path.startsWith('/result/') || path.startsWith('/report/') ? path.split('/').pop() : ''; return id ? loadResults().find((result) => result.id === id) ?? null : null; });
   const [submitError, setSubmitError] = useState('');
 
+  useEffect(() => { initializeDefaultInterpretationConfigs(config); }, [config]);
+
   useEffect(() => {
     if (page === 'rh-skrining' && currentPath.startsWith('/result/') && activeResult && !activeResult.rhCompleted) { setPage('rh-skrining', '/rh-skrining'); return; }
     if (page === 'rh-skrining' && activeResult?.rhCompleted) { setPage('result', `/result/${activeResult.id}`); return; }
@@ -109,6 +111,7 @@ export default function App() {
     const tokenValidation = validateSessionToken(s);
     if (!tokenValidation.valid) { setSubmitError(tokenValidation.message); setPage('scoring-missing'); return; }
     const latestConfig = loadScoringConfig();
+    ensureInterpretationConfigsExist(latestConfig);
     const latestQuestions = orderQuestionsForSession(loadQuestions(), s.questionOrder);
     const validationError = validateScoringConfig(latestConfig, latestQuestions);
     saveCurrentSession({ ...s, status: 'Draft', updatedAt: new Date().toISOString() });

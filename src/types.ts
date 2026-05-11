@@ -139,12 +139,29 @@ export interface SourceInterpretationConfig {
   sourceName: 'Rusdi Maslim' | 'Hubertus' | string;
   version: string;
   isDemo: boolean;
+  isAutoDefault?: boolean;
+  isOfficial?: boolean;
+  isVerified?: boolean;
+  licenseStatus?: string;
+  createdAt?: string;
+  verifiedAt?: string;
+  officialMarkedAt?: string;
+  disclaimer?: string;
   validityInterpretations: Record<string, unknown>;
   scaleInterpretations: Record<string, unknown>;
-  codeTypeInterpretations: Record<string, unknown>;
+  codeTypeInterpretations?: Record<string, unknown>;
   domainInterpretations: Record<string, unknown>;
-  recommendationRules: Record<string, unknown>;
+  recommendationRules: Record<string, unknown> | unknown[];
   appendix: Record<string, unknown>;
+}
+
+export interface SourceCodeTypeConfig {
+  sourceName: 'Rusdi Maslim' | 'Hubertus' | string;
+  version: string;
+  isAutoDefault?: boolean;
+  isOfficial?: boolean;
+  rules: unknown[];
+  message: string;
 }
 
 export interface SourceInterpretationResult {
@@ -152,6 +169,9 @@ export interface SourceInterpretationResult {
   source: 'Rusdi Maslim' | 'Hubertus' | string;
   message?: string;
   isDemo?: boolean;
+  isAutoDefault?: boolean;
+  isOfficial?: boolean;
+  disclaimer?: string;
   validityNarrative: string;
   clinicalNarrative: string;
   codeTypeNarrative: string;
