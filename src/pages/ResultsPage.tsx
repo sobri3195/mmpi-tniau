@@ -10,8 +10,9 @@ import { RHReportSection } from '../components/report/RHReportSection';
 import { SummaryAnalysisSection } from '../components/report/SummaryAnalysisSection';
 import { AppendixSection } from '../components/AppendixSection';
 import { getRHFormByResultId, loadAuxiliaryConfig } from '../utils/storage';
+import { buildDualInterpretations } from '../utils/sourceInterpretations';
 
-const DISCLAIMER = 'Interpretasi Rusdi Maslim dan Hubertus ditampilkan sebagai bahan telaah profesional. Perbedaan hasil atau penekanan interpretasi harus ditinjau oleh spesialis/dokter jiwa/psikolog klinis. Laporan otomatis ini bukan diagnosis final dan tidak boleh menjadi satu-satunya dasar keputusan klinis, administratif, atau personel.';
+const DISCLAIMER = 'Interpretasi Rusdi Maslim dan Hubertus ditampilkan sebagai bahan telaah profesional. Perbedaan hasil atau penekanan interpretasi harus ditinjau oleh spesialis/dokter jiwa/psikolog klinis. Laporan otomatis ini bukan diagnosis final dan tidak boleh menjadi satu-satunya dasar keputusan klinis, administratif, atau personel. Interpretasi auto-default menggunakan konfigurasi generik dan bukan kutipan manual. Kesimpulan final wajib ditetapkan oleh spesialis/dokter jiwa/psikolog klinis.';
 
 export const ResultsPage = ({ result, scoringConfig, goHome }: { result: AssessmentResult; scoringConfig?: ScoringConfig | null; goHome: () => void }) => {
   const [tab, setTab] = useState<'summary' | 'rusdi' | 'hubertus' | 'summaryAnalysis' | 'rh' | 'review' | 'appendix'>('summary');
@@ -24,12 +25,12 @@ export const ResultsPage = ({ result, scoringConfig, goHome }: { result: Assessm
   const report = generateSpecialistInterpretation(result, scoringConfig);
   const validityTone = result.validityStatus?.status === 'valid' ? 'teal' : result.validityStatus?.status === 'invalid' ? 'rose' : 'amber';
   const statusLabel = result.status === 'Perlu Review' ? 'Perlu telaah' : result.status;
-  const dual = result.interpretations;
+  const dual = buildDualInterpretations(result.scores, result.validityStatus ?? { status: 'caution', label: 'Validitas belum dinilai', reasons: [], flags: [] }, loadAuxiliaryConfig('interpretationRusdiMaslim'), loadAuxiliaryConfig('interpretationHubertus'));
   const rhForm = getRHFormByResultId(result.id);
   const summaryAnalysisConfig = loadAuxiliaryConfig<SummaryAnalysisConfig>('summaryAnalysisConfig');
   const canPrintFinal = Boolean(result.rhCompleted && rhForm?.status === 'completed');
   const tabs = [
-    ['summary', 'Ringkasan Skor dan Grafik'], ['rusdi', 'Interpretasi Rusdi Maslim'], ['hubertus', 'Interpretasi Hubertus'], ['summaryAnalysis', 'Analisa Ringkas TNI AU'], ['rh', 'RH Skrining'], ['review', 'Catatan Spesialis'], ['appendix', 'Lampiran'],
+    ['summary', 'Ringkasan Skor dan Grafik'], ['rusdi', dual.rusdiMaslim?.isAutoDefault ? 'Interpretasi format Rusdi Maslim — auto-default' : 'Interpretasi Rusdi Maslim'], ['hubertus', dual.hubertus?.isAutoDefault ? 'Interpretasi format Hubertus — auto-default' : 'Interpretasi Hubertus'], ['summaryAnalysis', 'Analisa Ringkas TNI AU'], ['rh', 'RH Skrining'], ['review', 'Catatan Spesialis'], ['appendix', 'Lampiran'],
   ] as const;
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
@@ -48,8 +49,8 @@ export const ResultsPage = ({ result, scoringConfig, goHome }: { result: Assessm
         <Card><h2 className="mb-4 text-xl font-black">Tabel skor</h2><ScoreTable scores={result.scores} /></Card>
       </section>
 
-      <section className={tab === 'rusdi' ? '' : 'hidden print:block'}><Card className="mb-6"><SourceInterpretationSection title="Interpretasi Rusdi Maslim" interpretation={dual?.rusdiMaslim} unavailable="Interpretasi Rusdi Maslim belum diimpor admin." /></Card></section>
-      <section className={tab === 'hubertus' ? '' : 'hidden print:block'}><Card className="mb-6"><SourceInterpretationSection title="Interpretasi Hubertus" interpretation={dual?.hubertus} unavailable="Interpretasi Hubertus belum diimpor admin." /></Card></section>
+      <section className={tab === 'rusdi' ? '' : 'hidden print:block'}><Card className="mb-6"><SourceInterpretationSection title={dual.rusdiMaslim?.isAutoDefault ? 'Interpretasi format Rusdi Maslim — auto-default' : 'Interpretasi Rusdi Maslim'} interpretation={dual?.rusdiMaslim} unavailable="Interpretasi Rusdi Maslim belum diimpor admin." /></Card></section>
+      <section className={tab === 'hubertus' ? '' : 'hidden print:block'}><Card className="mb-6"><SourceInterpretationSection title={dual.hubertus?.isAutoDefault ? 'Interpretasi format Hubertus — auto-default' : 'Interpretasi Hubertus'} interpretation={dual?.hubertus} unavailable="Interpretasi Hubertus belum diimpor admin." /></Card></section>
       <section className={tab === 'summaryAnalysis' ? '' : 'hidden print:block'}><SummaryAnalysisSection result={result} config={summaryAnalysisConfig} rhForm={rhForm} /></section>
       <section className={tab === 'rh' ? '' : 'hidden print:block'}><RHReportSection form={rhForm} /></section>
       <section className={tab === 'review' ? '' : 'hidden print:block'}><Card className="mb-6"><SpecialistFinalization result={result} /></Card></section>
@@ -67,9 +68,10 @@ const AdministrativeSummary = ({ result, submittedDateTime, startedDate, started
 </div>;
 
 const SourceInterpretationSection = ({ title, interpretation, unavailable }: { title: string; interpretation?: SourceInterpretationResult; unavailable: string }) => {
+  const isAutoDefault = Boolean(interpretation?.isAutoDefault);
   const unavailableMessage = interpretation?.message?.includes('Mode demo') ? interpretation.message : unavailable;
   if (!interpretation?.available) return <div><h2 className="text-xl font-black">{title}</h2><p className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm font-semibold text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">{unavailableMessage}</p></div>;
-  return <div><h2 className="text-xl font-black">{title}</h2><div className="mt-4 grid gap-4"><Narrative title="Validitas" text={interpretation.validityNarrative} /><Narrative title="Klinis / Skala" text={interpretation.clinicalNarrative} /><Narrative title="Code Type" text={interpretation.codeTypeNarrative} /><Narrative title="Domain" text={interpretation.domainNarrative} />{interpretation.recommendations.length ? <div><h3 className="font-black">Rekomendasi dari konfigurasi</h3><ul className="mt-2 list-disc pl-5 text-sm leading-6">{interpretation.recommendations.map((item) => <li key={item}>{item}</li>)}</ul></div> : <p className="text-sm text-slate-500">Rekomendasi belum tersedia dalam konfigurasi.</p>}</div></div>;
+  return <div><div className="flex flex-wrap items-center gap-2"><h2 className="text-xl font-black">{title}</h2>{isAutoDefault && <Badge tone="amber">Interpretasi auto-default — perlu verifikasi spesialis</Badge>}</div>{interpretation.disclaimer && <p className="mt-3 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">{interpretation.disclaimer}</p>}<div className="mt-4 grid gap-4"><Narrative title="Validitas" text={interpretation.validityNarrative} /><Narrative title="Klinis / Skala" text={interpretation.clinicalNarrative} /><Narrative title="Code Type" text={interpretation.codeTypeNarrative} /><Narrative title="Domain" text={interpretation.domainNarrative} />{interpretation.recommendations.length ? <div><h3 className="font-black">Rekomendasi dari konfigurasi</h3><ul className="mt-2 list-disc pl-5 text-sm leading-6">{interpretation.recommendations.map((item) => <li key={item}>{item}</li>)}</ul></div> : <p className="text-sm text-slate-500">Rekomendasi belum tersedia dalam konfigurasi.</p>}</div></div>;
 };
 
 const Narrative = ({ title, text }: { title: string; text?: string }) => <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800"><h3 className="font-black">{title}</h3><p className="mt-2 whitespace-pre-wrap text-sm leading-6">{text || 'Belum tersedia dalam konfigurasi yang diimpor admin.'}</p></div>;

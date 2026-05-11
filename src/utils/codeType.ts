@@ -48,8 +48,8 @@ export const generateCodeType = (scores: ScoreRow[], scoringConfig?: ScoringConf
     scales: elevatedSelected,
     interpretiveConfidence: licensed ? 'tinggi' : 'terbatas',
     clinicalThemes: licensed?.themes ?? [`Code type terdeteksi secara numerik pada ${elevatedSelected.map(scoreLabel).join(', ')}.`],
-    cautionNotes: licensed?.cautionNotes ?? ['Code type terdeteksi secara numerik, tetapi interpretasi spesifik belum tersedia karena admin belum mengimpor codeTypeInterpretation resmi.'],
-    message: licensed?.summary ?? 'Code type terdeteksi secara numerik, tetapi interpretasi spesifik belum tersedia karena admin belum mengimpor codeTypeInterpretation resmi.',
+    cautionNotes: licensed?.cautionNotes ?? ['Code type terdeteksi secara numerik, tetapi interpretasi spesifik belum tersedia pada konfigurasi auto-default.'],
+    message: licensed?.summary ?? 'Code type terdeteksi secara numerik, tetapi interpretasi spesifik belum tersedia pada konfigurasi auto-default.',
     hasLicensedInterpretation: Boolean(licensed),
   };
 };

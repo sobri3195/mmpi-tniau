@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { AccessToken, AssessmentResult, Question, ScoringConfig, SummaryAnalysisConfig } from '../types';
 import { Badge, Button, Card } from '../components/ui';
 import { StatCard } from '../components/admin/AdminCommon';
@@ -30,8 +30,10 @@ import { getUsers } from '../utils/userStorage';
 import { ADMIN_STORAGE_KEYS, loadAdminSettings, loadAuxConfig, readAdminJson } from '../utils/adminStorage';
 import { calculateReviewStats, getSystemReadinessStatus } from '../utils/systemReadiness';
 import { getAuditLogs } from '../utils/auditLog';
+import { ensureInterpretationConfigsExist } from '../utils/sourceInterpretations';
 
 export const AdminDashboard = ({ questions, config, results, refresh, openResult, currentPath, navigate }: { questions: Question[]; config: ScoringConfig | null; results: AssessmentResult[]; refresh: () => void; openResult: (result: AssessmentResult) => void; currentPath: string; navigate: (path: string) => void }) => {
+  useEffect(() => { if (ensureInterpretationConfigsExist(config)) refresh(); }, [config]);
   const user = getCurrentUser();
   const normTable = loadAuxConfig('normTable');
   const interpretationConfig = loadAuxConfig('interpretationConfig');
