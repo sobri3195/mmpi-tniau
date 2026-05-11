@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="MMPI TNI AU">
+  <defs>
+    <linearGradient id="g" x1="14" x2="50" y1="8" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#14b8a6"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="#f8fafc"/>
+  <path d="M32 7c9 6 18 8 25 8v18c0 14-8 24-25 30C15 57 7 47 7 33V15c7 0 16-2 25-8Z" fill="url(#g)"/>
+  <path d="M29 31c-8-5-16-8-25-8 7 7 14 11 24 13-7 1-14 0-21-2 8 6 16 9 27 9h4c11 0 19-3 27-9-7 2-14 3-21 2 10-2 17-6 24-13-9 0-17 3-25 8l-7-7-7 7Z" fill="#1e3a8a"/>
+  <circle cx="32" cy="29" r="9" fill="#ecfeff"/>
+  <path d="M32 23c4 0 7 3 7 6 0 5-5 6-5 10h-4c0-6 5-7 5-10a3 3 0 1 0-6 1l-4-1c1-4 3-6 7-6Z" fill="#0f766e"/>
+</svg>
