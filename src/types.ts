@@ -278,6 +278,8 @@ export interface SummaryAnalysisVariableConfig {
   rangeDescription?: string;
   formula?: string;
   sourceScales?: string[];
+  autoRule?: string;
+  fallbackValue?: number | null;
 }
 
 export interface SummaryAnalysisCategoryRule { min: number; max: number; label: string; }
@@ -286,37 +288,61 @@ export interface SummaryAnalysisScoreRule { score: number; label: string; descri
 export interface SummaryAnalysisConfig {
   configName: string;
   version: string;
+  source?: string;
   isDemo: boolean;
+  isAutoDefault?: boolean;
+  isOfficial?: boolean;
+  isFinal?: boolean;
+  licenseStatus?: string;
+  createdAt?: string;
+  disclaimer?: string;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  verificationNote?: string;
   validityAttitude?: {
+    title?: string;
     sourceScales?: string[];
     scoreRules?: SummaryAnalysisScoreRule[];
     narrativeTemplates?: Record<string, string>;
   };
   mentalCapacityIndex?: {
+    title?: string;
+    isAutoDefault?: boolean;
     variables?: SummaryAnalysisVariableConfig[];
     totalScore?: { min: number; max: number; label: string };
     categoryRules?: SummaryAnalysisCategoryRule[];
   };
   clinicalProfile?: {
+    title?: string;
+    isAutoDefault?: boolean;
     sourceScales?: string[];
-    narrativeRules?: Array<{ condition?: string; text: string; sourceScales?: string[]; minTScore?: number; maxTScore?: number; minRaw?: number; maxRaw?: number; formula?: string }>;
+    narrativeRules?: Array<{ domain?: string; condition?: string; text: string; sourceScales?: string[]; minTScore?: number; maxTScore?: number; minRaw?: number; maxRaw?: number; formula?: string }>;
+    noElevationText?: string;
   };
   basicPersonalityIndex?: {
+    title?: string;
     name?: string;
     model?: string;
+    isAutoDefault?: boolean;
     variables?: SummaryAnalysisVariableConfig[];
     totalScore?: { min: number; max: number; label: string };
     categoryRules?: SummaryAnalysisCategoryRule[];
   };
-  conclusionTemplates?: { valid?: string; caution?: string; invalid?: string };
+  conclusionTemplates?: { valid?: string; caution?: string; invalid?: string; pending?: string };
+  suggestionTemplates?: { no_elevation?: string; moderate_elevation?: string; high_elevation?: string; rh_redflag?: string };
+  appendix?: Record<string, string>;
 }
 
-export interface SummaryAnalysisValidationResult { valid: boolean; errors: string[]; warnings: string[]; }
-export interface SummaryAnalysisVariableResult { id: string; label: string; englishLabel?: string; value: number | null; rangeDescription: string; category?: string; warning?: string; }
+export interface SummaryAnalysisValidationResult { valid: boolean; errors: string[]; warnings: string[]; structurallyValid?: boolean; formulaAvailable?: boolean; sourceScalesChecked?: boolean; clinicallyOfficial?: boolean; status?: string; message?: string; }
+export interface SummaryAnalysisVariableResult { id: string; label: string; englishLabel?: string; value: number | null; rangeDescription: string; category?: string; warning?: string; isAutoDefault?: boolean; }
 
 export interface SummaryAnalysisResult {
   available: boolean;
   isDemo: boolean;
+  isAutoDefault?: boolean;
+  config?: SummaryAnalysisConfig;
+  badgeLabel?: string;
+  disclaimer?: string;
   message?: string;
   validationWarnings?: string[];
   testAttitude: { score: number | null; label: string; narrative: string; warnings?: string[] };
