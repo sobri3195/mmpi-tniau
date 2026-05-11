@@ -23,7 +23,7 @@ const newSession = (identity: ParticipantIdentity): CurrentSession => ({
 });
 
 export default function App() {
-  const [page, setPage] = useState<Page>('landing');
+  const [page, setPage] = useState<Page>(() => window.location.pathname === '/admin' ? 'admin' : 'landing');
   const [dark, setDark] = useState(() => localStorage.getItem(STORAGE_KEYS.adminSettings)?.includes('dark'));
   const [session, setSession] = useState<CurrentSession | null>(() => loadCurrentSession());
   const [questions, setQuestions] = useState(() => loadQuestions());
@@ -32,7 +32,11 @@ export default function App() {
   const [activeResult, setActiveResult] = useState<AssessmentResult | null>(null);
   const [submitError, setSubmitError] = useState('');
 
-  useEffect(() => { document.documentElement.classList.toggle('dark', Boolean(dark)); localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify({ dark })); }, [dark]);
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', Boolean(dark));
+    const currentSettings = JSON.parse(localStorage.getItem(STORAGE_KEYS.adminSettings) || '{}');
+    localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify({ ...currentSettings, dark }));
+  }, [dark]);
   const refresh = () => { setQuestions(loadQuestions()); setConfig(loadScoringConfig()); setResults(loadResults()); };
   const startIdentity = (identity: ParticipantIdentity) => { const s = newSession(identity); setSession(s); saveCurrentSession(s); setPage('instructions'); };
   const submit = (s: CurrentSession) => {
