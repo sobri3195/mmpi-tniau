@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { AssessmentResult, Question, ScoringConfig } from '../types';
+import type { AssessmentResult, Question, ScoringConfig, SummaryAnalysisConfig } from '../types';
 import { Badge, Button, Card } from '../components/ui';
 import { StatCard } from '../components/admin/AdminCommon';
 import { ImportQuestionsPanel } from '../components/admin/ImportQuestionsPanel';
@@ -8,6 +8,7 @@ import { ImportNormPanel } from '../components/admin/ImportNormPanel';
 import { ImportInterpretationPanel } from '../components/admin/ImportInterpretationPanel';
 import { ImportCodeTypePanel } from '../components/admin/ImportCodeTypePanel';
 import { InterpretationConfigPanel } from '../components/admin/InterpretationConfigPanel';
+import { SummaryAnalysisConfigPanel } from '../components/admin/SummaryAnalysisConfigPanel';
 import { ResultsManagementPanel } from '../components/admin/ResultsManagementPanel';
 import { SystemReadinessCheck } from '../components/admin/SystemReadinessCheck';
 import { AdminSettingsPanel } from '../components/admin/AdminSettingsPanel';
@@ -35,6 +36,7 @@ export const AdminDashboard = ({ questions, config, results, refresh, openResult
   const rusdiConfig = loadAuxConfig('interpretationRusdiMaslim');
   const hubertusConfig = loadAuxConfig('interpretationHubertus');
   const codeTypeConfig = loadAuxConfig('codeTypeConfig');
+  const summaryAnalysisConfig = loadAuxConfig<SummaryAnalysisConfig>('summaryAnalysisConfig');
   const rusdiCodeTypeConfig = loadAuxConfig('codeTypeRusdiMaslim');
   const hubertusCodeTypeConfig = loadAuxConfig('codeTypeHubertus');
   const settings = loadAdminSettings();
@@ -79,6 +81,7 @@ export const AdminDashboard = ({ questions, config, results, refresh, openResult
     : currentPath === '/admin/tokens' ? <PermissionGuard permission="tokens.create"><TokenManagementPanel results={results} toast={() => undefined} /></PermissionGuard>
     : currentPath === '/admin/config' ? configPage
     : currentPath === '/admin/interpretations' ? interpretationConfigPage
+    : currentPath === '/admin/summary-analysis' ? <PermissionGuard permission="config.importQuestions"><SummaryAnalysisConfigPanel config={summaryAnalysisConfig} scoringConfig={config} onRefresh={refresh} toast={() => undefined} /></PermissionGuard>
     : currentPath === '/admin/results' ? resultsPage
     : currentPath === '/admin/review' ? <PermissionGuard permission="review.create"><SpecialistReviewPage results={results} onRefresh={refresh} /></PermissionGuard>
     : currentPath === '/admin/rh' ? <PermissionGuard permission="results.readAdministrative"><AdminRHPage results={results} /></PermissionGuard>

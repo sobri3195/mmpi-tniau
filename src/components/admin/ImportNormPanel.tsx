@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import type { ScoringKonfigurasi } from '../../types';
+import type { ScoringConfig } from '../../types';
 import { Button, Card } from '../ui';
 import { downloadFile } from '../../utils/export';
-import { clearAdminDataKey, saveAuxKonfigurasi } from '../../utils/adminStorage';
+import { clearAdminDataKey, saveAuxConfig } from '../../utils/adminStorage';
 import { getNormScaleKeys, validateNormTable, type ValidationResult } from '../../utils/configValidation';
 import { EmptyState, PanelTitle, TemplateButton, ValidationMessages } from './AdminCommon';
 
 const templateNorm = [{ scaleId: 'placeholder_validity', general: true, conversions: [{ raw: 0, tScore: 50 }, { raw: 1, tScore: 55 }] }, { code: 'CLIN_PLACEHOLDER', gender: 'all', ageRange: '18+', conversions: [{ raw: 0, tScore: 50 }] }];
 const asRows = (value: unknown) => Array.isArray(value) ? value : Object.values((value as Record<string, unknown>) ?? {});
 
-export const ImportNormPanel = ({ normTable, config, onRefresh, toast }: { normTable: unknown; config: ScoringKonfigurasi | null; onRefresh: () => void; toast: (message: string, tone?: 'teal' | 'amber' | 'rose') => void }) => {
+export const ImportNormPanel = ({ normTable, config, onRefresh, toast }: { normTable: unknown; config: ScoringConfig | null; onRefresh: () => void; toast: (message: string, tone?: 'teal' | 'amber' | 'rose') => void }) => {
   const [draft, setDraft] = useState<unknown | null>(null);
   const [validation, setValidation] = useState<ValidationResult | null>(normTable ? validateNormTable(normTable, config) : null);
   const active = draft ?? normTable;

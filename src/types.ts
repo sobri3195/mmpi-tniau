@@ -250,6 +250,62 @@ export interface SpecialistReview {
   isLocked: boolean;
 }
 
+
+export interface SummaryAnalysisVariableConfig {
+  id: string;
+  label: string;
+  englishLabel?: string;
+  rangeDescription?: string;
+  formula?: string;
+  sourceScales?: string[];
+}
+
+export interface SummaryAnalysisCategoryRule { min: number; max: number; label: string; }
+export interface SummaryAnalysisScoreRule { score: number; label: string; description: string; }
+
+export interface SummaryAnalysisConfig {
+  configName: string;
+  version: string;
+  isDemo: boolean;
+  validityAttitude?: {
+    sourceScales?: string[];
+    scoreRules?: SummaryAnalysisScoreRule[];
+    narrativeTemplates?: Record<string, string>;
+  };
+  mentalCapacityIndex?: {
+    variables?: SummaryAnalysisVariableConfig[];
+    totalScore?: { min: number; max: number; label: string };
+    categoryRules?: SummaryAnalysisCategoryRule[];
+  };
+  clinicalProfile?: {
+    sourceScales?: string[];
+    narrativeRules?: Array<{ condition?: string; text: string; sourceScales?: string[]; minTScore?: number; maxTScore?: number; minRaw?: number; maxRaw?: number; formula?: string }>;
+  };
+  basicPersonalityIndex?: {
+    name?: string;
+    model?: string;
+    variables?: SummaryAnalysisVariableConfig[];
+    totalScore?: { min: number; max: number; label: string };
+    categoryRules?: SummaryAnalysisCategoryRule[];
+  };
+  conclusionTemplates?: { valid?: string; caution?: string; invalid?: string };
+}
+
+export interface SummaryAnalysisValidationResult { valid: boolean; errors: string[]; warnings: string[]; }
+export interface SummaryAnalysisVariableResult { id: string; label: string; englishLabel?: string; value: number | null; rangeDescription: string; category?: string; warning?: string; }
+
+export interface SummaryAnalysisResult {
+  available: boolean;
+  isDemo: boolean;
+  message?: string;
+  validationWarnings?: string[];
+  testAttitude: { score: number | null; label: string; narrative: string; warnings?: string[] };
+  mentalCapacityIndex: { variables: SummaryAnalysisVariableResult[]; total: number | null; category: string; warnings?: string[] };
+  clinicalProfileSummary: { narratives: string[]; redFlags: string[]; warnings?: string[] };
+  basicPersonalityIndex: { variables: SummaryAnalysisVariableResult[]; total: number | null; category: string; warnings?: string[] };
+  conclusionAndSuggestion: { conclusion: string; suggestion: string };
+}
+
 export interface AssessmentResult {
   id: string;
   resultId?: string;
@@ -293,6 +349,7 @@ export interface AssessmentResult {
   rhFormId?: string;
   rhCompleted?: boolean;
   rhSummary?: RHSummary;
+  summaryAnalysis?: SummaryAnalysisResult;
 }
 
 
