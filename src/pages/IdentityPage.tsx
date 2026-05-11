@@ -42,13 +42,13 @@ export const IdentityPage = ({ onSubmit }: { onSubmit: (identity: ParticipantIde
   const setDateOfBirth = (value: string) => setForm((prev) => ({ ...prev, dateOfBirth: value, age: calculateAge(value) }));
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:py-10">
       <Card>
         <p className="text-sm font-bold uppercase tracking-wide text-teal-600">Kesehatan Jiwa TNI Angkatan Udara</p>
-        <h1 className="mt-2 text-3xl font-black">Identitas Responden MMPI</h1>
+        <h1 className="mt-2 text-2xl font-black sm:text-3xl">Identitas Responden MMPI</h1>
         <p className="mt-2 text-slate-600 dark:text-slate-300">Kolom bertanda <RequiredMark /> wajib diisi. Data tidak dikirim ke server dan hanya tersimpan pada perangkat ini.</p>
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <label className="md:col-span-2">Nama<RequiredMark /><Input value={form.name} onChange={(e) => set('name', e.target.value)} /></label>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <label className="sm:col-span-2">Nama<RequiredMark /><Input value={form.name} onChange={(e) => set('name', e.target.value)} /></label>
           <label>Nomor peserta/NIK opsional<Input value={form.participantNumber} onChange={(e) => set('participantNumber', e.target.value)} /></label>
           <label>Tanggal lahir<RequiredMark /><Input type="date" value={form.dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} /></label>
           <label>Usia<RequiredMark /><Input type="number" min="1" value={form.age} onChange={(e) => set('age', e.target.value)} /></label>
@@ -62,7 +62,7 @@ export const IdentityPage = ({ onSubmit }: { onSubmit: (identity: ParticipantIde
         </div>
         <label className="mt-5 flex gap-3 rounded-2xl bg-slate-50 p-4 text-sm dark:bg-slate-800"><input type="checkbox" checked={form.consent} onChange={(e) => set('consent', e.target.checked)} />Saya memahami tujuan asesmen, penyimpanan lokal, dan bahwa hasil perlu ditinjau profesional berwenang.</label>
         <div className="mt-5"><Disclaimer /></div>
-        <div className="mt-6 no-print"><Button disabled={!valid} onClick={() => onSubmit(form)}>Lanjut ke Instruksi</Button></div>
+        <div className="mt-6 grid no-print sm:block"><Button disabled={!valid} onClick={() => onSubmit(form)}>Lanjut ke Instruksi</Button></div>
       </Card>
     </div>
   );
