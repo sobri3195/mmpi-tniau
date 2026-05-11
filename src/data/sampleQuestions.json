@@ -4350,5 +4350,957 @@
       }
     ],
     "required": true
+  },
+  {
+    "id": 257,
+    "code": "Q257",
+    "text": "Seandainya aku adalah wartawan, aku akan sangat senang menulis berita olah raga.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 258,
+    "code": "Q258",
+    "text": "Aku dapat tidur di siang hari, tetapi di malam hari tidak dapat tidur.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 259,
+    "code": "Q259",
+    "text": "Aku yakin bahwa aku dipergunjingkan (digosipkan) orang.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 260,
+    "code": "Q260",
+    "text": "Sekali-sekali aku tertawa juga bila mendengar lelucon yang porno.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 261,
+    "code": "Q261",
+    "text": "Dibandingkan kawan-kawanku, aku sangat jarang merasa takut.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 262,
+    "code": "Q262",
+    "text": "Dalam sebuah pertemuan, aku tidak akan malu-malu bila diminta memulai berbicara dalam diskusi atau memberi pendapat tentang sesuatu hal yang kukuasai dengan baik.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 263,
+    "code": "Q263",
+    "text": "Aku selalu merasa muak terhadap hukum, ketika seseorang penjahat dibebaskan hanya karna kepandaian pembelanya.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 264,
+    "code": "Q264",
+    "text": "Aku telah minum-minuman keras (alkohol) berlebihan.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 265,
+    "code": "Q265",
+    "text": "Aku cenderung tidak menyapa orang lain, sampai mereka menyapa aku lebih dahulu.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 266,
+    "code": "Q266",
+    "text": "Aku belum pernah dihukum karena melanggar hukum (tindakan kriminal).",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 267,
+    "code": "Q267",
+    "text": "Pada waktu-waktu tertentu aku merasa sangat gembira tanpa sebab yang jelas.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 268,
+    "code": "Q268",
+    "text": "Aku terganggu oleh pikiran tentang seks.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 269,
+    "code": "Q269",
+    "text": "Bila beberapa orang terlibat dalam percekcokan, maka hal terbaik untuk mereka lakukan adalah membuat kesepakatan dan pelaksanaannya tetap berpedoman pada kesepakatan itu.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 270,
+    "code": "Q270",
+    "text": "Hatiku tidak tergugah ketika melihat hewan yang menderita.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 271,
+    "code": "Q271",
+    "text": "Aku kira aku memiliki perasaan lebih halus / peka dibandingkan orang lain.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 272,
+    "code": "Q272",
+    "text": "Selama hidupku ini aku tidak pernah senang bermain-main boneka.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 273,
+    "code": "Q273",
+    "text": "Seringkali aku merasa hidup ini berat.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 274,
+    "code": "Q274",
+    "text": "Aku sangat sensitif terhadap beberapa permasalahan, sehingga aku tidak sanggup membicarakannya.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 275,
+    "code": "Q275",
+    "text": "Ternyata aku sangat sukar berbicara di depan kelas (ketika SD, SMP atau SMA).",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 276,
+    "code": "Q276",
+    "text": "Aku sayang pada ibuku.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 277,
+    "code": "Q277",
+    "text": "Aku sering merasa kesepian, walaupun berada di lingkungan banyak orang.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 278,
+    "code": "Q278",
+    "text": "Aku selalu memperoleh rasa simpati dari orang lain.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 279,
+    "code": "Q279",
+    "text": "Biasanya aku menolak ikut serta dalam beberapa permainan karena aku kurang pandai dalam permainan itu.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 280,
+    "code": "Q280",
+    "text": "Aku mudah mendapat teman baru.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 281,
+    "code": "Q281",
+    "text": "Aku tidak suka ada orang berada di sekitarku.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 282,
+    "code": "Q282",
+    "text": "Aku pernah diberitahu bahwa akhir-akhir ini aku suka berjalan-jalan dalam keadaan tidur.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 283,
+    "code": "Q283",
+    "text": "Orang yang membiarkan barang-barang berharganya tidak dijaga sehingga dicuri adalah sama salahnya dengan si pencuri.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 284,
+    "code": "Q284",
+    "text": "Menurut pendapatku, hampir semua orang akan berbohong agar terhindar dari kesulitan.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 285,
+    "code": "Q285",
+    "text": "Aku lebih perasa (sensitif) dari kebanyakan orang.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 286,
+    "code": "Q286",
+    "text": "Kebanyakan orang (dalam hati kecilnya) tidak suka mengulurkan tangan untuk menolong orang lain.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 287,
+    "code": "Q287",
+    "text": "Kebanyakan mimpiku adalah tentang seks.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 288,
+    "code": "Q288",
+    "text": "Orang tuaku dan anggota keluargaku sering menyalahkan aku.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 289,
+    "code": "Q289",
+    "text": "Aku mudah sekali menjadi malu (canggung).",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 290,
+    "code": "Q290",
+    "text": "Aku khawatir tentang keadaan keuanganku.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 291,
+    "code": "Q291",
+    "text": "Aku belum pernah jatuh cinta pada siapapun juga.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 292,
+    "code": "Q292",
+    "text": "Beberapa perbuatan yang dilakukan anggota keluargaku, telah mengagetkan aku.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 293,
+    "code": "Q293",
+    "text": "Aku hampir tidak pernah bermimpi.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 294,
+    "code": "Q294",
+    "text": "Leherku sering ada bercak merah.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 295,
+    "code": "Q295",
+    "text": "Aku tidak pernah lumpuh atau mengalami kelemahan otot yang berat.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 296,
+    "code": "Q296",
+    "text": "Kadang-kadang suaraku hilang atau berubah, walaupun aku tidak sedang sakit batuk pilek.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 297,
+    "code": "Q297",
+    "text": "Orang tuaku sering memaksaku menuruti kehendak mereka, termasuk menuruti hal-hal yang tidak masuk akal.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 298,
+    "code": "Q298",
+    "text": "Ada kalanya tercium olehku bau yang aneh.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 299,
+    "code": "Q299",
+    "text": "Aku tidak dapat memusatkan perhatian pada satu hal (objek) saja.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 300,
+    "code": "Q300",
+    "text": "Aku mempunyai alasan untuk iri pada satu atau beberapa anggota keluargaku.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 301,
+    "code": "Q301",
+    "text": "Aku hampir selalu merasa cemas terhadap sesuatu hal atau seseorang.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 302,
+    "code": "Q302",
+    "text": "Aku mudah tidak sabar terhadap orang-orang.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 303,
+    "code": "Q303",
+    "text": "Sering sekali aku berharap aku telah meninggal dunia.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 304,
+    "code": "Q304",
+    "text": "Kadang-kadang aku begitu bersemangat, sehingga sukar tidur.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 305,
+    "code": "Q305",
+    "text": "Sesungguhnya aku merisaukan lebih banyak persoalan, daripada yang seharusnya.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 306,
+    "code": "Q306",
+    "text": "Tiada seorangpun yang peduli terhadap apa yang terjadi pada diriku.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 307,
+    "code": "Q307",
+    "text": "Ada kalanya aku terganggu oleh pendengaranku yang terlalu tajam.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 308,
+    "code": "Q308",
+    "text": "Aku cepat lupa tentang sesuatu yang dikatakan orang kepadaku.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 309,
+    "code": "Q309",
+    "text": "Biasanya aku harus berpikir-pikir dahulu sebelum melakukan sesuatu walaupun untuk hal-hal yang kecil.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 310,
+    "code": "Q310",
+    "text": "Seringkali aku menghindar agar tidak bertemu dengan seseorang.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 311,
+    "code": "Q311",
+    "text": "Aku sering merasa seakan-akan barang-barang di sekitarku itu tidak nyata.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
+  },
+  {
+    "id": 312,
+    "code": "Q312",
+    "text": "Satu-satunya bagian yang menarik dari surat kabar hanya rubrik komik yang lucu.",
+    "responseType": "yes_no",
+    "options": [
+      {
+        "label": "YA",
+        "value": true
+      },
+      {
+        "label": "TIDAK",
+        "value": false
+      }
+    ],
+    "required": true
   }
 ]
