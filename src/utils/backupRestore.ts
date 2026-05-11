@@ -20,7 +20,7 @@ const normalizeBackupValue = (name: keyof typeof ADMIN_STORAGE_KEYS, value: unkn
 };
 
 export const createBackupPayload = (): BackupPayload => {
-  writeAuditLog({ action: 'Backup', targetType: 'system', targetId: 'localStorage', description: 'Export backup seluruh data lokal.' });
+  writeAuditLog({ action: 'Backup', targetType: 'system', targetId: 'localStorage', description: 'Ekspor cadangan seluruh data lokal.' });
   return {
     exportedAt: new Date().toISOString(),
     app: 'sppg-mmpi2-admin',

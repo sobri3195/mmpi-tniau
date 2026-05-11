@@ -30,7 +30,7 @@ export const Textarea = (props: TextareaHTMLAttributes<HTMLTextAreaElement>) => 
 
 export const Disclaimer = () => (
   <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm sm:p-4 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
-    <strong>Disclaimer klinis:</strong> Sistem ini hanya alat administrasi dan screening internal. Hasil otomatis bukan diagnosis klinis dan wajib ditinjau psikolog, psikiater, atau konselor berwenang. Gunakan hanya bank soal, norma, dan interpretasi resmi/berizin.
+    <strong>Disclaimer klinis:</strong> Sistem ini hanya alat administrasi dan skrining internal. Hasil otomatis bukan diagnosis klinis dan wajib ditinjau oleh psikolog, psikiater, atau konselor berwenang. Gunakan hanya bank soal, norma, dan interpretasi resmi/berizin.
   </div>
 );
 

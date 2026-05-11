@@ -7,17 +7,17 @@ Aplikasi React + Vite + TypeScript untuk administrasi asesmen MMPI kebutuhan Kes
 - Repository ini **tidak menyertakan, menyalin, atau mengarang butir MMPI asli**.
 - File `src/data/sampleQuestions.json` dan `src/data/sampleScoringConfig.json` hanya berisi dummy placeholder untuk uji alur.
 - Gunakan hanya bank soal, scoring key, norma, dan interpretasi resmi/berizin yang Anda miliki hak pakainya.
-- Interpretasi otomatis bersifat indikatif/screening internal, bukan diagnosis klinis. Hasil wajib ditinjau psikolog, psikiater, atau konselor berwenang.
+- Interpretasi otomatis bersifat indikatif/skrining internal, bukan diagnosis klinis. Hasil wajib ditinjau psikolog, psikiater, atau konselor berwenang.
 
 ## Fitur
 
 - Landing page TNI AU, formulir identitas sesuai kebutuhan MMPI, instruksi, halaman tes, laporan hasil, dan admin dashboard.
-- Import bank soal JSON/CSV resmi/berizin.
-- Import konfigurasi skala/scoring JSON berbasis konfigurasi; tidak ada kunci rahasia hardcoded.
+- Impor bank soal JSON/CSV resmi/berizin.
+- Impor konfigurasi skala/scoring JSON berbasis konfigurasi; tidak ada kunci rahasia hardcoded.
 - Autosave progres peserta ke `sppg_mmpi_current_session`.
 - Scoring raw score per skala, interpretasi rentang skor, dan konversi T-score opsional jika norma tersedia.
 - Grafik bar dan radar dengan Recharts.
-- Export JSON/CSV yang memuat identitas responden, cetak laporan/PDF melalui print browser, dark mode, dan reset data lokal.
+- Ekspor JSON/CSV yang memuat identitas responden, cetak laporan/PDF melalui print browser, dark mode, dan reset data lokal.
 
 ## LocalStorage Keys
 
@@ -54,7 +54,7 @@ vercel deploy
 
 Vercel akan membaca proyek Vite standar ini. Build command: `npm run build`, output directory: `dist`.
 
-## Cara Import Bank Soal Resmi/Berizin
+## Cara Impor Bank Soal Resmi/Berizin
 
 Masuk ke halaman **Admin**, lalu import file JSON atau CSV.
 
@@ -78,7 +78,7 @@ Masuk ke halaman **Admin**, lalu import file JSON atau CSV.
 
 ### Format CSV Bank Soal
 
-Header minimal:
+Bagian kepala minimal:
 
 ```csv
 id,code,text,responseType,required
@@ -88,9 +88,9 @@ id,code,text,responseType,required
 
 `responseType` mendukung `true_false` atau `yes_no`.
 
-## Cara Import Konfigurasi Scoring
+## Cara Impor Konfigurasi Scoring
 
-Import file JSON pada panel **Scoring Config** di Admin.
+Impor file JSON pada panel **Scoring Config** di Admin.
 
 ```json
 {

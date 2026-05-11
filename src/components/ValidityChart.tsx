@@ -17,7 +17,7 @@ export const ValidityChart = ({ scores }: { scores: ScoreRow[] }) => {
           <YAxis allowDecimals={false} domain={[30, 100]} />
           <Tooltip />
           <ReferenceLine y={65} stroke="#f59e0b" strokeDasharray="4 4" label="caution" />
-          <ReferenceLine y={75} stroke="#be123c" strokeDasharray="4 4" label="review/retest" />
+          <ReferenceLine y={75} stroke="#be123c" strokeDasharray="4 4" label="telaah/tes ulang" />
           <Bar dataKey="tScore" name="T-score validitas">
             {data.map((entry) => <Cell key={entry.scale} fill={colorFor(entry.tScore)} />)}
           </Bar>

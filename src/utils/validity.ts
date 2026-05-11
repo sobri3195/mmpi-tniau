@@ -36,7 +36,7 @@ export const determineProtocolValidity = (scores: ScoreRow[], scoringConfig?: Sc
     return {
       status: 'unknown',
       label: 'Validitas belum tersedia',
-      reasons: ['Konfigurasi belum memuat skala validitas (?/VRIN/TRIN/F/Fb/Fp/FBS/L/K/S). Interpretasi perlu review profesional.'],
+      reasons: ['Konfigurasi belum memuat skala validitas (?/VRIN/TRIN/F/Fb/Fp/FBS/L/K/S). Interpretasi memerlukan telaah profesional.'],
       canInterpretClinical: false,
       requiresRetest: false,
       flags: ['validity-missing'],
@@ -62,7 +62,7 @@ export const determineProtocolValidity = (scores: ScoreRow[], scoringConfig?: Sc
   if (invalidMarkers.length) {
     return {
       status: 'invalid',
-      label: 'Invalid / perlu review atau retest',
+      label: 'Invalid / perlu telaah atau tes ulang',
       reasons: reasons.length ? reasons : ['Profil respons belum memadai untuk interpretasi klinis final.'],
       canInterpretClinical: false,
       requiresRetest: true,
