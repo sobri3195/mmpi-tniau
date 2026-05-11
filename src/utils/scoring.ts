@@ -91,7 +91,7 @@ export const generateRecommendations = (scores: ScoreRow[], validityStatus: Vali
 export const validateScoringConfig = (config: ScoringConfig | null, questions?: Question[], options?: { requireOfficial?: boolean }) => {
   if (!config) return 'Konfigurasi scoring belum tersedia.';
   if (!Array.isArray(config.scales) || config.scales.length === 0) return 'Konfigurasi scoring harus memiliki minimal satu skala.';
-  if (options?.requireOfficial && isDemoScoringConfig(config)) return 'Konfigurasi yang digunakan masih demo/placeholder dan tidak boleh dipakai untuk laporan final klinis/personel.';
+  if (options?.requireOfficial && isDemoScoringConfig(config)) return 'Konfigurasi perlu diverifikasi sebelum dipakai untuk laporan final klinis/personel.';
   if (questions && questions.length !== 567) return `Total item harus 567 untuk MMPI-2; saat ini ${questions.length}.`;
   const invalid = config.scales.find((scale) => !scale.id || !(scale.code ?? scale.id) || !scale.name || !scale.group || !Array.isArray(scale.items) || scale.items.length === 0);
   if (invalid) return `Skala ${invalid?.id || '(tanpa ID)'} harus punya id, code, name, group, dan items.`;

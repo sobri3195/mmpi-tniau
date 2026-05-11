@@ -17,7 +17,6 @@ export const ResultsPage = ({ result, scoringConfig, goHome }: { result: Assessm
   const validityTone = result.validityStatus?.status === 'valid' ? 'teal' : result.validityStatus?.status === 'invalid' ? 'rose' : 'amber';
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
-      {report.isDemo && <Card className="mb-6 border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"><h2 className="text-xl font-black">Konfigurasi yang digunakan masih demo/placeholder.</h2><p className="mt-2">Laporan ini tidak valid untuk interpretasi klinis atau personel. Jangan tampilkan “Interpretasi Spesialis” sampai admin mengimpor konfigurasi resmi/berizin.</p></Card>}
       <Card className="mb-6">
         <div className="flex flex-wrap justify-between gap-4"><div><p className="text-sm font-bold text-teal-600">Kesehatan Jiwa TNI Angkatan Udara</p><h1 className="text-2xl font-black sm:text-3xl">Laporan Hasil Asesmen MMPI-2 TNI AU</h1><p className="text-slate-500">Kesehatan Jiwa TNI Angkatan Udara</p></div><div className="flex flex-col items-start gap-2 sm:items-end"><Badge tone={result.status === 'Perlu Review' ? 'amber' : 'teal'}>{result.status}</Badge><Badge tone={validityTone}>{result.validityStatus?.label ?? 'Validitas belum dinilai'}</Badge></div></div>
         <div className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-3">

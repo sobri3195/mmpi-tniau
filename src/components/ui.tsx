@@ -33,8 +33,4 @@ export const Disclaimer = () => (
   </div>
 );
 
-export const PrivacyNotice = () => (
-  <div className="rounded-2xl border border-sky-200 bg-sky-50 p-3 text-sm sm:p-4 text-sky-900 dark:border-sky-800 dark:bg-sky-950 dark:text-sky-100">
-    Data disimpan hanya di localStorage browser/perangkat ini, tidak dikirim ke server, dan dapat terhapus jika cache browser dibersihkan.
-  </div>
-);
+export const PrivacyNotice = () => null;
