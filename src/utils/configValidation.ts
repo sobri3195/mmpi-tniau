@@ -70,7 +70,6 @@ export const validateScoringConfigAdmin = (config: unknown, questions: Question[
     if (!groups.has(group)) result.warnings.push(`Group skala ${group} belum tersedia.`);
   });
   if (missingQuestionIds.length) result.errors.push(`questionId tidak ditemukan di bank soal: ${missingQuestionIds.slice(0, 25).join(', ')}${missingQuestionIds.length > 25 ? ' ...' : ''}`);
-  if (isDemoLikeConfig(cfg)) result.warnings.push('Mode Demo - Tidak Valid untuk Interpretasi Klinis.');
   result.valid = result.errors.length === 0;
   return result;
 };
@@ -106,7 +105,6 @@ export const validateInterpretationConfig = (config: unknown): ValidationResult 
   ['codeTypeInterpretations', 'redFlags', 'reviewRecommendations', 'retestRecommendations'].forEach((field) => {
     if (!cfg[field]) result.warnings.push(`Interpretasi spesialis belum lengkap: ${field} belum tersedia.`);
   });
-  if (isDemoLikeConfig(config)) result.warnings.push('Mode Demo - Tidak Valid untuk Interpretasi Klinis.');
   result.valid = result.errors.length === 0;
   return result;
 };
@@ -121,7 +119,6 @@ export const validateCodeTypeConfig = (config: unknown): ValidationResult => {
       if (!row[field]) result.errors.push(`Code type baris ${index + 1} harus punya ${field}.`);
     });
   });
-  if (isDemoLikeConfig(config)) result.warnings.push('Mode Demo - Tidak Valid untuk Interpretasi Klinis.');
   result.valid = result.errors.length === 0;
   return result;
 };

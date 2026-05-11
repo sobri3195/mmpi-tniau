@@ -5,7 +5,7 @@ import { downloadFile } from '../../utils/export';
 import { saveAdminQuestions, clearAdminDataKey } from '../../utils/adminStorage';
 import { validateQuestions, type ValidationResult } from '../../utils/configValidation';
 import { parseQuestionsCsv } from '../../utils/csvImport';
-import { AlertBox, EmptyState, PanelTitle, TemplateButton, ValidationMessages } from './AdminCommon';
+import { EmptyState, PanelTitle, TemplateButton, ValidationMessages } from './AdminCommon';
 
 const templateQuestions = Array.from({ length: 3 }, (_, index) => ({ id: index + 1, code: `ITEM_${index + 1}`, text: `Placeholder item ${index + 1} - ganti dengan item resmi/berizin`, responseType: 'true_false', required: true, options: [{ label: 'True', value: true }, { label: 'False', value: false }] }));
 
@@ -27,7 +27,6 @@ export const ImportQuestionsPanel = ({ questions, onRefresh, toast }: { question
 
   return <Card>
     <PanelTitle title="Import Bank Soal" subtitle="Upload questions.json atau questions.csv. Source code tidak menyertakan soal MMPI asli; gunakan file resmi/berizin." />
-    <AlertBox tone="amber"><strong>Mode Demo - Tidak Valid untuk Interpretasi Klinis.</strong> Bank soal final hanya dianggap siap jika tepat 567 item dan lolos validasi.</AlertBox>
     <div className="mt-4 grid gap-3 sm:flex sm:flex-wrap">
       <input className="block w-full text-sm sm:w-auto" type="file" accept=".json,.csv" onChange={(event) => importFile(event.target.files?.[0]).catch((error) => { setValidation({ valid: false, errors: [error instanceof Error ? error.message : 'Gagal membaca file.'], warnings: [] }); toast('Gagal import bank soal.', 'rose'); })} />
       <TemplateButton filename="template_questions.json" data={templateQuestions} />
