@@ -9,6 +9,8 @@ export interface QuestionOption {
 
 export interface Question {
   id: number;
+  number?: number;
+  order?: number;
   code: string;
   text: string;
   responseType: ResponseType;
@@ -98,6 +100,8 @@ export interface ParticipantIdentity {
   name: string;
   participantNumber?: string;
   dateOfBirth: string;
+  birthDateInput?: string;
+  birthDateISO?: string;
   age: string;
   gender: string;
   maritalStatus: string;
@@ -156,6 +160,14 @@ export interface CurrentSession {
   mode: 'single' | 'list';
   status: 'Draft' | 'Selesai' | 'Perlu Review' | 'in_progress';
   startedAt?: string;
+  startedDate?: string;
+  startedTime?: string;
+  submittedAt?: string;
+  submittedDate?: string;
+  submittedTime?: string;
+  durationSeconds?: number;
+  durationText?: string;
+  questionOrder?: number[];
   lastSavedAt?: string;
   updatedAt: string;
 }
@@ -201,7 +213,13 @@ export interface AssessmentResult {
   answeredCount: number;
   totalQuestions: number;
   submittedAt: string;
+  submittedDate?: string;
+  submittedTime?: string;
   startedAt?: string;
+  startedDate?: string;
+  startedTime?: string;
+  durationSeconds?: number;
+  durationText?: string;
   durationLabel?: string;
   scores: ScoreRow[];
   status: 'Selesai' | 'Perlu Review';

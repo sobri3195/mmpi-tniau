@@ -11,15 +11,21 @@ export const downloadFile = (filename: string, content: string, mime = 'applicat
 };
 
 const escapeCsv = (value: unknown) => `"${String(value ?? '').replaceAll('"', '""')}"`;
-const formatFinishTime = (submittedAt: string) => new Date(submittedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+const timeFromIso = (value?: string) => value ? new Date(value).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '';
+const dateFromIso = (value?: string) => value ? value.slice(0, 10) : '';
 
 export const resultToCsv = (results: AssessmentResult[]) => {
-  const rows = [['id', 'nama', 'nomor_peserta', 'tanggal_lahir', 'usia', 'gender', 'status_perkawinan', 'pendidikan', 'pekerjaan', 'asal_satker', 'kesatuan', 'tanggal_submit', 'waktu_selesai', 'status', 'skor']];
+  const rows: unknown[][] = [[
+    'id', 'nama', 'nomor_peserta', 'tanggal_lahir', 'birthDateInput', 'birthDateISO', 'age', 'gender', 'status_perkawinan', 'pendidikan', 'pekerjaan', 'asal_satker', 'kesatuan',
+    'tanggal_asesmen', 'startedDate', 'startedTime', 'submittedDate', 'submittedTime', 'durationSeconds', 'durationText', 'total_soal', 'total_dijawab', 'status_pengerjaan', 'status_validitas', 'skor',
+  ]];
   results.forEach((result) => rows.push([
     result.id,
     result.identity.name,
     result.identity.participantNumber ?? '',
-    result.identity.dateOfBirth ?? '',
+    result.identity.birthDateInput || result.identity.dateOfBirth || '',
+    result.identity.birthDateInput ?? '',
+    result.identity.birthDateISO ?? result.identity.dateOfBirth ?? '',
     result.identity.age,
     result.identity.gender,
     result.identity.maritalStatus ?? '',
@@ -27,9 +33,17 @@ export const resultToCsv = (results: AssessmentResult[]) => {
     result.identity.occupation ?? '',
     result.identity.originWorkUnit ?? '',
     result.identity.unit,
-    result.submittedAt,
-    formatFinishTime(result.submittedAt),
+    result.identity.assessmentDate,
+    result.startedDate ?? dateFromIso(result.startedAt),
+    result.startedTime ?? timeFromIso(result.startedAt),
+    result.submittedDate ?? dateFromIso(result.submittedAt),
+    result.submittedTime ?? timeFromIso(result.submittedAt),
+    result.durationSeconds ?? '',
+    result.durationText ?? result.durationLabel ?? '',
+    result.totalQuestions,
+    result.answeredCount,
     result.status,
+    result.validityStatus?.label ?? 'Unknown',
     result.scores.map((score) => `${score.scaleId}:${score.rawScore}${score.tScore ? `/T${score.tScore}` : ''}`).join('; '),
   ]));
   return rows.map((row) => row.map(escapeCsv).join(',')).join('\n');

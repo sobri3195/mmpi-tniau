@@ -1,5 +1,6 @@
 import type { AccessToken, CurrentSession, TokenSessionBinding } from '../types';
 import { STORAGE_KEYS, loadCurrentSession, saveCurrentSession } from './storage';
+import { buildStartTiming } from './time';
 
 export const TOKEN_STORAGE_KEYS = {
   accessTokens: 'sppg_mmpi2_access_tokens',
@@ -84,6 +85,7 @@ export const bindTokenToSession = (tokenId: string) => {
   const token = getTokenById(tokenId);
   if (!token) return null;
   const now = new Date().toISOString();
+  const startTiming = buildStartTiming(new Date(now));
   const session: CurrentSession = {
     id: crypto.randomUUID(),
     sessionId: crypto.randomUUID(),
@@ -109,7 +111,7 @@ export const bindTokenToSession = (tokenId: string) => {
     currentIndex: 0,
     mode: 'single',
     status: 'in_progress',
-    startedAt: now,
+    ...startTiming,
     lastSavedAt: now,
     updatedAt: now,
   };
@@ -121,7 +123,7 @@ export const bindTokenToSession = (tokenId: string) => {
     uniqueKey: token.uniqueKey,
     participant: {},
     answers: {},
-    startedAt: now,
+    startedAt: startTiming.startedAt,
     lastSavedAt: now,
     status: 'in_progress',
   };

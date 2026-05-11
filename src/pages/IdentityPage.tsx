@@ -3,19 +3,35 @@ import type { ParticipantIdentity } from '../types';
 import { Button, Card, Disclaimer, Input, Select } from '../components/ui';
 
 const today = () => new Date().toISOString().slice(0, 10);
+const MIN_AGE = 17;
+const MAX_AGE = 80;
+const DATE_MESSAGE = 'Tanggal lahir harus ditulis dalam format DD-MM-YYYY, contoh 31-07-1995.';
 
-const calculateAge = (dateOfBirth: string) => {
-  if (!dateOfBirth) return '';
-  const birthDate = new Date(`${dateOfBirth}T00:00:00`);
-  if (Number.isNaN(birthDate.getTime())) return '';
+const formatBirthDateInput = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4)}`;
+};
 
-  const currentDate = new Date();
-  let age = currentDate.getFullYear() - birthDate.getFullYear();
-  const monthDifference = currentDate.getMonth() - birthDate.getMonth();
-  const hasBirthdayPassed = monthDifference > 0 || (monthDifference === 0 && currentDate.getDate() >= birthDate.getDate());
+const parseBirthDate = (value: string) => {
+  const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value);
+  if (!match) return { valid: false, message: DATE_MESSAGE };
+  const [, dayText, monthText, yearText] = match;
+  const day = Number(dayText);
+  const month = Number(monthText);
+  const year = Number(yearText);
+  const birthDate = new Date(year, month - 1, day);
+  const isValidDate = birthDate.getFullYear() === year && birthDate.getMonth() === month - 1 && birthDate.getDate() === day;
+  if (!isValidDate) return { valid: false, message: DATE_MESSAGE };
+  const now = new Date();
+  if (birthDate.getTime() > now.getTime()) return { valid: false, message: 'Tanggal lahir tidak boleh tanggal masa depan.' };
+  let age = now.getFullYear() - year;
+  const monthDifference = now.getMonth() - birthDate.getMonth();
+  const hasBirthdayPassed = monthDifference > 0 || (monthDifference === 0 && now.getDate() >= birthDate.getDate());
   if (!hasBirthdayPassed) age -= 1;
-
-  return age >= 0 ? String(age) : '';
+  if (age < MIN_AGE || age > MAX_AGE) return { valid: false, message: `Usia harus masuk akal (${MIN_AGE}–${MAX_AGE} tahun).` };
+  return { valid: true, age: String(age), iso: `${yearText}-${monthText}-${dayText}`, message: '' };
 };
 
 const requiredFields: Array<keyof ParticipantIdentity> = ['name', 'dateOfBirth', 'age', 'gender', 'maritalStatus', 'education', 'occupation', 'originWorkUnit', 'unit'];
@@ -27,6 +43,8 @@ export const IdentityPage = ({ onSubmit }: { onSubmit: (identity: ParticipantIde
     name: '',
     participantNumber: '',
     dateOfBirth: '',
+    birthDateInput: '',
+    birthDateISO: '',
     age: '',
     gender: '',
     maritalStatus: '',
@@ -37,9 +55,21 @@ export const IdentityPage = ({ onSubmit }: { onSubmit: (identity: ParticipantIde
     assessmentDate: today(),
     consent: false,
   });
-  const valid = requiredFields.every((field) => Boolean(form[field])) && form.consent;
+  const [birthDateError, setBirthDateError] = useState('');
+  const valid = requiredFields.every((field) => Boolean(form[field])) && form.consent && !birthDateError;
   const set = (key: keyof ParticipantIdentity, value: string | boolean) => setForm((prev) => ({ ...prev, [key]: value }));
-  const setDateOfBirth = (value: string) => setForm((prev) => ({ ...prev, dateOfBirth: value, age: calculateAge(value) }));
+  const setDateOfBirth = (value: string) => {
+    const formatted = formatBirthDateInput(value);
+    const parsed = parseBirthDate(formatted);
+    setBirthDateError(formatted.length === 10 && !parsed.valid ? parsed.message : formatted.length > 0 && formatted.length < 10 ? DATE_MESSAGE : '');
+    setForm((prev) => ({
+      ...prev,
+      birthDateInput: formatted,
+      birthDateISO: parsed.valid ? parsed.iso ?? '' : '',
+      dateOfBirth: parsed.valid ? parsed.iso ?? '' : '',
+      age: parsed.valid ? parsed.age ?? '' : '',
+    }));
+  };
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:py-10">
@@ -50,8 +80,8 @@ export const IdentityPage = ({ onSubmit }: { onSubmit: (identity: ParticipantIde
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <label className="sm:col-span-2">Nama<RequiredMark /><Input value={form.name} onChange={(e) => set('name', e.target.value)} /></label>
           <label>Nomor peserta/NIK opsional<Input value={form.participantNumber} onChange={(e) => set('participantNumber', e.target.value)} /></label>
-          <label>Tanggal lahir<RequiredMark /><Input type="date" value={form.dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} /></label>
-          <label>Usia<RequiredMark /><Input type="number" min="1" value={form.age} onChange={(e) => set('age', e.target.value)} /></label>
+          <label>Tanggal lahir<RequiredMark /><Input type="text" inputMode="numeric" placeholder="DD-MM-YYYY" value={form.birthDateInput ?? ''} onChange={(e) => setDateOfBirth(e.target.value)} /><span className="mt-1 block text-xs text-slate-500">Ketik manual, contoh: 31-07-1995</span>{birthDateError && <span className="mt-1 block text-xs font-bold text-rose-600">{birthDateError}</span>}{form.age && !birthDateError && <span className="mt-1 block text-sm font-bold text-teal-700">Usia: {form.age} tahun</span>}</label>
+          <label>Usia<RequiredMark /><Input type="number" min={MIN_AGE} max={MAX_AGE} value={form.age} readOnly /></label>
           <label>Jenis kelamin<RequiredMark /><Select value={form.gender} onChange={(e) => set('gender', e.target.value)}><option value="">Pilih</option><option>Pria</option><option>Wanita</option></Select></label>
           <label>Status perkawinan<RequiredMark /><Select value={form.maritalStatus} onChange={(e) => set('maritalStatus', e.target.value)}><option value="">Pilih</option><option>Menikah</option><option>Belum Menikah</option></Select></label>
           <label>Pendidikan<RequiredMark /><Select value={form.education} onChange={(e) => set('education', e.target.value)}><option value="">Pilih</option><option>SMA</option><option>D3</option><option>S1</option><option>S2/S3</option></Select></label>

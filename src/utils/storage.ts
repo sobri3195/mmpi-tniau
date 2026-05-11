@@ -1,8 +1,9 @@
 import sampleQuestions from '../data/sampleQuestions.json';
 import sampleScoringConfig from '../data/sampleScoringConfig.json';
 import type { AssessmentResult, CurrentSession, Question, ScoringConfig } from '../types';
+import { normalizeQuestions } from './questions';
 
-const BUNDLED_QUESTIONS = sampleQuestions as Question[];
+const BUNDLED_QUESTIONS = normalizeQuestions(sampleQuestions as Question[]);
 
 export const STORAGE_KEYS = {
   questions: 'sppg_mmpi2_questions',
@@ -57,9 +58,9 @@ const isLegacyPlaceholderBank = (questions: Question[]) =>
 export const loadQuestions = (): Question[] => {
   const savedQuestions = readJsonWithLegacy<Question[] | null>(STORAGE_KEYS.questions, LEGACY_STORAGE_KEYS.questions, null);
   if (!savedQuestions?.length || isIncompleteQuestionBank(savedQuestions) || isLegacyPlaceholderBank(savedQuestions)) return BUNDLED_QUESTIONS;
-  return savedQuestions;
+  return normalizeQuestions(savedQuestions);
 };
-export const saveQuestions = (questions: Question[]) => writeJson(STORAGE_KEYS.questions, questions);
+export const saveQuestions = (questions: Question[]) => writeJson(STORAGE_KEYS.questions, normalizeQuestions(questions));
 export const loadDemoQuestions = (): Question[] => BUNDLED_QUESTIONS;
 
 export const loadScoringConfig = (): ScoringConfig | null => readJsonWithLegacy<ScoringConfig | null>(STORAGE_KEYS.scoringConfig, LEGACY_STORAGE_KEYS.scoringConfig, null);

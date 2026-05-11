@@ -34,7 +34,9 @@ export const parseQuestionsCsv = (text: string): Question[] => {
     const row = Object.fromEntries(headers.map((header, index) => [header, cols[index] ?? '']));
     const responseType = (row.responseType || 'true_false') as Question['responseType'];
     return {
-      id: Number(row.id),
+      id: Number(row.id || row.number || row.order),
+      number: Number(row.number || row.order || row.id),
+      order: Number(row.order || row.number || row.id),
       code: row.code,
       text: row.text,
       responseType,
