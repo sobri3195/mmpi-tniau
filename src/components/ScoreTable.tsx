@@ -1,4 +1,5 @@
 import type { ScoreRow } from '../types';
+import { getScoreTone } from '../utils/interpretation';
 import { Badge } from './ui';
 
 export const ScoreTable = ({ scores }: { scores: ScoreRow[] }) => (
@@ -11,7 +12,7 @@ export const ScoreTable = ({ scores }: { scores: ScoreRow[] }) => (
               <p className="font-mono text-sm font-bold text-teal-700 dark:text-teal-300">{score.scaleId}</p>
               <h3 className="font-black">{score.scaleName}</h3>
             </div>
-            <Badge tone={score.category === 'Tinggi' ? 'amber' : 'teal'}>{score.category}</Badge>
+            <Badge tone={getScoreTone(score)}>{score.category}</Badge>
           </div>
           <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
             <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800">
@@ -42,7 +43,7 @@ export const ScoreTable = ({ scores }: { scores: ScoreRow[] }) => (
               <td>{score.scaleName}</td>
               <td className="font-bold">{score.rawScore}</td>
               <td>{score.tScore ?? <span className="text-slate-500">Belum dikonversi</span>}</td>
-              <td><Badge tone={score.category === 'Tinggi' ? 'amber' : 'teal'}>{score.category}</Badge></td>
+              <td><Badge tone={getScoreTone(score)}>{score.category}</Badge></td>
               <td><p>{score.interpretation}</p><p className="text-xs text-slate-500">{score.normStatus}</p></td>
             </tr>
           ))}
