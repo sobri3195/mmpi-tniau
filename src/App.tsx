@@ -183,11 +183,11 @@ export default function App() {
           </div>
         </div>
       </nav>
-      {page === 'landing' && <LandingPage go={(p) => p === 'identity' ? resume() : setPage(p as Page, p === 'admin' ? '/admin' : undefined)} questionsCount={questions.length} hasScoringConfig={Boolean(config)} />}
+      {page === 'landing' && <LandingPage go={(p) => p === 'identity' ? resume() : setPage(p as Page, p === 'admin' ? '/admin' : undefined)} questionsCount={questions.length} />}
       {page === 'access' && <TokenAccessPage reason={accessMessage} onVerified={() => { const next = loadCurrentSession(); setSession(next); setAccessMessage(''); setPage('identity', '/participant'); }} />}
       {page === 'identity' && <IdentityPage onSubmit={startIdentity} />}
-      {page === 'instructions' && <InstructionsPage onStart={() => { const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } setPage('test', '/test'); }} questionsCount={questions.length} hasScoringConfig={Boolean(config)} />}
-      {page === 'test' && session && <TestPage session={session} questions={orderQuestionsForSession(questions, session.questionOrder)} hasScoringConfig={Boolean(config)} onSubmit={submit} onExit={() => setPage('landing', '/')} onChange={(next) => { setSession(next); touchTokenSession(next); }} />}
+      {page === 'instructions' && <InstructionsPage onStart={() => { const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } setPage('test', '/test'); }} questionsCount={questions.length} />}
+      {page === 'test' && session && <TestPage session={session} questions={orderQuestionsForSession(questions, session.questionOrder)} onSubmit={submit} onExit={() => setPage('landing', '/')} onChange={(next) => { setSession(next); touchTokenSession(next); }} />}
       {page === 'scoring-missing' && <ScoringMissingPage message={submitError} goAdmin={() => { refresh(); setPage('admin', '/admin'); }} saveDraft={() => session && saveCurrentSession(session)} backToTest={() => setPage('test', '/test')} />}
       {page === 'result' && activeResult && (activeResult.rhCompleted ? <ResultsPage result={activeResult} scoringConfig={config} goHome={() => setPage('landing', '/')} /> : <RHSkriningPage result={activeResult} onDone={(completed) => { setActiveResult(completed); refresh(); setSession(null); setPage('result', `/result/${completed.id}`); }} onCancel={() => setPage('landing', '/')} />)}
       {page === 'rh-skrining' && activeResult && <RHSkriningPage result={activeResult} onDone={(completed) => { setActiveResult(completed); refresh(); setSession(null); setPage('result', `/result/${completed.id}`); }} onCancel={() => setPage('landing', '/')} />}

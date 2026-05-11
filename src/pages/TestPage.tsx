@@ -5,7 +5,7 @@ import { saveCurrentSession } from '../utils/storage';
 import { questionNumber, questionNumberPadded } from '../utils/questions';
 import { isAnswerValue, REQUIRED_TOTAL_QUESTIONS } from '../utils/answerFormat';
 
-export const TestPage = ({ session, questions, hasScoringConfig, onSubmit, onExit, onChange }: { session: CurrentSession; questions: Question[]; hasScoringConfig: boolean; onSubmit: (s: CurrentSession) => void; onExit: () => void; onChange: (s: CurrentSession) => void }) => {
+export const TestPage = ({ session, questions, onSubmit, onExit, onChange }: { session: CurrentSession; questions: Question[]; onSubmit: (s: CurrentSession) => void; onExit: () => void; onChange: (s: CurrentSession) => void }) => {
   const [local, setLocal] = useState(session);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notice, setNotice] = useState('');
@@ -86,7 +86,6 @@ export const TestPage = ({ session, questions, hasScoringConfig, onSubmit, onExi
         <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-black">Tes berlangsung</h1><p className="text-sm text-slate-500">Autosave aktif • {answered}/{questions.length} terjawab • Soal aktif {question ? questionNumberPadded(question, local.currentIndex) : '-'}</p></div><Badge tone="amber">Draft</Badge></div>
         <div className="mt-4 h-3 rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-3 rounded-full bg-teal-500" style={{ width: `${progress}%` }} /></div>
         <div className="mt-3 flex flex-wrap gap-3 text-xs font-semibold text-slate-500"><span>Ring biru: soal aktif</span><span>Hijau: sudah dijawab</span><span>Abu-abu: belum dijawab</span><span>Redup: belum bisa dibuka</span></div><div className="mt-4 flex gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible sm:pb-0">{questions.map((q, i) => <button key={q.id} title={`Nomor soal: ${questionNumberPadded(q, i)}`} onClick={() => goToQuestion(i)} aria-disabled={!canOpenQuestion(i)} aria-label={`Soal ${questionNumber(q, i)} dari ${questions.length}, nomor soal ${questionNumberPadded(q, i)}${i === local.currentIndex ? ', aktif' : ''}${isAnswerValue(local.answers[String(q.id)]) ? ', sudah dijawab' : ', belum dijawab'}`} className={`h-11 min-w-11 shrink-0 rounded-xl px-2 text-xs font-black ${isAnswerValue(local.answers[String(q.id)]) ? 'bg-teal-600 text-white' : 'bg-slate-100 dark:bg-slate-800'} ${i === local.currentIndex ? 'ring-4 ring-blue-500' : ''} ${!canOpenQuestion(i) ? 'cursor-not-allowed opacity-45' : ''}`}>{questionNumberPadded(q, i)}</button>)}</div>
-        {!hasScoringConfig && <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">Tes dapat dikerjakan, tetapi hasil belum dapat dihitung sebelum admin mengimpor konfigurasi scoring.</div>}
         <div className="mt-4 grid gap-3 sm:flex sm:flex-wrap"><Button variant="ghost" onClick={() => update({ mode: local.mode === 'single' ? 'list' : 'single' })}>Mode: {local.mode === 'single' ? 'Satu soal' : 'Daftar'}</Button><Button variant="ghost" onClick={onExit}>Simpan & lanjutkan nanti</Button></div>
       </Card>
       <Card>
