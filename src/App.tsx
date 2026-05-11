@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { AssessmentResult, CurrentSession, ParticipantIdentity } from './types';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { AdminLoginPage } from './pages/AdminLoginPage';
+import { AdminSetupPage } from './pages/AdminSetupPage';
 import { IdentityPage } from './pages/IdentityPage';
 import { InstructionsPage } from './pages/InstructionsPage';
 import { LandingPage } from './pages/LandingPage';
@@ -11,6 +13,9 @@ import { Button, Card } from './components/ui';
 import { calculateRawScores, determineValidity, generateClinicalSummary, generateInterpretations, generateRecommendations, isDemoScoringConfig, validateScoringConfig } from './utils/scoring';
 import { clearCurrentSession, loadCurrentSession, loadQuestions, loadResults, loadScoringConfig, saveCurrentSession, saveResult, STORAGE_KEYS } from './utils/storage';
 import { markTokenCompleted, touchTokenSession, validateSessionToken } from './utils/tokenAccess';
+import { hasAnyUser } from './utils/userStorage';
+import { validateSession } from './utils/session';
+import { writeAuditLog } from './utils/auditLog';
 
 export type Page = 'landing' | 'access' | 'identity' | 'instructions' | 'test' | 'result' | 'admin' | 'scoring-missing';
 
@@ -32,15 +37,23 @@ const newSession = (identity: ParticipantIdentity, existing?: CurrentSession | n
 });
 
 export default function App() {
-  const [page, setPageState] = useState<Page>(() => {
-    if (window.location.pathname === '/admin' || window.location.pathname === '/admin/tokens') return 'admin';
-    if (window.location.pathname === '/access') return 'access';
-    if (window.location.pathname === '/participant') return validateSessionToken().valid ? 'identity' : 'access';
-    if (window.location.pathname === '/test') return validateSessionToken().valid ? 'test' : 'access';
+  const routeToPage = (pathname: string): Page => {
+    if (pathname.startsWith('/admin') || pathname.startsWith('/result/') || pathname.startsWith('/report/')) return 'admin';
+    if (pathname === '/access') return 'access';
+    if (pathname === '/participant') return validateSessionToken().valid ? 'identity' : 'access';
+    if (pathname === '/test') return validateSessionToken().valid ? 'test' : 'access';
     return 'landing';
-  });
+  };
+  const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
+  const [page, setPageState] = useState<Page>(() => routeToPage(window.location.pathname));
   const [accessMessage, setAccessMessage] = useState(() => window.location.pathname === '/test' && !validateSessionToken().valid ? 'Silakan masukkan token akses dan unique key terlebih dahulu.' : '');
-  const setPage = (next: Page, path?: string) => { setPageState(next); if (path) window.history.replaceState(null, '', path); };
+  useEffect(() => {
+    const onPopState = () => { setCurrentPath(window.location.pathname); setPageState(routeToPage(window.location.pathname)); };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+  const navigate = (path: string) => { window.history.replaceState(null, '', path); setCurrentPath(path); setPageState(routeToPage(path)); };
+  const setPage = (next: Page, path?: string) => { setPageState(next); if (path) { window.history.replaceState(null, '', path); setCurrentPath(path); } };
   const [dark, setDark] = useState(() => localStorage.getItem(STORAGE_KEYS.adminSettings)?.includes('dark'));
   const [session, setSession] = useState<CurrentSession | null>(() => loadCurrentSession());
   const [questions, setQuestions] = useState(() => loadQuestions());
@@ -55,7 +68,7 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify({ ...currentSettings, dark }));
   }, [dark]);
   const refresh = () => { setQuestions(loadQuestions()); setConfig(loadScoringConfig()); setResults(loadResults()); };
-  const startIdentity = (identity: ParticipantIdentity) => { const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } const s = newSession(identity, session); setSession(s); saveCurrentSession(s); touchTokenSession(s); setPage('instructions', '/participant'); };
+  const startIdentity = (identity: ParticipantIdentity) => { const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } const s = newSession(identity, session); setSession(s); saveCurrentSession(s); touchTokenSession(s); writeAuditLog({ action: 'Participant started test', targetType: 'token', targetId: s.tokenId ?? '', description: `Peserta ${identity.name} memulai tes.` }); setPage('instructions', '/participant'); };
   const submit = (s: CurrentSession) => {
     const tokenValidation = validateSessionToken(s);
     if (!tokenValidation.valid) { setSubmitError(tokenValidation.message); setPage('scoring-missing'); return; }
@@ -90,8 +103,13 @@ export default function App() {
       interpretations: generateInterpretations(scores),
       clinicalSummary: generateClinicalSummary(scores, validityStatus),
       recommendations: generateRecommendations(scores, validityStatus),
+      specialistReview: {
+        status: 'pending', reviewerId: '', reviewerName: '', reviewerTitle: '', licenseNumber: '', reviewedAt: '',
+        validityNotes: '', clinicalImpression: '', riskNotes: '', recommendations: '', limitations: '', finalConclusion: '', isLocked: false,
+      },
     };
-    saveResult(result); if (s.tokenId) markTokenCompleted(s.tokenId, result.id); clearCurrentSession(); setActiveResult(result); setSession(null); refresh(); setPage('result');
+    saveResult(result);
+    writeAuditLog({ action: 'Participant submitted test', targetType: 'result', targetId: result.id, description: `Peserta ${result.identity.name} submit tes.` }); if (s.tokenId) markTokenCompleted(s.tokenId, result.id); clearCurrentSession(); setActiveResult(result); setSession(null); refresh(); setPage('result');
   };
   const resume = () => { const validation = validateSessionToken(session); if (validation.valid && session) setPage('test', '/test'); else { setAccessMessage(validation.message || 'Silakan masukkan token akses dan unique key terlebih dahulu.'); setPage('access', '/access'); } };
   return (
@@ -113,7 +131,14 @@ export default function App() {
       {page === 'test' && session && <TestPage session={session} questions={questions} hasScoringConfig={Boolean(config)} onSubmit={submit} onExit={() => setPage('landing', '/')} onChange={(next) => { setSession(next); touchTokenSession(next); }} />}
       {page === 'scoring-missing' && <ScoringMissingPage message={submitError} goAdmin={() => { refresh(); setPage('admin', '/admin'); }} saveDraft={() => session && saveCurrentSession(session)} backToTest={() => setPage('test', '/test')} />}
       {page === 'result' && activeResult && <ResultsPage result={activeResult} scoringConfig={config} goHome={() => setPage('landing', '/')} />}
-      {page === 'admin' && <AdminDashboard questions={questions} config={config} results={results} refresh={refresh} openResult={(r) => { setActiveResult(r); setPage('result'); }} />}
+      {page === 'admin' && (() => {
+        if (!hasAnyUser()) return <AdminSetupPage onDone={() => navigate('/admin/login')} />;
+        if (currentPath === '/admin/setup') return <AdminSetupPage onDone={() => navigate('/admin/login')} />;
+        if (currentPath === '/admin/login' || !validateSession().valid) return <AdminLoginPage onAuthenticated={() => navigate('/admin/dashboard')} />;
+        const routeResult = currentPath.startsWith('/result/') || currentPath.startsWith('/report/') ? results.find((result) => result.id === currentPath.split('/').pop()) : null;
+        if (routeResult) return <ResultsPage result={routeResult} scoringConfig={config} goHome={() => navigate('/admin/results')} />;
+        return <AdminDashboard questions={questions} config={config} results={results} refresh={refresh} currentPath={currentPath === '/admin' ? '/admin/dashboard' : currentPath} navigate={navigate} openResult={(r) => { setActiveResult(r); navigate(`/result/${r.id}`); }} />;
+      })()}
     </main>
   );
 }

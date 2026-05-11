@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { AssessmentResult, Question, ScoringConfig } from '../types';
-import { Badge, Button } from '../components/ui';
+import { Badge, Button, Card } from '../components/ui';
 import { AlertBox, StatCard } from '../components/admin/AdminCommon';
 import { ImportQuestionsPanel } from '../components/admin/ImportQuestionsPanel';
 import { ImportScoringPanel } from '../components/admin/ImportScoringPanel';
@@ -12,49 +12,72 @@ import { SystemReadinessCheck } from '../components/admin/SystemReadinessCheck';
 import { AdminSettingsPanel } from '../components/admin/AdminSettingsPanel';
 import { BackupRestorePanel } from '../components/admin/BackupRestorePanel';
 import { TokenManagementPanel } from '../components/admin/TokenManagementPanel';
-import { AdminLogin } from './AdminLogin';
-import { ADMIN_AUTH_KEY, loadAdminSettings, loadAuxConfig } from '../utils/adminStorage';
+import { AdminSidebar } from '../components/admin/AdminSidebar';
+import { RoleBadge } from '../components/admin/RoleBadge';
+import { AuditLogPanel } from '../components/admin/AuditLogPanel';
+import { UserManagementPage } from './UserManagementPage';
+import { SpecialistReviewPage } from './SpecialistReviewPage';
+import { SecurityNotice, LocalAuthDisclaimer } from '../components/auth/SecurityNotice';
+import { PermissionGuard } from '../components/auth/PermissionGuard';
+import { AccessDenied } from '../components/auth/ProtectedRoute';
+import { getCurrentUser, logoutUser } from '../utils/session';
+import { getUsers } from '../utils/userStorage';
+import { ADMIN_STORAGE_KEYS, loadAdminSettings, loadAuxConfig, readAdminJson } from '../utils/adminStorage';
 import { isDemoLikeConfig, validateInterpretationConfig, validateNormTable, validateScoringConfigAdmin } from '../utils/configValidation';
+import { getAuditLogs } from '../utils/auditLog';
+import type { AccessToken } from '../types';
 
-const tabs = [
-  ['dashboard', 'Dashboard Ringkas'],
-  ['questions', 'Import Bank Soal'],
-  ['scoring', 'Import Scoring'],
-  ['norm', 'Norma T-score'],
-  ['interpretation', 'Interpretasi'],
-  ['codetype', 'Code Type'],
-  ['results', 'Hasil Peserta'],
-  ['tokens', 'Token Peserta'],
-  ['settings', 'Pengaturan Laporan'],
-  ['backup', 'Reset & Backup'],
-] as const;
-type TabKey = typeof tabs[number][0];
-type ToastTone = 'teal' | 'amber' | 'rose';
-
-export const AdminDashboard = ({ questions, config, results, refresh, openResult }: { questions: Question[]; config: ScoringConfig | null; results: AssessmentResult[]; refresh: () => void; openResult: (result: AssessmentResult) => void }) => {
-  const [authenticated, setAuthenticated] = useState(() => localStorage.getItem(ADMIN_AUTH_KEY) === 'true');
-  const [activeTab, setActiveTab] = useState<TabKey>(() => window.location.pathname === '/admin/tokens' ? 'tokens' : 'dashboard');
-  const [toast, setToast] = useState<{ message: string; tone: ToastTone } | null>(null);
+export const AdminDashboard = ({ questions, config, results, refresh, openResult, currentPath, navigate }: { questions: Question[]; config: ScoringConfig | null; results: AssessmentResult[]; refresh: () => void; openResult: (result: AssessmentResult) => void; currentPath: string; navigate: (path: string) => void }) => {
+  const user = getCurrentUser();
   const normTable = loadAuxConfig('normTable');
   const interpretationConfig = loadAuxConfig('interpretationConfig');
   const codeTypeConfig = loadAuxConfig('codeTypeConfig');
   const settings = loadAdminSettings();
-  const showToast = (message: string, tone: ToastTone = 'teal') => { setToast({ message, tone }); window.setTimeout(() => setToast(null), 3500); };
-  const logout = () => { localStorage.removeItem(ADMIN_AUTH_KEY); setAuthenticated(false); };
+  const tokens = readAdminJson<AccessToken[]>(ADMIN_STORAGE_KEYS.accessTokens, []);
+  const users = getUsers();
+  const logs = getAuditLogs();
 
   const summary = useMemo(() => {
     const scoringValidation = validateScoringConfigAdmin(config, questions);
     const normValidation = validateNormTable(normTable, config);
     const interpretationValidation = validateInterpretationConfig(interpretationConfig);
-    const validReports = results.filter((result) => result.validityStatus?.status === 'valid' && result.status === 'Selesai').length;
-    const reviewReports = results.filter((result) => result.status === 'Perlu Review').length;
-    const invalidReports = results.filter((result) => result.validityStatus?.status === 'invalid' || result.validityStatus?.requiresRetest).length;
-    return { scoringValidation, normValidation, interpretationValidation, validReports, reviewReports, invalidReports };
-  }, [config, interpretationConfig, normTable, questions, results]);
+    const today = new Date().toISOString().slice(0, 10);
+    return {
+      scoringValidation,
+      normValidation,
+      interpretationValidation,
+      completed: results.filter((result) => result.status === 'Selesai').length,
+      reviewReports: results.filter((result) => result.status === 'Perlu Review' || !result.specialistReview || result.specialistReview.status === 'pending').length,
+      finalReports: results.filter((result) => result.specialistReview?.status === 'finalized').length,
+      tokensAvailable: tokens.filter((token) => token.status === 'unused').length,
+      tokensActive: tokens.filter((token) => token.status === 'active').length,
+      testingNow: tokens.filter((token) => token.status === 'active').length,
+      completedToday: results.filter((result) => result.submittedAt.startsWith(today)).length,
+      notStarted: tokens.filter((token) => token.status === 'unused').length,
+      caution: results.filter((result) => result.validityStatus?.status === 'caution').length,
+      invalid: results.filter((result) => result.validityStatus?.status === 'invalid' || result.validityStatus?.requiresRetest).length,
+      reviewed: results.filter((result) => result.specialistReview?.status === 'reviewed').length,
+    };
+  }, [config, interpretationConfig, normTable, questions, results, tokens]);
 
-  if (!authenticated) return <AdminLogin onAuthenticated={() => setAuthenticated(true)} />;
+  if (!user) return <AccessDenied />;
 
-  const dashboard = <div className="space-y-6"><AlertBox tone="rose"><strong>Mode Demo - Tidak Valid untuk Interpretasi Klinis.</strong> Semua soal, scoringConfig, normTable, dan interpretationConfig final wajib diimport admin dari file resmi/berizin. Interpretasi spesialis dinonaktifkan jika konfigurasi belum lengkap atau masih demo.</AlertBox><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><StatCard label="Status bank soal" value={questions.length === 567 ? 'Siap' : 'Belum siap'} tone={questions.length === 567 ? 'teal' : 'rose'} /><StatCard label="Jumlah soal terimport" value={questions.length} tone={questions.length === 567 ? 'teal' : 'amber'} /><StatCard label="Status scoring config" value={summary.scoringValidation.valid ? 'Valid' : 'Belum valid'} tone={summary.scoringValidation.valid ? 'teal' : 'rose'} /><StatCard label="Jumlah skala tersedia" value={config?.scales?.length ?? 0} tone={config?.scales?.length ? 'teal' : 'rose'} /><StatCard label="Status norma T-score" value={summary.normValidation.valid && normTable ? 'Ada' : 'Belum lengkap'} tone={summary.normValidation.valid && normTable ? 'teal' : 'amber'} /><StatCard label="Status interpretation config" value={summary.interpretationValidation.valid ? 'Ada' : 'Belum lengkap'} tone={summary.interpretationValidation.valid ? 'teal' : 'amber'} /><StatCard label="Jumlah hasil peserta" value={results.length} /><StatCard label="Jumlah laporan valid" value={summary.validReports} tone="teal" /><StatCard label="Jumlah laporan perlu review" value={summary.reviewReports} tone="amber" /><StatCard label="Jumlah laporan invalid/retest" value={summary.invalidReports} tone="rose" /></div><SystemReadinessCheck questions={questions} scoringConfig={config} normTable={normTable} interpretationConfig={interpretationConfig} codeTypeConfig={codeTypeConfig} settings={settings} />{(isDemoLikeConfig(config) || isDemoLikeConfig(interpretationConfig)) && <AlertBox tone="rose">Konfigurasi masih demo dan tidak boleh dipakai untuk laporan final.</AlertBox>}</div>;
+  const superadminDashboard = <div className="space-y-6"><AlertBox tone="rose"><strong>Mode Demo - Tidak Valid untuk Interpretasi Klinis.</strong> Semua soal, scoringConfig, normTable, dan interpretationConfig final wajib diimport admin dari file resmi/berizin.</AlertBox><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><StatCard label="Jumlah user" value={users.length} /><StatCard label="Jumlah token" value={tokens.length} /><StatCard label="Peserta selesai" value={summary.completed} tone="teal" /><StatCard label="Status bank soal" value={questions.length === 567 ? 'Siap' : 'Belum siap'} tone={questions.length === 567 ? 'teal' : 'rose'} /><StatCard label="Status scoringConfig" value={summary.scoringValidation.valid ? 'Valid' : 'Belum valid'} tone={summary.scoringValidation.valid ? 'teal' : 'rose'} /><StatCard label="Status normTable" value={summary.normValidation.valid && normTable ? 'Ada' : 'Belum lengkap'} tone={summary.normValidation.valid && normTable ? 'teal' : 'amber'} /><StatCard label="Status interpretationConfig" value={summary.interpretationValidation.valid ? 'Ada' : 'Belum lengkap'} tone={summary.interpretationValidation.valid ? 'teal' : 'amber'} /><StatCard label="Perlu review" value={summary.reviewReports} tone="amber" /><StatCard label="Laporan final" value={summary.finalReports} tone="teal" /></div><SystemReadinessCheck questions={questions} scoringConfig={config} normTable={normTable} interpretationConfig={interpretationConfig} codeTypeConfig={codeTypeConfig} settings={settings} /><Card><h3 className="text-xl font-black">Audit log terbaru</h3><div className="mt-4 grid gap-2">{logs.slice(0, 5).map((log) => <div key={log.logId} className="rounded-2xl border border-slate-100 p-3 text-sm dark:border-slate-800"><strong>{log.action}</strong> — {log.description}<br /><span className="text-xs text-slate-500">{new Date(log.timestamp).toLocaleString('id-ID')} oleh {log.username}</span></div>)}{logs.length === 0 && <p className="text-sm text-slate-500">Belum ada audit log.</p>}</div></Card></div>;
+  const testerDashboard = <div className="space-y-6"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><StatCard label="Token tersedia" value={summary.tokensAvailable} /><StatCard label="Token aktif" value={summary.tokensActive} tone="teal" /><StatCard label="Peserta sedang tes" value={summary.testingNow} tone="amber" /><StatCard label="Peserta selesai hari ini" value={summary.completedToday} tone="teal" /><StatCard label="Peserta belum mulai" value={summary.notStarted} /><StatCard label="Hasil menunggu review" value={summary.reviewReports} tone="amber" /></div><Card><h2 className="text-xl font-black">Aksi cepat Tester</h2><div className="mt-4 flex flex-wrap gap-3"><Button onClick={() => navigate('/admin/tokens')}>Generate token</Button><Button variant="ghost" onClick={() => navigate('/admin/tokens')}>Print kartu token</Button><Button variant="secondary" onClick={() => navigate('/admin/results')}>Lihat status peserta</Button></div></Card></div>;
+  const specialistDashboard = <div className="space-y-6"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"><StatCard label="Perlu review" value={summary.reviewReports} tone="amber" /><StatCard label="Caution" value={summary.caution} tone="amber" /><StatCard label="Invalid/retest" value={summary.invalid} tone="rose" /><StatCard label="Sudah direview" value={summary.reviewed} tone="teal" /><StatCard label="Laporan final" value={summary.finalReports} tone="teal" /></div><Card><h2 className="text-xl font-black">Aksi cepat Spesialis</h2><div className="mt-4 flex flex-wrap gap-3"><Button onClick={() => navigate('/admin/review')}>Review hasil terbaru</Button><Button variant="secondary" onClick={() => navigate('/admin/review')}>Cetak laporan final</Button><Button variant="ghost" onClick={() => navigate('/admin/review')}>Tambah catatan klinis</Button></div></Card></div>;
+  const dashboard = user.role === 'superadmin' ? superadminDashboard : user.role === 'tester' ? testerDashboard : specialistDashboard;
+  const configPage = <PermissionGuard permission="config.importQuestions"><div className="space-y-6"><ImportQuestionsPanel questions={questions} onRefresh={refresh} toast={() => undefined} /><ImportScoringPanel questions={questions} config={config} onRefresh={refresh} toast={() => undefined} /><ImportNormPanel normTable={normTable} config={config} onRefresh={refresh} toast={() => undefined} /><ImportInterpretationPanel config={interpretationConfig} onRefresh={refresh} toast={() => undefined} /><ImportCodeTypePanel config={codeTypeConfig} onRefresh={refresh} toast={() => undefined} /></div></PermissionGuard>;
+  const resultsPage = <PermissionGuard permission="results.readAdministrative"><ResultsManagementPanel results={user.role === 'tester' ? results.map((result) => ({ ...result, scores: [], interpretations: [], clinicalSummary: undefined, recommendations: [] })) : results} onRefresh={refresh} openResult={openResult} toast={() => undefined} /></PermissionGuard>;
 
-  return <div className="mx-auto max-w-7xl px-4 py-6 sm:py-8"><div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-bold uppercase tracking-wide text-teal-700">Admin Dashboard</p><h1 className="text-2xl font-black sm:text-3xl">Asesmen MMPI TNI AU / SPPG</h1><p className="text-slate-500">Kelola bank soal, scoring, norma, interpretasi, token peserta, hasil, laporan, backup, dan reset data lokal.</p></div><div className="flex flex-wrap gap-2"><Badge tone="amber">localStorage + Vercel</Badge><Button variant="ghost" onClick={() => { refresh(); showToast('Data direfresh.', 'teal'); }}>Refresh</Button><Button variant="danger" onClick={logout}>Logout Admin</Button></div></div>{toast && <div className="fixed right-4 top-20 z-50 max-w-sm"><AlertBox tone={toast.tone}>{toast.message}</AlertBox></div>}<div className="grid gap-6 lg:grid-cols-[260px_1fr]"><aside className="h-fit rounded-3xl border border-slate-200 bg-white/80 p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900/80"><nav className="grid gap-2">{tabs.map(([key, label]) => <button key={key} type="button" onClick={() => setActiveTab(key)} className={`rounded-2xl px-4 py-3 text-left text-sm font-bold transition ${activeTab === key ? 'bg-teal-600 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}>{label}</button>)}</nav></aside><section className="min-w-0">{activeTab === 'dashboard' && dashboard}{activeTab === 'questions' && <ImportQuestionsPanel questions={questions} onRefresh={refresh} toast={showToast} />}{activeTab === 'scoring' && <ImportScoringPanel questions={questions} config={config} onRefresh={refresh} toast={showToast} />}{activeTab === 'norm' && <ImportNormPanel normTable={normTable} config={config} onRefresh={refresh} toast={showToast} />}{activeTab === 'interpretation' && <ImportInterpretationPanel config={interpretationConfig} onRefresh={refresh} toast={showToast} />}{activeTab === 'codetype' && <ImportCodeTypePanel config={codeTypeConfig} onRefresh={refresh} toast={showToast} />}{activeTab === 'results' && <ResultsManagementPanel results={results} onRefresh={refresh} openResult={openResult} toast={showToast} />}{activeTab === 'tokens' && <TokenManagementPanel results={results} toast={showToast} />}{activeTab === 'settings' && <AdminSettingsPanel onRefresh={refresh} toast={showToast} />}{activeTab === 'backup' && <BackupRestorePanel onRefresh={refresh} toast={showToast} />}</section></div></div>;
+  const content = currentPath === '/admin/users' ? <PermissionGuard permission="users.read"><UserManagementPage /></PermissionGuard>
+    : currentPath === '/admin/tokens' ? <PermissionGuard permission="tokens.create"><TokenManagementPanel results={results} toast={() => undefined} /></PermissionGuard>
+    : currentPath === '/admin/config' ? configPage
+    : currentPath === '/admin/results' ? resultsPage
+    : currentPath === '/admin/review' ? <PermissionGuard permission="review.create"><SpecialistReviewPage results={results} onRefresh={refresh} /></PermissionGuard>
+    : currentPath === '/admin/settings' ? <PermissionGuard permission="system.reset"><AdminSettingsPanel onRefresh={refresh} toast={() => undefined} /></PermissionGuard>
+    : currentPath === '/admin/backup' ? <PermissionGuard permission="backup.export"><BackupRestorePanel onRefresh={refresh} toast={() => undefined} /></PermissionGuard>
+    : currentPath === '/admin/audit' ? <PermissionGuard permission="audit.read"><AuditLogPanel /></PermissionGuard>
+    : dashboard;
+
+  return <div className="mx-auto max-w-7xl px-4 py-8"><div className="mb-6 space-y-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-bold uppercase tracking-wide text-teal-700">Admin Dashboard</p><h1 className="text-2xl font-black sm:text-3xl">Asesmen MMPI TNI AU / SPPG</h1><p className="text-slate-500">Multiakses localStorage untuk Superadmin, Tester, dan Spesialis.</p></div><div className="flex flex-wrap items-center gap-2"><Badge tone="amber">localStorage + Vercel</Badge><RoleBadge role={user.role} /><span className="text-sm font-bold">{user.displayName}</span><Button variant="ghost" onClick={refresh}>Refresh</Button><Button variant="danger" onClick={() => { logoutUser(); navigate('/admin/login'); }}>Logout</Button></div></div><LocalAuthDisclaimer /><SecurityNotice /></div><div className="grid gap-6 lg:grid-cols-[260px_1fr]"><AdminSidebar user={user} currentPath={currentPath} navigate={navigate} /><section className="min-w-0">{content}</section></div></div>;
 };

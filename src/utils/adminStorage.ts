@@ -1,4 +1,5 @@
 import type { AssessmentResult, Question, ScoringConfig } from '../types';
+import { writeAuditLog } from './auditLog';
 
 export const ADMIN_STORAGE_KEYS = {
   questions: 'sppg_mmpi2_questions',
@@ -9,6 +10,9 @@ export const ADMIN_STORAGE_KEYS = {
   results: 'sppg_mmpi2_results',
   currentSession: 'sppg_mmpi2_current_session',
   accessTokens: 'sppg_mmpi2_access_tokens',
+  users: 'sppg_mmpi2_users',
+  authSession: 'sppg_mmpi2_auth_session',
+  auditLogs: 'sppg_mmpi2_audit_logs',
   tokenSessions: 'sppg_mmpi2_token_sessions',
   adminSettings: 'sppg_mmpi2_admin_settings',
 } as const;
@@ -49,14 +53,18 @@ export const writeAdminJson = (key: string, value: unknown) => localStorage.setI
 export const removeAdminKey = (key: string) => localStorage.removeItem(key);
 
 export const loadAdminQuestions = () => readAdminJson<Question[]>(ADMIN_STORAGE_KEYS.questions, []);
-export const saveAdminQuestions = (questions: Question[]) => writeAdminJson(ADMIN_STORAGE_KEYS.questions, questions);
+export const saveAdminQuestions = (questions: Question[]) => { writeAdminJson(ADMIN_STORAGE_KEYS.questions, questions); writeAuditLog({ action: 'Import questions', targetType: 'config', targetId: 'questions', description: `Import bank soal ${questions.length} item.` }); };
 export const loadAdminScoringConfig = () => readAdminJson<ScoringConfig | null>(ADMIN_STORAGE_KEYS.scoringConfig, null);
-export const saveAdminScoringConfig = (config: ScoringConfig) => writeAdminJson(ADMIN_STORAGE_KEYS.scoringConfig, config);
+export const saveAdminScoringConfig = (config: ScoringConfig) => { writeAdminJson(ADMIN_STORAGE_KEYS.scoringConfig, config); writeAuditLog({ action: 'Import scoring config', targetType: 'config', targetId: 'scoringConfig', description: 'Import scoringConfig.' }); };
 export const loadAdminResults = () => readAdminJson<AssessmentResult[]>(ADMIN_STORAGE_KEYS.results, []);
 export const saveAdminResults = (results: AssessmentResult[]) => writeAdminJson(ADMIN_STORAGE_KEYS.results, results);
 export const loadAdminSettings = () => readAdminJson<AdminReportSettings>(ADMIN_STORAGE_KEYS.adminSettings, {});
 export const saveAdminSettings = (settings: AdminReportSettings) => writeAdminJson(ADMIN_STORAGE_KEYS.adminSettings, settings);
 
 export const loadAuxConfig = <T = unknown>(key: 'normTable' | 'interpretationConfig' | 'codeTypeConfig') => readAdminJson<T | null>(ADMIN_STORAGE_KEYS[key], null);
-export const saveAuxConfig = (key: 'normTable' | 'interpretationConfig' | 'codeTypeConfig', value: unknown) => writeAdminJson(ADMIN_STORAGE_KEYS[key], value);
+export const saveAuxConfig = (key: 'normTable' | 'interpretationConfig' | 'codeTypeConfig', value: unknown) => {
+  writeAdminJson(ADMIN_STORAGE_KEYS[key], value);
+  const action = key === 'normTable' ? 'Import norm table' : key === 'interpretationConfig' ? 'Import interpretation config' : 'Import code type config';
+  writeAuditLog({ action, targetType: 'config', targetId: key, description: `Import ${key}.` });
+};
 export const clearAdminDataKey = (key: AdminStorageKey) => removeAdminKey(ADMIN_STORAGE_KEYS[key]);

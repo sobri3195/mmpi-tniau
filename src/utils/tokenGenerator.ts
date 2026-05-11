@@ -1,5 +1,6 @@
 import type { AccessToken } from '../types';
 import { loadTokens, saveTokens } from './tokenAccess';
+import { writeAuditLog } from './auditLog';
 
 const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
@@ -76,6 +77,7 @@ export const bulkCreateTokens = (count: number, options: BulkCreateTokenOptions 
     created.push(createAccessToken({ ...options, token, uniqueKey, expiresAt }));
   }
   saveTokens([...created, ...existing]);
+  writeAuditLog({ action: 'Generate token', targetType: 'access_token', targetId: created.map((token) => token.tokenId).join(','), description: `Generate ${created.length} token peserta.` });
   return created;
 };
 
