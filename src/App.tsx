@@ -5,25 +5,42 @@ import { IdentityPage } from './pages/IdentityPage';
 import { InstructionsPage } from './pages/InstructionsPage';
 import { LandingPage } from './pages/LandingPage';
 import { ResultsPage } from './pages/ResultsPage';
+import { TokenAccessPage } from './pages/TokenAccessPage';
 import { TestPage } from './pages/TestPage';
 import { Button, Card } from './components/ui';
 import { calculateRawScores, determineValidity, generateClinicalSummary, generateInterpretations, generateRecommendations, isDemoScoringConfig, validateScoringConfig } from './utils/scoring';
 import { clearCurrentSession, loadCurrentSession, loadQuestions, loadResults, loadScoringConfig, saveCurrentSession, saveResult, STORAGE_KEYS } from './utils/storage';
+import { markTokenCompleted, touchTokenSession, validateSessionToken } from './utils/tokenAccess';
 
-export type Page = 'landing' | 'identity' | 'instructions' | 'test' | 'result' | 'admin' | 'scoring-missing';
+export type Page = 'landing' | 'access' | 'identity' | 'instructions' | 'test' | 'result' | 'admin' | 'scoring-missing';
 
-const newSession = (identity: ParticipantIdentity): CurrentSession => ({
-  id: crypto.randomUUID(),
+const newSession = (identity: ParticipantIdentity, existing?: CurrentSession | null): CurrentSession => ({
+  id: existing?.id || crypto.randomUUID(),
+  sessionId: existing?.sessionId || existing?.id || crypto.randomUUID(),
+  tokenId: existing?.tokenId,
+  token: existing?.token,
+  uniqueKey: existing?.uniqueKey,
+  participant: identity,
   identity,
-  answers: {},
-  currentIndex: 0,
-  mode: 'single',
+  answers: existing?.answers || {},
+  currentIndex: existing?.currentIndex || 0,
+  mode: existing?.mode || 'single',
   status: 'Draft',
+  startedAt: existing?.startedAt || new Date().toISOString(),
+  lastSavedAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
 });
 
 export default function App() {
-  const [page, setPage] = useState<Page>(() => window.location.pathname === '/admin' ? 'admin' : 'landing');
+  const [page, setPageState] = useState<Page>(() => {
+    if (window.location.pathname === '/admin' || window.location.pathname === '/admin/tokens') return 'admin';
+    if (window.location.pathname === '/access') return 'access';
+    if (window.location.pathname === '/participant') return validateSessionToken().valid ? 'identity' : 'access';
+    if (window.location.pathname === '/test') return validateSessionToken().valid ? 'test' : 'access';
+    return 'landing';
+  });
+  const [accessMessage, setAccessMessage] = useState(() => window.location.pathname === '/test' && !validateSessionToken().valid ? 'Silakan masukkan token akses dan unique key terlebih dahulu.' : '');
+  const setPage = (next: Page, path?: string) => { setPageState(next); if (path) window.history.replaceState(null, '', path); };
   const [dark, setDark] = useState(() => localStorage.getItem(STORAGE_KEYS.adminSettings)?.includes('dark'));
   const [session, setSession] = useState<CurrentSession | null>(() => loadCurrentSession());
   const [questions, setQuestions] = useState(() => loadQuestions());
@@ -38,8 +55,10 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify({ ...currentSettings, dark }));
   }, [dark]);
   const refresh = () => { setQuestions(loadQuestions()); setConfig(loadScoringConfig()); setResults(loadResults()); };
-  const startIdentity = (identity: ParticipantIdentity) => { const s = newSession(identity); setSession(s); saveCurrentSession(s); setPage('instructions'); };
+  const startIdentity = (identity: ParticipantIdentity) => { const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } const s = newSession(identity, session); setSession(s); saveCurrentSession(s); touchTokenSession(s); setPage('instructions', '/participant'); };
   const submit = (s: CurrentSession) => {
+    const tokenValidation = validateSessionToken(s);
+    if (!tokenValidation.valid) { setSubmitError(tokenValidation.message); setPage('scoring-missing'); return; }
     const latestConfig = loadScoringConfig();
     const latestQuestions = loadQuestions();
     const validationError = validateScoringConfig(latestConfig, latestQuestions);
@@ -72,27 +91,28 @@ export default function App() {
       clinicalSummary: generateClinicalSummary(scores, validityStatus),
       recommendations: generateRecommendations(scores, validityStatus),
     };
-    saveResult(result); clearCurrentSession(); setActiveResult(result); setSession(null); refresh(); setPage('result');
+    saveResult(result); if (s.tokenId) markTokenCompleted(s.tokenId, result.id); clearCurrentSession(); setActiveResult(result); setSession(null); refresh(); setPage('result');
   };
-  const resume = () => session ? setPage('test') : setPage('identity');
+  const resume = () => { const validation = validateSessionToken(session); if (validation.valid && session) setPage('test', '/test'); else { setAccessMessage(validation.message || 'Silakan masukkan token akses dan unique key terlebih dahulu.'); setPage('access', '/access'); } };
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-teal-950 dark:text-slate-100">
       <nav className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur no-print dark:border-slate-800 dark:bg-slate-950/90">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <button onClick={() => setPage('landing')} className="text-left text-lg font-black text-teal-700 dark:text-teal-300">MMPI TNI AU</button>
+          <button onClick={() => setPage('landing', '/')} className="text-left text-lg font-black text-teal-700 dark:text-teal-300">MMPI TNI AU</button>
           <div className="grid grid-cols-[auto_1fr_auto] gap-2 sm:flex sm:items-center">
             <Button variant="ghost" className="px-3" aria-label="Toggle dark mode" onClick={() => setDark(!dark)}>{dark ? '☀️' : '🌙'}</Button>
             <Button variant="ghost" className="whitespace-nowrap" onClick={resume}>{session ? 'Lanjutkan Draft' : 'Mulai Tes'}</Button>
-            <Button variant="secondary" onClick={() => { refresh(); setPage('admin'); }}>Admin</Button>
+            <Button variant="secondary" onClick={() => { refresh(); setPage('admin', '/admin'); }}>Admin</Button>
           </div>
         </div>
       </nav>
-      {page === 'landing' && <LandingPage go={(p) => setPage(p as Page)} questionsCount={questions.length} hasScoringConfig={Boolean(config)} />}
+      {page === 'landing' && <LandingPage go={(p) => p === 'identity' ? resume() : setPage(p as Page, p === 'admin' ? '/admin' : undefined)} questionsCount={questions.length} hasScoringConfig={Boolean(config)} />}
+      {page === 'access' && <TokenAccessPage reason={accessMessage} onVerified={() => { const next = loadCurrentSession(); setSession(next); setAccessMessage(''); setPage('identity', '/participant'); }} />}
       {page === 'identity' && <IdentityPage onSubmit={startIdentity} />}
-      {page === 'instructions' && <InstructionsPage onStart={() => setPage('test')} questionsCount={questions.length} hasScoringConfig={Boolean(config)} />}
-      {page === 'test' && session && <TestPage session={session} questions={questions} hasScoringConfig={Boolean(config)} onSubmit={submit} onExit={() => setPage('landing')} onChange={setSession} />}
-      {page === 'scoring-missing' && <ScoringMissingPage message={submitError} goAdmin={() => { refresh(); setPage('admin'); }} saveDraft={() => session && saveCurrentSession(session)} backToTest={() => setPage('test')} />}
-      {page === 'result' && activeResult && <ResultsPage result={activeResult} scoringConfig={config} goHome={() => setPage('landing')} />}
+      {page === 'instructions' && <InstructionsPage onStart={() => { const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } setPage('test', '/test'); }} questionsCount={questions.length} hasScoringConfig={Boolean(config)} />}
+      {page === 'test' && session && <TestPage session={session} questions={questions} hasScoringConfig={Boolean(config)} onSubmit={submit} onExit={() => setPage('landing', '/')} onChange={(next) => { setSession(next); touchTokenSession(next); }} />}
+      {page === 'scoring-missing' && <ScoringMissingPage message={submitError} goAdmin={() => { refresh(); setPage('admin', '/admin'); }} saveDraft={() => session && saveCurrentSession(session)} backToTest={() => setPage('test', '/test')} />}
+      {page === 'result' && activeResult && <ResultsPage result={activeResult} scoringConfig={config} goHome={() => setPage('landing', '/')} />}
       {page === 'admin' && <AdminDashboard questions={questions} config={config} results={results} refresh={refresh} openResult={(r) => { setActiveResult(r); setPage('result'); }} />}
     </main>
   );

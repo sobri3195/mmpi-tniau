@@ -111,13 +111,52 @@ export interface ParticipantIdentity {
 
 export type Answers = Record<string, AnswerValue>;
 
+export type AccessTokenStatus = 'unused' | 'active' | 'completed' | 'expired' | 'revoked';
+
+export interface AccessToken {
+  tokenId: string;
+  token: string;
+  uniqueKey: string;
+  participantName: string;
+  participantNumber: string;
+  unit: string;
+  createdAt: string;
+  expiresAt: string;
+  status: AccessTokenStatus;
+  maxAttempts: number;
+  usedAttempts: number;
+  startedAt: string | null;
+  completedAt: string | null;
+  resultId: string | null;
+  notes: string;
+}
+
+export interface TokenSessionBinding {
+  sessionId: string;
+  tokenId: string;
+  token: string;
+  uniqueKey: string;
+  participant: Partial<ParticipantIdentity>;
+  answers: Answers;
+  startedAt: string;
+  lastSavedAt: string;
+  status: 'in_progress' | 'completed';
+}
+
 export interface CurrentSession {
   id: string;
+  sessionId?: string;
+  tokenId?: string;
+  token?: string;
+  uniqueKey?: string;
+  participant?: Partial<ParticipantIdentity>;
   identity: ParticipantIdentity;
   answers: Answers;
   currentIndex: number;
   mode: 'single' | 'list';
-  status: 'Draft' | 'Selesai' | 'Perlu Review';
+  status: 'Draft' | 'Selesai' | 'Perlu Review' | 'in_progress';
+  startedAt?: string;
+  lastSavedAt?: string;
   updatedAt: string;
 }
 

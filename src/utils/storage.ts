@@ -8,6 +8,8 @@ export const STORAGE_KEYS = {
   questions: 'sppg_mmpi2_questions',
   scoringConfig: 'sppg_mmpi2_scoring_config',
   currentSession: 'sppg_mmpi2_current_session',
+  accessTokens: 'sppg_mmpi2_access_tokens',
+  tokenSessions: 'sppg_mmpi2_token_sessions',
   results: 'sppg_mmpi2_results',
   adminSettings: 'sppg_mmpi2_admin_settings',
   interpretationConfig: 'sppg_mmpi2_interpretation_config',
