@@ -1,52 +1,83 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ScoringConfig, SummaryAnalysisConfig } from '../../types';
 import { Button, Card } from '../ui';
-import { downloadFile } from '../../utils/export';
-import { clearSummaryAnalysisConfig, saveSummaryAnalysisConfig, validateSummaryAnalysisConfig } from '../../utils/summaryAnalysis';
+import { AUTO_DEFAULT_BADGE_LABEL, clearSummaryAnalysisConfig, createDefaultSummaryAnalysisConfig, ensureSummaryAnalysisConfigExists, exportSummaryAnalysisConfig, restoreAutoDefaultSummaryAnalysisConfig, saveSummaryAnalysisConfig, validateSummaryAnalysisConfig } from '../../utils/summaryAnalysis';
 import { EmptyState, PanelTitle, TemplateButton, ValidationMessages } from './AdminCommon';
 
-const template: SummaryAnalysisConfig = {
-  configName: 'Analisa Ringkas TNI AU',
-  version: 'admin-imported',
-  isDemo: false,
-  validityAttitude: {
-    sourceScales: ['L', 'F', 'K', 'VRIN', 'TRIN'],
-    scoreRules: [
-      { score: 0, label: 'Tidak valid', description: 'Tidak valid dan tidak dapat diinterpretasi sama sekali' },
-      { score: 1, label: 'Masih valid dengan modifikasi', description: 'Masih valid dan dapat diinterpretasi dengan modifikasi' },
-      { score: 2, label: 'Valid', description: 'Valid dan dapat diinterpretasi sepenuhnya' },
-    ],
-    narrativeTemplates: { '0': 'Responden menunjukkan pola respons yang tidak memadai untuk interpretasi. Hasil tes tidak disarankan untuk ditafsirkan lebih lanjut sebelum dilakukan review atau retest.', '1': 'Responden mengisi seluruh tes dengan lengkap, namun terdapat indikator yang memerlukan kehati-hatian. Dengan demikian, skor validitas adalah 1 dan hasil masih dapat diinterpretasi dengan modifikasi.', '2': 'Responden mengisi tes secara memadai dan profil dapat diinterpretasi sepenuhnya.' },
-  },
-  mentalCapacityIndex: { variables: [
-    { id: 'potensi_kinerja', label: 'Potensi Kinerja', rangeDescription: '0=kurang, 1=sedang, 2=besar', formula: 'admin_config_formula', sourceScales: [] },
-    { id: 'kemampuan_adaptasi', label: 'Kemampuan Adaptasi', rangeDescription: '0=kurang, 1=sedang, 2=besar', formula: 'admin_config_formula', sourceScales: [] },
-    { id: 'kendala_psikologis', label: 'Kendala Psikologis', rangeDescription: '0=berat, 1=sedang, 2=ringan', formula: 'admin_config_formula', sourceScales: [] },
-    { id: 'perilaku_berisiko', label: 'Perilaku Berisiko', rangeDescription: '0=besar, 1=sedang, 2=kecil', formula: 'admin_config_formula', sourceScales: [] },
-    { id: 'integritas_moral', label: 'Integritas Moral', rangeDescription: '0=rendah, 1=sedang, 2=tinggi', formula: 'admin_config_formula', sourceScales: [] },
-  ], totalScore: { min: 0, max: 10, label: 'Indeks Kapasitas Mental' }, categoryRules: [{ min: 0, max: 2, label: 'Sangat Buruk' }, { min: 3, max: 4, label: 'Buruk' }, { min: 5, max: 6, label: 'Sedang' }, { min: 7, max: 8, label: 'Baik' }, { min: 9, max: 10, label: 'Sangat Baik' }] },
-  clinicalProfile: { sourceScales: [], narrativeRules: [{ condition: 'elevated_somatic', text: 'Gejala klinis somatik yang terkait dengan problem psikologis.' }, { condition: 'elevated_interpersonal', text: 'Gejala klinis yang terkait dengan kesulitan emosional dalam hubungan interpersonal.' }, { condition: 'elevated_suspiciousness', text: 'Gejala klinis yang terkait dengan pikiran kecurigaan yang berlebihan.' }, { condition: 'elevated_affect', text: 'Gejala klinis yang terkait dengan luapan perasaan yang berlebihan.' }] },
-  basicPersonalityIndex: { name: 'Indeks Kepribadian Dasar', model: 'OCEAN', variables: [
-    { id: 'openness', label: 'Keterbukaan Pikiran', englishLabel: 'Openness', rangeDescription: '0=kurang, 1=sedang, 2=besar', formula: 'admin_config_formula', sourceScales: [] },
-    { id: 'conscientiousness', label: 'Keterbukaan Hati', englishLabel: 'Conscientiousness', rangeDescription: '0=kurang, 1=sedang, 2=besar', formula: 'admin_config_formula', sourceScales: [] },
-    { id: 'extraversion', label: 'Keterbukaan terhadap Orang Lain', englishLabel: 'Extraversion', rangeDescription: '0=kurang, 1=sedang, 2=besar', formula: 'admin_config_formula', sourceScales: [] },
-    { id: 'agreeableness', label: 'Keterbukaan terhadap Kesepakatan', englishLabel: 'Agreeableness', rangeDescription: '0=kurang, 1=sedang, 2=besar', formula: 'admin_config_formula', sourceScales: [] },
-    { id: 'neuroticism', label: 'Keterbukaan terhadap Tekanan', englishLabel: 'Neuroticism', rangeDescription: '0=kurang, 1=sedang, 2=besar', formula: 'admin_config_formula', sourceScales: [] },
-  ], totalScore: { min: 0, max: 10, label: 'Indeks OCEAN' }, categoryRules: [{ min: 0, max: 2, label: 'Sangat Buruk' }, { min: 3, max: 4, label: 'Buruk' }, { min: 5, max: 6, label: 'Sedang' }, { min: 7, max: 8, label: 'Baik' }, { min: 9, max: 10, label: 'Sangat Baik' }] },
-  conclusionTemplates: { valid: 'Dengan merujuk pada skor validitas, indeks kapasitas mental, indeks kepribadian dasar, dan profil klinis, hasil ini dapat ditelaah lebih lanjut oleh pemeriksa berwenang.', caution: 'Dengan merujuk pada skor validitas, interpretasi perlu dilakukan secara hati-hati dan dikonfirmasi melalui wawancara klinis.', invalid: 'Profil belum memadai untuk kesimpulan final. Disarankan review atau retest oleh profesional berwenang.' },
-};
+const template = createDefaultSummaryAnalysisConfig(null);
 
-export const SummaryAnalysisConfigPanel = ({ config, scoringConfig, onRefresh, toast }: { config: SummaryAnalysisConfig | null; scoringConfig: ScoringConfig | null; onRefresh: () => void; toast: (message: string, tone?: 'teal' | 'amber' | 'rose') => void }) => {
+type Tone = 'teal' | 'amber' | 'rose';
+
+export const SummaryAnalysisConfigPanel = ({ config, scoringConfig, onRefresh, toast }: { config: SummaryAnalysisConfig | null; scoringConfig: ScoringConfig | null; onRefresh: () => void; toast: (message: string, tone?: Tone) => void }) => {
   const [draft, setDraft] = useState<SummaryAnalysisConfig | null>(null);
   const active = draft ?? config;
   const [validation, setValidation] = useState(active ? validateSummaryAnalysisConfig(active, scoringConfig) : null);
-  const importFile = async (file?: File) => { if (!file) return; const parsed = JSON.parse(await file.text()) as SummaryAnalysisConfig; const result = validateSummaryAnalysisConfig(parsed, scoringConfig); setDraft(parsed); setValidation(result); toast(result.valid ? 'summaryAnalysisConfig.json terbaca.' : 'Konfigurasi analisa perlu dilengkapi.', result.valid ? 'teal' : 'amber'); };
-  const markDemo = (isDemo: boolean) => { if (!active) return; const next = { ...active, isDemo }; setDraft(next); setValidation(validateSummaryAnalysisConfig(next, scoringConfig)); };
-  return <Card><PanelTitle title="Konfigurasi Analisa Ringkas" subtitle="Import summaryAnalysisConfig.json untuk validity attitude, indeks kapasitas mental, profil klinis, OCEAN, dan template kesimpulan." />
+
+  useEffect(() => {
+    if (!config) {
+      ensureSummaryAnalysisConfigExists(scoringConfig);
+      onRefresh();
+    }
+  }, [config, scoringConfig, onRefresh]);
+
+  useEffect(() => {
+    setValidation(active ? validateSummaryAnalysisConfig(active, scoringConfig) : null);
+  }, [active, scoringConfig]);
+
+  const importFile = async (file?: File) => {
+    if (!file) return;
+    const parsed = JSON.parse(await file.text()) as SummaryAnalysisConfig;
+    const imported = { ...parsed, isAutoDefault: parsed.isAutoDefault ?? false, isOfficial: parsed.isOfficial ?? true, isFinal: parsed.isFinal ?? false };
+    const result = validateSummaryAnalysisConfig(imported, scoringConfig);
+    setDraft(imported);
+    setValidation(result);
+    toast(result.valid ? 'summaryAnalysisConfig.json terbaca. Klik Simpan config untuk memakai config ini.' : 'Konfigurasi analisa perlu dilengkapi.', result.valid ? 'teal' : 'amber');
+  };
+
+  const updateDraft = (next: SummaryAnalysisConfig) => {
+    setDraft(next);
+    setValidation(validateSummaryAnalysisConfig(next, scoringConfig));
+  };
+
+  const markDemo = (isDemo: boolean) => {
+    if (!active) return;
+    updateDraft({ ...active, isDemo, isFinal: isDemo ? false : active.isFinal });
+  };
+
+  const markVerified = () => {
+    if (!active) return;
+    updateDraft({ ...active, verifiedBy: 'admin/spesialis', verifiedAt: new Date().toISOString(), verificationNote: active.verificationNote || 'Diverifikasi admin/spesialis melalui dashboard.', isFinal: active.isFinal ?? false });
+    toast('Konfigurasi ditandai sudah diverifikasi. Tandai final kini dapat digunakan bila diperlukan.', 'teal');
+  };
+
+  const markFinal = () => {
+    if (!active) return;
+    const verified = Boolean(active.verifiedBy || active.verificationNote || active.isOfficial || !active.isAutoDefault);
+    if (!verified) {
+      toast('Auto-default belum dapat dijadikan final tanpa verifikasi spesialis/admin.', 'amber');
+      setValidation({ ...validateSummaryAnalysisConfig(active, scoringConfig), valid: false, errors: ['Auto-default belum dapat dijadikan final tanpa verifikasi spesialis/admin.'] });
+      return;
+    }
+    updateDraft({ ...active, isFinal: true, isDemo: false });
+  };
+
+  const restoreDefault = () => {
+    const next = restoreAutoDefaultSummaryAnalysisConfig(scoringConfig);
+    setDraft(null);
+    setValidation(validateSummaryAnalysisConfig(next, scoringConfig));
+    onRefresh();
+    toast('Auto-default Analisa Ringkas dibuat ulang.', 'teal');
+  };
+
+  const canMarkFinal = Boolean(active && (!active.isAutoDefault || active.isOfficial || active.verifiedBy || active.verificationNote));
+
+  return <Card><PanelTitle title="Konfigurasi Analisa Ringkas" subtitle="Config dapat diimpor resmi/berizin, tetapi sistem juga membuat auto-default generik untuk preview teknis agar aplikasi langsung berjalan." />
+    {active?.isAutoDefault && <div className="mb-4 space-y-2 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"><span className="inline-flex rounded-full bg-amber-200 px-3 py-1 text-xs font-black uppercase tracking-wide">{AUTO_DEFAULT_BADGE_LABEL}</span><p className="font-black">Konfigurasi Analisa Ringkas auto-default tersedia.</p><p>Status: Perlu verifikasi admin/spesialis.</p><p>Formula: Auto-default generik, bukan formula resmi.</p><p>Siap preview teknis.</p></div>}
     {active?.isDemo && <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Analisa Ringkas masih demo dan tidak valid untuk laporan final.</div>}
-    <div className="grid gap-3 sm:flex sm:flex-wrap"><input className="block w-full text-sm sm:w-auto" type="file" accept=".json" onChange={(event) => importFile(event.target.files?.[0]).catch((error) => { setValidation({ valid: false, errors: [error instanceof Error ? error.message : 'Gagal membaca file.'], warnings: [] }); toast('Gagal mengimpor summaryAnalysisConfig.', 'rose'); })} /><TemplateButton filename="summaryAnalysisConfig.json" data={template} /><Button variant="ghost" disabled={!active} onClick={() => active && setValidation(validateSummaryAnalysisConfig(active, scoringConfig))}>Validasi formula & sumber skala</Button><Button variant="ghost" disabled={!active} onClick={() => markDemo(true)}>Tandai demo</Button><Button variant="ghost" disabled={!active} onClick={() => markDemo(false)}>Tandai final</Button></div>
-    <div className="mt-4"><ValidationMessages result={validation} /></div>
-    <div className="mt-5">{active ? <pre className="max-h-96 overflow-auto rounded-2xl bg-slate-950 p-4 text-xs text-slate-100">{JSON.stringify(active, null, 2)}</pre> : <EmptyState title="Belum ada konfigurasi Analisa Ringkas" />}</div>
-    <div className="mt-5 flex flex-wrap gap-3"><Button disabled={!draft || !validation?.valid} onClick={() => { if (draft) saveSummaryAnalysisConfig(draft); setDraft(null); onRefresh(); toast('Konfigurasi Analisa Ringkas disimpan.', 'teal'); }}>Simpan config</Button><Button variant="secondary" disabled={!active} onClick={() => downloadFile('summaryAnalysisConfig-export.json', JSON.stringify(active, null, 2))}>Export config</Button><Button variant="danger" onClick={() => { clearSummaryAnalysisConfig(); setDraft(null); setValidation(null); onRefresh(); toast('Konfigurasi Analisa Ringkas dihapus.', 'amber'); }}>Hapus config</Button></div>
+    {active?.isAutoDefault && !canMarkFinal && <div className="mb-4 rounded-2xl border border-amber-200 bg-white p-3 text-sm font-semibold text-amber-900">Auto-default belum dapat dijadikan final tanpa verifikasi spesialis/admin.</div>}
+    <div className="grid gap-3 sm:flex sm:flex-wrap"><label className="inline-flex cursor-pointer items-center rounded-2xl border border-slate-200 px-4 py-2 text-sm font-bold hover:bg-slate-50">Ganti dengan Config Resmi<input className="hidden" type="file" accept=".json" onChange={(event) => importFile(event.target.files?.[0]).catch((error) => { setValidation({ valid: false, errors: [error instanceof Error ? error.message : 'Gagal membaca file.'], warnings: [] }); toast('Gagal mengimpor summaryAnalysisConfig.', 'rose'); })} /></label><TemplateButton filename="summaryAnalysisConfig.json" data={template} /><Button variant="ghost" disabled={!active} onClick={() => active && setValidation(validateSummaryAnalysisConfig(active, scoringConfig))}>Validasi formula & sumber skala</Button><Button variant="ghost" disabled={!active} onClick={() => markDemo(true)}>Tandai demo</Button><Button variant="ghost" disabled={!active || !canMarkFinal} onClick={markFinal}>Tandai final</Button><Button variant="ghost" onClick={restoreDefault}>Buat Ulang Auto-Default</Button><Button variant="secondary" disabled={!active} onClick={markVerified}>Tandai Sudah Diverifikasi</Button></div>
+    <div className="mt-4"><ValidationMessages result={validation} />{validation?.message && <p className="mt-2 text-sm font-semibold text-slate-600">{validation.message}</p>}</div>
+    <div className="mt-5">{active ? <pre className="max-h-96 overflow-auto rounded-2xl bg-slate-950 p-4 text-xs text-slate-100">{JSON.stringify(active, null, 2)}</pre> : <EmptyState title="Konfigurasi Analisa Ringkas auto-default sedang disiapkan"><p className="mt-2 text-sm text-slate-500">Sistem akan membuat auto-default otomatis tanpa menimpa config resmi/custom yang sudah ada.</p></EmptyState>}</div>
+    <div className="mt-5 flex flex-wrap gap-3"><Button disabled={!draft || !validation?.valid} onClick={() => { if (draft) saveSummaryAnalysisConfig(draft); setDraft(null); onRefresh(); toast('Konfigurasi Analisa Ringkas disimpan.', 'teal'); }}>Simpan config</Button><Button variant="secondary" disabled={!active} onClick={() => exportSummaryAnalysisConfig(active)}>Export config</Button><Button variant="danger" onClick={() => { clearSummaryAnalysisConfig(); setDraft(null); setValidation(null); onRefresh(); toast('Konfigurasi Analisa Ringkas dihapus. Auto-default akan dibuat lagi saat dashboard dibuka/refresh.', 'amber'); }}>Hapus config</Button></div>
   </Card>;
 };

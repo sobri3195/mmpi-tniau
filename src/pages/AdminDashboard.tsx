@@ -31,9 +31,15 @@ import { ADMIN_STORAGE_KEYS, loadAdminSettings, loadAuxConfig, readAdminJson } f
 import { calculateReviewStats, getSystemReadinessStatus } from '../utils/systemReadiness';
 import { getAuditLogs } from '../utils/auditLog';
 import { ensureInterpretationConfigsExist } from '../utils/sourceInterpretations';
+import { ensureSummaryAnalysisConfigExists } from '../utils/summaryAnalysis';
 
 export const AdminDashboard = ({ questions, config, results, refresh, openResult, currentPath, navigate }: { questions: Question[]; config: ScoringConfig | null; results: AssessmentResult[]; refresh: () => void; openResult: (result: AssessmentResult) => void; currentPath: string; navigate: (path: string) => void }) => {
-  useEffect(() => { if (ensureInterpretationConfigsExist(config)) refresh(); }, [config]);
+  useEffect(() => {
+    const interpretationChanged = ensureInterpretationConfigsExist(config);
+    const before = loadAuxConfig<SummaryAnalysisConfig>('summaryAnalysisConfig');
+    const after = ensureSummaryAnalysisConfigExists(config);
+    if (interpretationChanged || (!before && after)) refresh();
+  }, [config]);
   const user = getCurrentUser();
   const normTable = loadAuxConfig('normTable');
   const interpretationConfig = loadAuxConfig('interpretationConfig');
