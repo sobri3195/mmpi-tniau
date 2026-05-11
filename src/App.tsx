@@ -7,7 +7,7 @@ import { LandingPage } from './pages/LandingPage';
 import { ResultsPage } from './pages/ResultsPage';
 import { TestPage } from './pages/TestPage';
 import { Button, Card } from './components/ui';
-import { calculateRawScores, determineValidity, generateClinicalSummary, generateInterpretations, generateRecommendations, validateScoringConfig } from './utils/scoring';
+import { calculateRawScores, determineValidity, generateClinicalSummary, generateInterpretations, generateRecommendations, isDemoScoringConfig, validateScoringConfig } from './utils/scoring';
 import { clearCurrentSession, loadCurrentSession, loadQuestions, loadResults, loadScoringConfig, saveCurrentSession, saveResult, STORAGE_KEYS } from './utils/storage';
 
 export type Page = 'landing' | 'identity' | 'instructions' | 'test' | 'result' | 'admin' | 'scoring-missing';
@@ -48,6 +48,9 @@ export default function App() {
     }
     const scores = calculateRawScores(s.answers, latestConfig!);
     const validityStatus = determineValidity(scores, latestConfig!);
+    const startedAt = new Date(s.updatedAt).getTime();
+    const durationMs = Number.isFinite(startedAt) ? Date.now() - startedAt : 0;
+    const durationLabel = durationMs > 0 ? `${Math.floor(durationMs / 60000)} menit ${Math.floor((durationMs % 60000) / 1000)} detik` : '-';
     const result: AssessmentResult = {
       id: s.id,
       identity: s.identity,
@@ -55,10 +58,13 @@ export default function App() {
       answeredCount: Object.keys(s.answers).length,
       totalQuestions: latestQuestions.length,
       submittedAt: new Date().toISOString(),
+      startedAt: s.updatedAt,
+      durationLabel,
       scores,
-      status: validityStatus.status === 'invalid' || validityStatus.status === 'caution' ? 'Perlu Review' : 'Selesai',
+      status: validityStatus.status === 'invalid' || validityStatus.status === 'caution' || isDemoScoringConfig(latestConfig) ? 'Perlu Review' : 'Selesai',
       validityStatus,
-      interpretations: generateInterpretations(scores, latestConfig!),
+      isDemoConfig: isDemoScoringConfig(latestConfig),
+      interpretations: generateInterpretations(scores),
       clinicalSummary: generateClinicalSummary(scores, validityStatus),
       recommendations: generateRecommendations(scores, validityStatus),
     };
@@ -82,7 +88,7 @@ export default function App() {
       {page === 'instructions' && <InstructionsPage onStart={() => setPage('test')} questionsCount={questions.length} hasScoringConfig={Boolean(config)} />}
       {page === 'test' && session && <TestPage session={session} questions={questions} hasScoringConfig={Boolean(config)} onSubmit={submit} onExit={() => setPage('landing')} onChange={setSession} />}
       {page === 'scoring-missing' && <ScoringMissingPage message={submitError} goAdmin={() => { refresh(); setPage('admin'); }} saveDraft={() => session && saveCurrentSession(session)} backToTest={() => setPage('test')} />}
-      {page === 'result' && activeResult && <ResultsPage result={activeResult} goHome={() => setPage('landing')} />}
+      {page === 'result' && activeResult && <ResultsPage result={activeResult} scoringConfig={config} goHome={() => setPage('landing')} />}
       {page === 'admin' && <AdminDashboard questions={questions} config={config} results={results} refresh={refresh} openResult={(r) => { setActiveResult(r); setPage('result'); }} />}
     </main>
   );

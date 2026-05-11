@@ -10,6 +10,9 @@ export const STORAGE_KEYS = {
   currentSession: 'sppg_mmpi2_current_session',
   results: 'sppg_mmpi2_results',
   adminSettings: 'sppg_mmpi2_admin_settings',
+  interpretationConfig: 'sppg_mmpi2_interpretation_config',
+  normTable: 'sppg_mmpi2_norm_table',
+  codeTypeConfig: 'sppg_mmpi2_code_type_config',
 } as const;
 
 const LEGACY_STORAGE_KEYS = {
@@ -75,3 +78,6 @@ export const exportResults = () => loadResults();
 
 export const resetParticipantData = () => [STORAGE_KEYS.currentSession, STORAGE_KEYS.results].forEach((key) => localStorage.removeItem(key));
 export const resetAllLocalData = () => Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
+
+export const saveAuxiliaryConfig = (key: 'interpretationConfig' | 'normTable' | 'codeTypeConfig', value: unknown) => writeJson(STORAGE_KEYS[key], value);
+export const loadAuxiliaryConfig = <T = unknown>(key: 'interpretationConfig' | 'normTable' | 'codeTypeConfig'): T | null => readJson<T | null>(STORAGE_KEYS[key], null);

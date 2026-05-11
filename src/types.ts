@@ -27,6 +27,8 @@ export interface InterpretationRule {
   max: number;
   label: string;
   description: string;
+  riskFlag?: string;
+  domain?: string;
 }
 
 export interface NormConversion {
@@ -34,29 +36,62 @@ export interface NormConversion {
   tScore: number;
 }
 
+export type ScaleGroup = 'validity' | 'clinical' | 'rc' | 'content' | 'supplementary' | 'psy5' | 'other';
+
 export interface ScaleConfig {
   id: string;
   code?: string;
   name: string;
-  description: string;
-  type?: 'validity' | 'clinical' | 'content' | 'other';
-  group?: 'validity' | 'clinical' | 'content' | 'other';
+  description?: string;
+  type?: ScaleGroup | string;
+  group?: ScaleGroup | string;
   items: ScoringItem[];
-  interpretationRules: InterpretationRule[];
+  interpretationRules?: InterpretationRule[];
   norms?: NormConversion[];
   tScoreConversion?: NormConversion[];
+  validityRules?: {
+    cautionTScore?: number;
+    invalidTScore?: number;
+    cautionRaw?: number;
+    invalidRaw?: number;
+    direction?: 'high' | 'low';
+    construct?: 'consistency' | 'infrequency' | 'defensiveness' | 'over-reporting' | 'under-reporting' | 'cannot-say' | 'random';
+  };
 }
 
-export interface ValidityStatus {
-  status: 'valid' | 'caution' | 'invalid' | 'unknown';
-  label: string;
-  reasons: string[];
+export interface CodeTypeRules {
+  includeScale5?: boolean;
+  includeScale0?: boolean;
+  minTScore?: number;
+  minSeparation?: number;
+  interpretations?: Record<string, { summary: string; themes?: string[]; cautionNotes?: string[] }>;
 }
 
 export interface ScoringConfig {
   instrumentName: string;
   version: string;
   scales: ScaleConfig[];
+  codeTypeRules?: CodeTypeRules;
+  tScoreRules?: {
+    lowMax?: number;
+    normalMin?: number;
+    normalMax?: number;
+    borderlineMin?: number;
+    borderlineMax?: number;
+    elevatedMin?: number;
+    elevatedMax?: number;
+    markedlyElevatedMin?: number;
+  };
+  [key: string]: unknown;
+}
+
+export interface ValidityStatus {
+  status: 'valid' | 'caution' | 'invalid' | 'unknown';
+  label: string;
+  reasons: string[];
+  canInterpretClinical?: boolean;
+  requiresRetest?: boolean;
+  flags?: string[];
 }
 
 export interface ParticipantIdentity {
@@ -95,7 +130,10 @@ export interface ScoreRow {
   interpretation: string;
   normStatus: string;
   type?: string;
+  group?: string;
   code?: string;
+  elevationLevel?: string;
+  note?: string;
 }
 
 export interface AssessmentResult {
@@ -105,10 +143,13 @@ export interface AssessmentResult {
   answeredCount: number;
   totalQuestions: number;
   submittedAt: string;
+  startedAt?: string;
+  durationLabel?: string;
   scores: ScoreRow[];
   status: 'Selesai' | 'Perlu Review';
   validityStatus?: ValidityStatus;
   interpretations?: { scaleId: string; label: string; description: string }[];
   clinicalSummary?: string;
   recommendations?: string[];
+  isDemoConfig?: boolean;
 }
