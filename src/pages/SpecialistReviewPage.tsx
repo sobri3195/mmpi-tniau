@@ -1,0 +1,18 @@
+import { useMemo, useState } from 'react';
+import type { AssessmentResult } from '../types';
+import { Card, Button } from '../components/ui';
+import { AlertBox, StatCard } from '../components/admin/AdminCommon';
+import { SpecialistReviewForm } from '../components/review/SpecialistReviewForm';
+
+export const SpecialistReviewPage = ({ results, onRefresh }: { results: AssessmentResult[]; onRefresh: () => void }) => {
+  const [selectedId, setSelectedId] = useState(results[0]?.id ?? '');
+  const selected = results.find((result) => result.id === selectedId) ?? results[0];
+  const stats = useMemo(() => ({
+    pending: results.filter((r) => !r.specialistReview || r.specialistReview.status === 'pending').length,
+    caution: results.filter((r) => r.validityStatus?.status === 'caution').length,
+    invalid: results.filter((r) => r.validityStatus?.status === 'invalid' || r.specialistReview?.status === 'retest_required').length,
+    reviewed: results.filter((r) => r.specialistReview?.status === 'reviewed').length,
+    final: results.filter((r) => r.specialistReview?.status === 'finalized').length,
+  }), [results]);
+  return <div className="space-y-6"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"><StatCard label="Laporan perlu review" value={stats.pending} tone="amber" /><StatCard label="Laporan caution" value={stats.caution} tone="amber" /><StatCard label="Invalid/retest" value={stats.invalid} tone="rose" /><StatCard label="Sudah direview" value={stats.reviewed} tone="teal" /><StatCard label="Laporan final" value={stats.final} tone="teal" /></div><Card><p className="text-sm font-bold uppercase tracking-wide text-teal-700">Specialist Review Dashboard</p><h2 className="text-2xl font-black">Review hasil terbaru</h2><p className="text-sm text-slate-500">Spesialis dapat melihat profil lengkap, interpretasi otomatis, grafik/skala, dan memfinalisasi laporan.</p><div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto_auto]"><select className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-950" value={selected?.id ?? ''} onChange={(e) => setSelectedId(e.target.value)}>{results.map((result) => <option key={result.id} value={result.id}>{result.identity.name} — {new Date(result.submittedAt).toLocaleDateString('id-ID')}</option>)}</select><Button onClick={onRefresh} variant="ghost">Refresh</Button><Button onClick={() => window.print()} variant="secondary">Cetak laporan final</Button></div>{results.length === 0 && <div className="mt-4"><AlertBox tone="amber">Belum ada hasil peserta untuk direview.</AlertBox></div>}</Card>{selected && <Card><h3 className="text-xl font-black">Full Report: {selected.identity.name}</h3><div className="mt-4 grid gap-4 md:grid-cols-3"><p><strong>Status validitas:</strong><br />{selected.validityStatus?.label ?? '-'}</p><p><strong>Jumlah jawaban:</strong><br />{selected.answeredCount}/{selected.totalQuestions}</p><p><strong>Durasi:</strong><br />{selected.durationLabel ?? '-'}</p></div><div className="mt-4 overflow-x-auto"><table className="w-full min-w-[680px] text-left text-sm"><thead><tr className="border-b"><th className="py-2">Skala</th><th>Raw</th><th>T-score</th><th>Kategori</th><th>Interpretasi</th></tr></thead><tbody>{selected.scores.map((score) => <tr key={score.scaleId} className="border-b border-slate-100 dark:border-slate-800"><td className="py-2 font-bold">{score.scaleName}</td><td>{score.rawScore}</td><td>{score.tScore ?? '-'}</td><td>{score.category}</td><td>{score.interpretation}</td></tr>)}</tbody></table></div></Card>}{selected && <SpecialistReviewForm result={selected} onChanged={onRefresh} />}</div>;
+};

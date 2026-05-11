@@ -175,6 +175,25 @@ export interface ScoreRow {
   note?: string;
 }
 
+
+export type SpecialistReviewStatus = 'pending' | 'reviewed' | 'retest_required' | 'interview_required' | 'referred' | 'finalized';
+
+export interface SpecialistReview {
+  status: SpecialistReviewStatus;
+  reviewerId: string;
+  reviewerName: string;
+  reviewerTitle: string;
+  licenseNumber: string;
+  reviewedAt: string;
+  validityNotes: string;
+  clinicalImpression: string;
+  riskNotes: string;
+  recommendations: string;
+  limitations: string;
+  finalConclusion: string;
+  isLocked: boolean;
+}
+
 export interface AssessmentResult {
   id: string;
   identity: ParticipantIdentity;
@@ -186,6 +205,7 @@ export interface AssessmentResult {
   durationLabel?: string;
   scores: ScoreRow[];
   status: 'Selesai' | 'Perlu Review';
+  specialistReview?: SpecialistReview;
   validityStatus?: ValidityStatus;
   interpretations?: { scaleId: string; label: string; description: string }[];
   clinicalSummary?: string;
