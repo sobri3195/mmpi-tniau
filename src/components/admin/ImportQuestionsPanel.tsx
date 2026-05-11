@@ -8,7 +8,7 @@ import { normalizeQuestions } from '../../utils/questions';
 import { parseQuestionsCsv } from '../../utils/csvImport';
 import { EmptyState, PanelTitle, TemplateButton, ValidationMessages } from './AdminCommon';
 
-const templateQuestions = Array.from({ length: 3 }, (_, index) => ({ id: index + 1, number: index + 1, order: index + 1, code: `ITEM_${index + 1}`, text: `Placeholder item ${index + 1} - ganti dengan item resmi/berizin`, responseType: 'true_false', required: true, options: [{ label: 'True', value: true }, { label: 'False', value: false }] }));
+const templateQuestions = Array.from({ length: 3 }, (_, index) => ({ id: index + 1, number: index + 1, order: index + 1, code: `ITEM_${index + 1}`, text: `Placeholder item ${index + 1} - ganti dengan item resmi/berizin`, responseType: 'plus_minus', required: true, options: [{ label: '+', value: '+' }, { label: '-', value: '-' }] }));
 
 export const ImportQuestionsPanel = ({ questions, onRefresh, toast }: { questions: Question[]; onRefresh: () => void; toast: (message: string, tone?: 'teal' | 'amber' | 'rose') => void }) => {
   const [draft, setDraft] = useState<Question[] | null>(null);

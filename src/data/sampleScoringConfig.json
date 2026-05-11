@@ -11,19 +11,53 @@
       "group": "validity",
       "type": "validity",
       "items": [
-        { "questionId": 1, "scoredResponse": true, "point": 1 },
-        { "questionId": 3, "scoredResponse": false, "point": 1 },
-        { "questionId": 5, "scoredResponse": true, "point": 1 }
+        {
+          "questionId": 1,
+          "scoredResponse": "+",
+          "point": 1
+        },
+        {
+          "questionId": 3,
+          "scoredResponse": "-",
+          "point": 1
+        },
+        {
+          "questionId": 5,
+          "scoredResponse": "+",
+          "point": 1
+        }
       ],
       "tScoreConversion": [
-        { "raw": 0, "tScore": 45 },
-        { "raw": 1, "tScore": 55 },
-        { "raw": 2, "tScore": 65 },
-        { "raw": 3, "tScore": 75 }
+        {
+          "raw": 0,
+          "tScore": 45
+        },
+        {
+          "raw": 1,
+          "tScore": 55
+        },
+        {
+          "raw": 2,
+          "tScore": 65
+        },
+        {
+          "raw": 3,
+          "tScore": 75
+        }
       ],
       "interpretationRules": [
-        { "min": 0, "max": 1, "label": "Demo rendah-sedang", "description": "Interpretasi demo; bukan scoring MMPI resmi." },
-        { "min": 2, "max": 999, "label": "Demo perlu perhatian", "description": "Interpretasi contoh untuk uji status validitas; perlu telaah profesional." }
+        {
+          "min": 0,
+          "max": 1,
+          "label": "Demo rendah-sedang",
+          "description": "Interpretasi demo; bukan scoring MMPI resmi."
+        },
+        {
+          "min": 2,
+          "max": 999,
+          "label": "Demo perlu perhatian",
+          "description": "Interpretasi contoh untuk uji status validitas; perlu telaah profesional."
+        }
       ]
     },
     {
@@ -34,20 +68,59 @@
       "group": "clinical",
       "type": "clinical",
       "items": [
-        { "questionId": 2, "scoredResponse": true, "point": 1 },
-        { "questionId": 4, "scoredResponse": true, "point": 1 },
-        { "questionId": 6, "scoredResponse": false, "point": 1 }
+        {
+          "questionId": 2,
+          "scoredResponse": "+",
+          "point": 1
+        },
+        {
+          "questionId": 4,
+          "scoredResponse": "+",
+          "point": 1
+        },
+        {
+          "questionId": 6,
+          "scoredResponse": "-",
+          "point": 1
+        }
       ],
       "tScoreConversion": [
-        { "raw": 0, "tScore": 40 },
-        { "raw": 1, "tScore": 50 },
-        { "raw": 2, "tScore": 65 },
-        { "raw": 3, "tScore": 76 }
+        {
+          "raw": 0,
+          "tScore": 40
+        },
+        {
+          "raw": 1,
+          "tScore": 50
+        },
+        {
+          "raw": 2,
+          "tScore": 65
+        },
+        {
+          "raw": 3,
+          "tScore": 76
+        }
       ],
       "interpretationRules": [
-        { "min": 0, "max": 1, "label": "Demo rendah/umum", "description": "Interpretasi demo, bukan diagnosis." },
-        { "min": 2, "max": 2, "label": "Demo elevated", "description": "Interpretasi contoh; area perlu dikonfirmasi profesional." },
-        { "min": 3, "max": 999, "label": "Demo high elevated", "description": "Interpretasi contoh; perlu evaluasi profesional." }
+        {
+          "min": 0,
+          "max": 1,
+          "label": "Demo rendah/umum",
+          "description": "Interpretasi demo, bukan diagnosis."
+        },
+        {
+          "min": 2,
+          "max": 2,
+          "label": "Demo elevated",
+          "description": "Interpretasi contoh; area perlu dikonfirmasi profesional."
+        },
+        {
+          "min": 3,
+          "max": 999,
+          "label": "Demo high elevated",
+          "description": "Interpretasi contoh; perlu evaluasi profesional."
+        }
       ]
     },
     {
@@ -58,12 +131,30 @@
       "group": "clinical",
       "type": "clinical",
       "items": [
-        { "questionId": 7, "scoredResponse": true, "point": 1 },
-        { "questionId": 8, "scoredResponse": false, "point": 1 }
+        {
+          "questionId": 7,
+          "scoredResponse": "+",
+          "point": 1
+        },
+        {
+          "questionId": 8,
+          "scoredResponse": "-",
+          "point": 1
+        }
       ],
       "interpretationRules": [
-        { "min": 0, "max": 0, "label": "Demo raw rendah", "description": "Raw score dummy rendah; belum dikonversi ke norma resmi." },
-        { "min": 1, "max": 999, "label": "Demo raw meningkat", "description": "Raw score dummy meningkat; jangan membuat klaim klinis kuat tanpa norma resmi." }
+        {
+          "min": 0,
+          "max": 0,
+          "label": "Demo raw rendah",
+          "description": "Raw score dummy rendah; belum dikonversi ke norma resmi."
+        },
+        {
+          "min": 1,
+          "max": 999,
+          "label": "Demo raw meningkat",
+          "description": "Raw score dummy meningkat; jangan membuat klaim klinis kuat tanpa norma resmi."
+        }
       ]
     }
   ]

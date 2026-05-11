@@ -1,6 +1,7 @@
 import type { AssessmentResult, Question, ScoringConfig } from '../types';
 import { writeAuditLog } from './auditLog';
 import { normalizeQuestions } from './questions';
+import { normalizeResultAnswers, normalizeScoringConfigResponses } from './answerFormat';
 
 export const ADMIN_STORAGE_KEYS = {
   questions: 'sppg_mmpi2_questions',
@@ -53,12 +54,26 @@ export const readAdminJson = <T>(key: string, fallback: T): T => {
 export const writeAdminJson = (key: string, value: unknown) => localStorage.setItem(key, JSON.stringify(value));
 export const removeAdminKey = (key: string) => localStorage.removeItem(key);
 
-export const loadAdminQuestions = () => normalizeQuestions(readAdminJson<Question[]>(ADMIN_STORAGE_KEYS.questions, []));
+export const loadAdminQuestions = () => {
+  const questions = normalizeQuestions(readAdminJson<Question[]>(ADMIN_STORAGE_KEYS.questions, []));
+  if (questions.length) writeAdminJson(ADMIN_STORAGE_KEYS.questions, questions);
+  return questions;
+};
 export const saveAdminQuestions = (questions: Question[]) => { writeAdminJson(ADMIN_STORAGE_KEYS.questions, normalizeQuestions(questions)); writeAuditLog({ action: 'Import questions', targetType: 'config', targetId: 'questions', description: `Import bank soal ${questions.length} item.` }); };
-export const loadAdminScoringConfig = () => readAdminJson<ScoringConfig | null>(ADMIN_STORAGE_KEYS.scoringConfig, null);
-export const saveAdminScoringConfig = (config: ScoringConfig) => { writeAdminJson(ADMIN_STORAGE_KEYS.scoringConfig, config); writeAuditLog({ action: 'Import scoring config', targetType: 'config', targetId: 'scoringConfig', description: 'Import scoringConfig.' }); };
-export const loadAdminResults = () => readAdminJson<AssessmentResult[]>(ADMIN_STORAGE_KEYS.results, []);
-export const saveAdminResults = (results: AssessmentResult[]) => writeAdminJson(ADMIN_STORAGE_KEYS.results, results);
+export const loadAdminScoringConfig = () => {
+  const config = readAdminJson<ScoringConfig | null>(ADMIN_STORAGE_KEYS.scoringConfig, null);
+  if (!config) return null;
+  const normalized = normalizeScoringConfigResponses(config);
+  writeAdminJson(ADMIN_STORAGE_KEYS.scoringConfig, normalized);
+  return normalized;
+};
+export const saveAdminScoringConfig = (config: ScoringConfig) => { writeAdminJson(ADMIN_STORAGE_KEYS.scoringConfig, normalizeScoringConfigResponses(config)); writeAuditLog({ action: 'Import scoring config', targetType: 'config', targetId: 'scoringConfig', description: 'Import scoringConfig.' }); };
+export const loadAdminResults = () => {
+  const results = readAdminJson<AssessmentResult[]>(ADMIN_STORAGE_KEYS.results, []).map(normalizeResultAnswers);
+  writeAdminJson(ADMIN_STORAGE_KEYS.results, results);
+  return results;
+};
+export const saveAdminResults = (results: AssessmentResult[]) => writeAdminJson(ADMIN_STORAGE_KEYS.results, results.map(normalizeResultAnswers));
 export const loadAdminSettings = () => readAdminJson<AdminReportSettings>(ADMIN_STORAGE_KEYS.adminSettings, {});
 export const saveAdminSettings = (settings: AdminReportSettings) => writeAdminJson(ADMIN_STORAGE_KEYS.adminSettings, settings);
 

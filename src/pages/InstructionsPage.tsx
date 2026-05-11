@@ -10,7 +10,7 @@ export const InstructionsPage = ({ onStart, questionsCount, hasScoringConfig }: 
       </div>
       <ol className="mt-6 list-decimal space-y-3 pl-5 text-slate-700 dark:text-slate-200">
         <li>Jawab setiap item sesuai kondisi diri Anda secara jujur.</li>
-        <li>Tidak ada jawaban benar atau salah secara umum; pilihan mengikuti format bank soal: Benar/Salah atau Ya/Tidak.</li>
+        <li>Tidak ada jawaban benar atau salah secara umum; peserta hanya memilih tombol “+” atau “-”.</li>
         <li>Progres akan tersimpan otomatis sehingga dapat dilanjutkan pada browser yang sama.</li>
         <li>Estimasi waktu pengisian sekitar 60-90 menit, bergantung jumlah item pada bank soal resmi yang diimport admin.</li>
         <li>Pastikan seluruh soal terjawab sebelum menekan submit.</li>

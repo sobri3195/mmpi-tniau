@@ -1,6 +1,7 @@
 import type { Question } from '../types';
+import { plusMinusOptions } from './answerFormat';
 
-const parseBool = (value: string) => ['true', '1', 'ya', 'yes', 'benar'].includes(value.trim().toLowerCase());
+const parseBool = (value: string) => ['true', '1', 'ya', 'yes', 'benar', '+'].includes(value.trim().toLowerCase());
 
 const splitCsvLine = (line: string) => {
   const out: string[] = [];
@@ -32,18 +33,15 @@ export const parseQuestionsCsv = (text: string): Question[] => {
   return lines.slice(1).map((line) => {
     const cols = splitCsvLine(line);
     const row = Object.fromEntries(headers.map((header, index) => [header, cols[index] ?? '']));
-    const responseType = (row.responseType || 'true_false') as Question['responseType'];
     return {
       id: Number(row.id || row.number || row.order),
       number: Number(row.number || row.order || row.id),
       order: Number(row.order || row.number || row.id),
       code: row.code,
       text: row.text,
-      responseType,
+      responseType: 'plus_minus',
       required: row.required ? parseBool(row.required) : true,
-      options: responseType === 'yes_no'
-        ? [{ label: 'Ya', value: true }, { label: 'Tidak', value: false }]
-        : [{ label: 'True', value: true }, { label: 'False', value: false }],
+      options: plusMinusOptions(),
     };
   });
 };

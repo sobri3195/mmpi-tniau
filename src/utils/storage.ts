@@ -2,6 +2,7 @@ import sampleQuestions from '../data/sampleQuestions.json';
 import sampleScoringConfig from '../data/sampleScoringConfig.json';
 import type { AssessmentResult, CurrentSession, Question, ScoringConfig } from '../types';
 import { normalizeQuestions } from './questions';
+import { normalizeResultAnswers, normalizeScoringConfigResponses, normalizeSessionAnswers } from './answerFormat';
 
 const BUNDLED_QUESTIONS = normalizeQuestions(sampleQuestions as Question[]);
 
@@ -58,26 +59,44 @@ const isLegacyPlaceholderBank = (questions: Question[]) =>
 export const loadQuestions = (): Question[] => {
   const savedQuestions = readJsonWithLegacy<Question[] | null>(STORAGE_KEYS.questions, LEGACY_STORAGE_KEYS.questions, null);
   if (!savedQuestions?.length || isIncompleteQuestionBank(savedQuestions) || isLegacyPlaceholderBank(savedQuestions)) return BUNDLED_QUESTIONS;
-  return normalizeQuestions(savedQuestions);
+  const normalized = normalizeQuestions(savedQuestions);
+  writeJson(STORAGE_KEYS.questions, normalized);
+  return normalized;
 };
 export const saveQuestions = (questions: Question[]) => writeJson(STORAGE_KEYS.questions, normalizeQuestions(questions));
 export const loadDemoQuestions = (): Question[] => BUNDLED_QUESTIONS;
 
-export const loadScoringConfig = (): ScoringConfig | null => readJsonWithLegacy<ScoringConfig | null>(STORAGE_KEYS.scoringConfig, LEGACY_STORAGE_KEYS.scoringConfig, null);
-export const saveScoringConfig = (config: ScoringConfig) => writeJson(STORAGE_KEYS.scoringConfig, config);
+export const loadScoringConfig = (): ScoringConfig | null => {
+  const config = readJsonWithLegacy<ScoringConfig | null>(STORAGE_KEYS.scoringConfig, LEGACY_STORAGE_KEYS.scoringConfig, null);
+  if (!config) return null;
+  const normalized = normalizeScoringConfigResponses(config);
+  writeJson(STORAGE_KEYS.scoringConfig, normalized);
+  return normalized;
+};
+export const saveScoringConfig = (config: ScoringConfig) => writeJson(STORAGE_KEYS.scoringConfig, normalizeScoringConfigResponses(config));
 export const clearScoringConfig = () => localStorage.removeItem(STORAGE_KEYS.scoringConfig);
-export const loadDemoScoringConfig = (): ScoringConfig => sampleScoringConfig as ScoringConfig;
+export const loadDemoScoringConfig = (): ScoringConfig => normalizeScoringConfigResponses(sampleScoringConfig as ScoringConfig);
 
-export const loadCurrentSession = (): CurrentSession | null => readJsonWithLegacy<CurrentSession | null>(STORAGE_KEYS.currentSession, LEGACY_STORAGE_KEYS.currentSession, null);
-export const saveCurrentSession = (session: CurrentSession) => writeJson(STORAGE_KEYS.currentSession, session);
+export const loadCurrentSession = (): CurrentSession | null => {
+  const session = readJsonWithLegacy<CurrentSession | null>(STORAGE_KEYS.currentSession, LEGACY_STORAGE_KEYS.currentSession, null);
+  if (!session) return null;
+  const normalized = normalizeSessionAnswers(session);
+  writeJson(STORAGE_KEYS.currentSession, normalized);
+  return normalized;
+};
+export const saveCurrentSession = (session: CurrentSession) => writeJson(STORAGE_KEYS.currentSession, normalizeSessionAnswers(session));
 export const clearCurrentSession = () => localStorage.removeItem(STORAGE_KEYS.currentSession);
 
-export const loadResults = (): AssessmentResult[] => readJsonWithLegacy<AssessmentResult[]>(STORAGE_KEYS.results, LEGACY_STORAGE_KEYS.results, []);
+export const loadResults = (): AssessmentResult[] => {
+  const results = readJsonWithLegacy<AssessmentResult[]>(STORAGE_KEYS.results, LEGACY_STORAGE_KEYS.results, []).map(normalizeResultAnswers);
+  writeJson(STORAGE_KEYS.results, results);
+  return results;
+};
 export const saveResult = (result: AssessmentResult) => {
   const results = loadResults().filter((item) => item.id !== result.id);
-  writeJson(STORAGE_KEYS.results, [result, ...results]);
+  writeJson(STORAGE_KEYS.results, [normalizeResultAnswers(result), ...results.map(normalizeResultAnswers)]);
 };
-export const saveResults = (results: AssessmentResult[]) => writeJson(STORAGE_KEYS.results, results);
+export const saveResults = (results: AssessmentResult[]) => writeJson(STORAGE_KEYS.results, results.map(normalizeResultAnswers));
 
 export const exportResults = () => loadResults();
 

@@ -1,4 +1,5 @@
 import type { Question, ScaleConfig, ScoringConfig } from '../types';
+import { ANSWER_VALUES, REQUIRED_TOTAL_QUESTIONS, isAnswerValue } from './answerFormat';
 
 export interface ValidationResult {
   valid: boolean;
@@ -21,7 +22,7 @@ export const validateQuestions = (questions: unknown): ValidationResult => {
     result.valid = false;
     return result;
   }
-  if (questions.length !== 567) result.warnings.push(`Jumlah soal harus 567; saat ini ${questions.length}.`);
+  if (questions.length !== REQUIRED_TOTAL_QUESTIONS) result.warnings.push(`Jumlah soal harus ${REQUIRED_TOTAL_QUESTIONS}; saat ini ${questions.length}.`);
   const ids = new Set<number>();
   const numbers = new Set<number>();
   questions.forEach((question, index) => {
@@ -36,10 +37,12 @@ export const validateQuestions = (questions: unknown): ValidationResult => {
     if (Number.isFinite(numericNumber) && numericNumber > 0) numbers.add(numericNumber);
     if (!String(q.code ?? '').trim()) result.errors.push(`Item ${q.id ?? index + 1} tidak punya code.`);
     if (!String(q.text ?? '').trim()) result.errors.push(`Item ${q.id ?? index + 1} tidak punya text.`);
-    if (!['true_false', 'yes_no'].includes(String(q.responseType))) result.errors.push(`Item ${q.id ?? index + 1} punya responseType tidak valid.`);
-    const labels = (q.options ?? []).map((option) => String(option.label ?? '').toLowerCase());
-    const optionsValid = labels.some((label) => ['true', 'false', 'benar', 'salah', 'ya', 'tidak'].includes(label)) || ['true_false', 'yes_no'].includes(String(q.responseType));
-    if (!optionsValid) result.errors.push(`Item ${q.id ?? index + 1} harus memakai respons True/False atau Ya/Tidak.`);
+    if (String(q.responseType) !== 'plus_minus') result.errors.push(`Item ${q.id ?? index + 1} punya responseType tidak valid; wajib plus_minus.`);
+    const options = q.options ?? [];
+    const values = new Set(options.map((option) => option.value));
+    const labels = new Set(options.map((option) => String(option.label ?? '').trim()));
+    const optionsValid = ANSWER_VALUES.every((value) => values.has(value) && labels.has(value)) && options.length === 2;
+    if (!optionsValid) result.errors.push(`Item ${q.id ?? index + 1} wajib memiliki tepat dua opsi dengan label/value "+" dan "-".`);
   });
   result.valid = result.errors.length === 0;
   return result;
@@ -54,7 +57,7 @@ export const validateScoringConfigAdmin = (config: unknown, questions: Question[
     return result;
   }
   if (!('instrument' in cfg) && !('instrumentName' in cfg)) result.errors.push('Harus punya field instrument.');
-  if (Number((cfg as { totalItems?: number }).totalItems) !== 567) result.errors.push('Harus punya field totalItems: 567.');
+  if (Number((cfg as { totalItems?: number }).totalItems) !== REQUIRED_TOTAL_QUESTIONS) result.errors.push(`Harus punya field totalItems: ${REQUIRED_TOTAL_QUESTIONS}.`);
   if (!Array.isArray(cfg.scales) || cfg.scales.length === 0) result.errors.push('Harus punya array scales.');
   const scales = Array.isArray(cfg.scales) ? cfg.scales : [];
   const questionIds = new Set(questions.map((q) => q.id));
@@ -68,6 +71,7 @@ export const validateScoringConfigAdmin = (config: unknown, questions: Question[
     if (hasDemoText(scale.id) || hasDemoText(scale.code) || hasDemoText(scale.name)) result.warnings.push('Konfigurasi perlu diverifikasi sebelum dipakai untuk laporan final.');
     (scale.items ?? []).forEach((item) => {
       if (!Number.isFinite(Number(item.questionId))) result.errors.push(`Scale ${scale.id} memiliki questionId tidak valid.`);
+      if (!isAnswerValue(item.scoredResponse)) result.errors.push(`Scale ${scale.id} questionId ${item.questionId} wajib memakai scoredResponse "+" atau "-".`);
       if (questions.length && !questionIds.has(Number(item.questionId))) missingQuestionIds.push(`${scale.code ?? scale.id}: ${item.questionId}`);
     });
   });

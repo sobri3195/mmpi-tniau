@@ -1,6 +1,7 @@
 import type { AccessToken, CurrentSession, TokenSessionBinding } from '../types';
 import { STORAGE_KEYS, loadCurrentSession, saveCurrentSession } from './storage';
 import { buildStartTiming } from './time';
+import { normalizeAnswers } from './answerFormat';
 
 export const TOKEN_STORAGE_KEYS = {
   accessTokens: 'sppg_mmpi2_access_tokens',
@@ -23,8 +24,8 @@ const writeJson = (key: string, value: unknown) => localStorage.setItem(key, JSO
 
 export const loadTokens = (): AccessToken[] => readJson<AccessToken[]>(TOKEN_STORAGE_KEYS.accessTokens, []);
 export const saveTokens = (tokens: AccessToken[]) => writeJson(TOKEN_STORAGE_KEYS.accessTokens, tokens);
-export const loadTokenSessions = (): TokenSessionBinding[] => readJson<TokenSessionBinding[]>(TOKEN_STORAGE_KEYS.tokenSessions, []);
-export const saveTokenSessions = (sessions: TokenSessionBinding[]) => writeJson(TOKEN_STORAGE_KEYS.tokenSessions, sessions);
+export const loadTokenSessions = (): TokenSessionBinding[] => readJson<TokenSessionBinding[]>(TOKEN_STORAGE_KEYS.tokenSessions, []).map((session) => ({ ...session, answers: normalizeAnswers(session.answers) }));
+export const saveTokenSessions = (sessions: TokenSessionBinding[]) => writeJson(TOKEN_STORAGE_KEYS.tokenSessions, sessions.map((session) => ({ ...session, answers: normalizeAnswers(session.answers) }))); 
 
 export const expireOldTokens = () => {
   const now = Date.now();
@@ -146,7 +147,7 @@ export const validateSessionToken = (session: CurrentSession | null = loadCurren
 export const touchTokenSession = (session: CurrentSession) => {
   if (!session.tokenId) return;
   const now = new Date().toISOString();
-  saveTokenSessions(loadTokenSessions().map((item) => item.tokenId === session.tokenId ? { ...item, participant: session.identity, answers: session.answers, lastSavedAt: now } : item));
+  saveTokenSessions(loadTokenSessions().map((item) => item.tokenId === session.tokenId ? { ...item, participant: session.identity, answers: normalizeAnswers(session.answers), lastSavedAt: now } : item));
 };
 
 export const STORAGE_KEYS_FOR_TOKEN_ACCESS = STORAGE_KEYS;
