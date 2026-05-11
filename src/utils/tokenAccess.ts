@@ -112,6 +112,8 @@ export const bindTokenToSession = (tokenId: string) => {
     currentIndex: 0,
     mode: 'single',
     status: 'in_progress',
+    mmpiStatus: 'mmpi_in_progress',
+    rhStatus: 'not_started',
     ...startTiming,
     lastSavedAt: now,
     updatedAt: now,

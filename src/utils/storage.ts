@@ -1,6 +1,6 @@
 import sampleQuestions from '../data/sampleQuestions.json';
 import sampleScoringConfig from '../data/sampleScoringConfig.json';
-import type { AssessmentResult, CurrentSession, Question, ScoringConfig } from '../types';
+import type { AssessmentResult, CurrentSession, Question, RHForm, ScoringConfig } from '../types';
 import { normalizeQuestions } from './questions';
 import { normalizeResultAnswers, normalizeScoringConfigResponses, normalizeSessionAnswers } from './answerFormat';
 
@@ -13,6 +13,7 @@ export const STORAGE_KEYS = {
   accessTokens: 'sppg_mmpi2_access_tokens',
   tokenSessions: 'sppg_mmpi2_token_sessions',
   results: 'sppg_mmpi2_results',
+  rhForms: 'sppg_mmpi2_rh_forms',
   adminSettings: 'sppg_mmpi2_admin_settings',
   interpretationConfig: 'sppg_mmpi2_interpretation_config',
   interpretationRusdiMaslim: 'sppg_mmpi2_interpretation_rusdi_maslim',
@@ -102,9 +103,15 @@ export const saveResult = (result: AssessmentResult) => {
 };
 export const saveResults = (results: AssessmentResult[]) => writeJson(STORAGE_KEYS.results, results.map(normalizeResultAnswers));
 
+export const loadRHForms = (): RHForm[] => readJson<RHForm[]>(STORAGE_KEYS.rhForms, []);
+export const saveRHForms = (forms: RHForm[]) => writeJson(STORAGE_KEYS.rhForms, forms);
+export const saveRHForm = (form: RHForm) => saveRHForms([form, ...loadRHForms().filter((item) => item.rhFormId !== form.rhFormId)]);
+export const getRHFormByResultId = (resultId: string) => loadRHForms().find((form) => form.resultId === resultId) || null;
+export const getRHFormByTokenId = (tokenId: string) => loadRHForms().find((form) => form.tokenId === tokenId && form.status !== 'completed') || loadRHForms().find((form) => form.tokenId === tokenId) || null;
+
 export const exportResults = () => loadResults();
 
-export const resetParticipantData = () => [STORAGE_KEYS.currentSession, STORAGE_KEYS.results].forEach((key) => localStorage.removeItem(key));
+export const resetParticipantData = () => [STORAGE_KEYS.currentSession, STORAGE_KEYS.results, STORAGE_KEYS.rhForms].forEach((key) => localStorage.removeItem(key));
 export const resetAllLocalData = () => Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
 
 export const saveAuxiliaryConfig = (key: 'interpretationConfig' | 'interpretationRusdiMaslim' | 'interpretationHubertus' | 'normTable' | 'codeTypeConfig' | 'codeTypeRusdiMaslim' | 'codeTypeHubertus', value: unknown) => writeJson(STORAGE_KEYS[key], value);

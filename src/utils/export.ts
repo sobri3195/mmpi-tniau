@@ -1,5 +1,6 @@
 import type { AssessmentResult } from '../types';
 import { normalizeResultAnswers } from './answerFormat';
+import { getRHFormByResultId } from './storage';
 
 export const downloadFile = (filename: string, content: string, mime = 'application/json') => {
   const blob = new Blob([content], { type: mime });
@@ -20,7 +21,7 @@ export const resultToCsv = (results: AssessmentResult[]) => {
   const answerKeys = Array.from(new Set(normalizedResults.flatMap((result) => Object.keys(result.answers)))).sort((a, b) => Number(a) - Number(b));
   const rows: unknown[][] = [[
     'id', 'nama', 'nomor_peserta', 'tanggal_lahir', 'birthDateInput', 'birthDateISO', 'age', 'gender', 'status_perkawinan', 'pendidikan', 'pekerjaan', 'asal_satker', 'kesatuan',
-    'tanggal_asesmen', 'startedDate', 'startedTime', 'submittedDate', 'submittedTime', 'durationSeconds', 'durationText', 'total_soal', 'total_dijawab', 'status_pengerjaan', 'status_validitas', 'skor',
+    'tanggal_asesmen', 'startedDate', 'startedTime', 'submittedDate', 'submittedTime', 'durationSeconds', 'durationText', 'total_soal', 'total_dijawab', 'status_pengerjaan', 'status_validitas', 'status_mmpi', 'status_rh', 'red_flag_rh', 'rh_submitted_at', 'catatan_spesialis', 'semua_jawaban_rh', 'skor',
     ...answerKeys.map((key) => `answer_${key.padStart(3, '0')}`),
   ]];
   normalizedResults.forEach((result) => rows.push([
@@ -48,13 +49,19 @@ export const resultToCsv = (results: AssessmentResult[]) => {
     result.answeredCount,
     result.status,
     result.validityStatus?.label ?? 'Unknown',
+    result.assessment?.status ?? result.status,
+    result.rhCompleted ? 'completed' : 'pending',
+    getRHFormByResultId(result.id)?.riskFlags.join('; ') ?? '',
+    getRHFormByResultId(result.id)?.submittedAt ?? '',
+    result.specialistReview?.riskNotes ?? '',
+    JSON.stringify(getRHFormByResultId(result.id) ?? null),
     result.scores.map((score) => `${score.scaleId}:${score.rawScore}${score.tScore ? `/T${score.tScore}` : ''}`).join('; '),
     ...answerKeys.map((key) => result.answers[key] ?? ''),
   ]));
   return rows.map((row) => row.map(escapeCsv).join(',')).join('\n');
 };
 
-export const exportResultJson = (result: AssessmentResult) => downloadFile(`hasil-${result.identity.name || result.id}.json`, JSON.stringify(normalizeResultAnswers(result), null, 2));
-export const exportResultsJson = (results: AssessmentResult[]) => downloadFile('hasil-asesmen-sppg.json', JSON.stringify(results.map(normalizeResultAnswers), null, 2));
+export const exportResultJson = (result: AssessmentResult) => downloadFile(`hasil-${result.identity.name || result.id}.json`, JSON.stringify({ ...normalizeResultAnswers(result), rhForm: getRHFormByResultId(result.id) }, null, 2));
+export const exportResultsJson = (results: AssessmentResult[]) => downloadFile('hasil-asesmen-sppg.json', JSON.stringify(results.map((result) => ({ ...normalizeResultAnswers(result), rhForm: getRHFormByResultId(result.id) })), null, 2));
 export const exportResultsCsv = (results: AssessmentResult[]) => downloadFile('hasil-asesmen-sppg.csv', resultToCsv(results), 'text/csv;charset=utf-8');
 export const printReport = () => window.print();

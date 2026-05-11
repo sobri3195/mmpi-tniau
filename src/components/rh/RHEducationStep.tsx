@@ -1,0 +1,6 @@
+import type { RHForm } from '../../types';
+import { Input } from './common';
+export const RHEducationStep = ({ form, onChange }: { form: RHForm; onChange: (form: RHForm) => void }) => {
+  const update = (index: number, key: keyof RHForm['educationHistory'][number], value: string) => onChange({ ...form, educationHistory: form.educationHistory.map((row, i) => i === index ? { ...row, [key]: value } : row) });
+  return <div className="overflow-x-auto"><table className="min-w-full text-left text-sm"><thead className="text-xs uppercase text-slate-500"><tr><th className="p-2">Pendidikan</th><th className="p-2">Nama sekolah</th><th className="p-2">Tahun masuk-keluar</th><th className="p-2">Keterangan lulus/tidak lulus</th></tr></thead><tbody>{form.educationHistory.map((row, index) => <tr key={row.education} className="border-t border-slate-100 dark:border-slate-800"><td className="p-2 font-bold">{row.education}</td><td className="p-2"><Input value={row.schoolName} onChange={(e) => update(index, 'schoolName', e.target.value)} /></td><td className="p-2"><Input value={row.years} onChange={(e) => update(index, 'years', e.target.value)} /></td><td className="p-2"><Input value={row.graduationStatus} onChange={(e) => update(index, 'graduationStatus', e.target.value)} /></td></tr>)}</tbody></table></div>;
+};
