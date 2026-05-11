@@ -6,11 +6,11 @@ import { InstructionsPage } from './pages/InstructionsPage';
 import { LandingPage } from './pages/LandingPage';
 import { ResultsPage } from './pages/ResultsPage';
 import { TestPage } from './pages/TestPage';
-import { Button } from './components/ui';
-import { calculateRawScores } from './utils/scoring';
-import { clearCurrentSession, loadCurrentSession, loadQuestions, loadResults, loadScoringConfig, saveCurrentSession, saveResult } from './utils/storage';
+import { Button, Card } from './components/ui';
+import { calculateRawScores, determineValidity, generateClinicalSummary, generateInterpretations, generateRecommendations, validateScoringConfig } from './utils/scoring';
+import { clearCurrentSession, loadCurrentSession, loadQuestions, loadResults, loadScoringConfig, saveCurrentSession, saveResult, STORAGE_KEYS } from './utils/storage';
 
-type Page = 'landing' | 'identity' | 'instructions' | 'test' | 'result' | 'admin';
+export type Page = 'landing' | 'identity' | 'instructions' | 'test' | 'result' | 'admin' | 'scoring-missing';
 
 const newSession = (identity: ParticipantIdentity): CurrentSession => ({
   id: crypto.randomUUID(),
@@ -24,20 +24,44 @@ const newSession = (identity: ParticipantIdentity): CurrentSession => ({
 
 export default function App() {
   const [page, setPage] = useState<Page>('landing');
-  const [dark, setDark] = useState(() => localStorage.getItem('sppg_mmpi_admin_settings')?.includes('dark'));
+  const [dark, setDark] = useState(() => localStorage.getItem(STORAGE_KEYS.adminSettings)?.includes('dark'));
   const [session, setSession] = useState<CurrentSession | null>(() => loadCurrentSession());
   const [questions, setQuestions] = useState(() => loadQuestions());
   const [config, setConfig] = useState(() => loadScoringConfig());
   const [results, setResults] = useState(() => loadResults());
   const [activeResult, setActiveResult] = useState<AssessmentResult | null>(null);
+  const [submitError, setSubmitError] = useState('');
 
-  useEffect(() => { document.documentElement.classList.toggle('dark', Boolean(dark)); localStorage.setItem('sppg_mmpi_admin_settings', JSON.stringify({ dark })); }, [dark]);
+  useEffect(() => { document.documentElement.classList.toggle('dark', Boolean(dark)); localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify({ dark })); }, [dark]);
   const refresh = () => { setQuestions(loadQuestions()); setConfig(loadScoringConfig()); setResults(loadResults()); };
   const startIdentity = (identity: ParticipantIdentity) => { const s = newSession(identity); setSession(s); saveCurrentSession(s); setPage('instructions'); };
   const submit = (s: CurrentSession) => {
-    if (!config) { alert('Konfigurasi scoring belum tersedia. Hubungi admin.'); return; }
-    const scores = calculateRawScores(s.answers, config);
-    const result: AssessmentResult = { id: s.id, identity: s.identity, answers: s.answers, answeredCount: Object.keys(s.answers).length, totalQuestions: questions.length, submittedAt: new Date().toISOString(), scores, status: 'Perlu Review' };
+    const latestConfig = loadScoringConfig();
+    const latestQuestions = loadQuestions();
+    const validationError = validateScoringConfig(latestConfig, latestQuestions);
+    saveCurrentSession({ ...s, status: 'Draft', updatedAt: new Date().toISOString() });
+    setSession(s);
+    if (validationError) {
+      setSubmitError(validationError);
+      setPage('scoring-missing');
+      return;
+    }
+    const scores = calculateRawScores(s.answers, latestConfig!);
+    const validityStatus = determineValidity(scores, latestConfig!);
+    const result: AssessmentResult = {
+      id: s.id,
+      identity: s.identity,
+      answers: s.answers,
+      answeredCount: Object.keys(s.answers).length,
+      totalQuestions: latestQuestions.length,
+      submittedAt: new Date().toISOString(),
+      scores,
+      status: validityStatus.status === 'invalid' || validityStatus.status === 'caution' ? 'Perlu Review' : 'Selesai',
+      validityStatus,
+      interpretations: generateInterpretations(scores, latestConfig!),
+      clinicalSummary: generateClinicalSummary(scores, validityStatus),
+      recommendations: generateRecommendations(scores, validityStatus),
+    };
     saveResult(result); clearCurrentSession(); setActiveResult(result); setSession(null); refresh(); setPage('result');
   };
   const resume = () => session ? setPage('test') : setPage('identity');
@@ -53,12 +77,26 @@ export default function App() {
           </div>
         </div>
       </nav>
-      {page === 'landing' && <LandingPage go={(p) => setPage(p as Page)} />}
+      {page === 'landing' && <LandingPage go={(p) => setPage(p as Page)} questionsCount={questions.length} hasScoringConfig={Boolean(config)} />}
       {page === 'identity' && <IdentityPage onSubmit={startIdentity} />}
-      {page === 'instructions' && <InstructionsPage onStart={() => setPage('test')} />}
-      {page === 'test' && session && <TestPage session={session} questions={questions} onSubmit={submit} onExit={() => setPage('landing')} onChange={setSession} />}
+      {page === 'instructions' && <InstructionsPage onStart={() => setPage('test')} questionsCount={questions.length} hasScoringConfig={Boolean(config)} />}
+      {page === 'test' && session && <TestPage session={session} questions={questions} hasScoringConfig={Boolean(config)} onSubmit={submit} onExit={() => setPage('landing')} onChange={setSession} />}
+      {page === 'scoring-missing' && <ScoringMissingPage message={submitError} goAdmin={() => { refresh(); setPage('admin'); }} saveDraft={() => session && saveCurrentSession(session)} backToTest={() => setPage('test')} />}
       {page === 'result' && activeResult && <ResultsPage result={activeResult} goHome={() => setPage('landing')} />}
       {page === 'admin' && <AdminDashboard questions={questions} config={config} results={results} refresh={refresh} openResult={(r) => { setActiveResult(r); setPage('result'); }} />}
     </main>
   );
 }
+
+const ScoringMissingPage = ({ message, goAdmin, saveDraft, backToTest }: { message: string; goAdmin: () => void; saveDraft: () => void; backToTest: () => void }) => (
+  <div className="mx-auto max-w-3xl px-4 py-8 sm:py-10">
+    <Card>
+      <p className="text-sm font-bold uppercase tracking-wide text-amber-600">Submit belum dapat dihitung</p>
+      <h1 className="mt-2 text-2xl font-black">Konfigurasi scoring belum tersedia</h1>
+      <p className="mt-3 leading-7 text-slate-700 dark:text-slate-200">Konfigurasi scoring belum tersedia. Admin harus mengimpor file scoringConfig terlebih dahulu sebelum hasil dapat dihitung.</p>
+      {message && <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"><strong>Detail teknis:</strong> {message}</div>}
+      <p className="mt-4 text-sm text-slate-500">Jawaban peserta tetap aman di localStorage sebagai draft. Tidak ada jawaban yang dihapus.</p>
+      <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap"><Button onClick={goAdmin}>Ke Admin Dashboard</Button><Button variant="secondary" onClick={saveDraft}>Simpan Draft</Button><Button variant="ghost" onClick={backToTest}>Kembali ke Tes</Button></div>
+    </Card>
+  </div>
+);

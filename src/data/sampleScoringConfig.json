@@ -1,40 +1,69 @@
 {
-  "instrumentName": "MMPI Custom Licensed Bank - Dummy Demo",
-  "version": "1.0-demo",
+  "instrumentName": "DUMMY CONFIG - BUKAN SCORING MMPI RESMI",
+  "version": "1.0-demo-placeholder",
+  "notice": "Konfigurasi ini hanya contoh placeholder untuk menguji alur import, submit, scoring, grafik, dan laporan. Jangan digunakan untuk interpretasi MMPI resmi.",
   "scales": [
     {
-      "id": "validity_l",
-      "name": "Validity Scale L (Demo)",
-      "description": "Contoh skala validitas. Ganti dengan konfigurasi resmi/berizin.",
+      "id": "validity_demo_l",
+      "code": "VD-L",
+      "name": "Validity Demo L",
+      "description": "Contoh skala validitas dummy. Ganti dengan konfigurasi resmi/berizin.",
+      "group": "validity",
       "type": "validity",
       "items": [
         { "questionId": 1, "scoredResponse": true, "point": 1 },
-        { "questionId": 3, "scoredResponse": false, "point": 1 }
+        { "questionId": 3, "scoredResponse": false, "point": 1 },
+        { "questionId": 5, "scoredResponse": true, "point": 1 }
+      ],
+      "tScoreConversion": [
+        { "raw": 0, "tScore": 45 },
+        { "raw": 1, "tScore": 55 },
+        { "raw": 2, "tScore": 65 },
+        { "raw": 3, "tScore": 75 }
       ],
       "interpretationRules": [
-        { "min": 0, "max": 0, "label": "Rendah", "description": "Interpretasi demo. Wajib diganti dengan pedoman resmi/berizin." },
-        { "min": 1, "max": 1, "label": "Sedang", "description": "Interpretasi contoh untuk uji sistem." },
-        { "min": 2, "max": 999, "label": "Tinggi", "description": "Interpretasi contoh; perlu telaah profesional." }
+        { "min": 0, "max": 1, "label": "Demo rendah-sedang", "description": "Interpretasi demo; bukan scoring MMPI resmi." },
+        { "min": 2, "max": 999, "label": "Demo perlu perhatian", "description": "Interpretasi contoh untuk uji status validitas; perlu telaah profesional." }
       ]
     },
     {
-      "id": "clinical_demo",
-      "name": "Clinical Demo Scale",
+      "id": "clinical_demo_a",
+      "code": "CD-A",
+      "name": "Clinical Demo A",
       "description": "Contoh skala klinis dummy tanpa makna diagnostik.",
+      "group": "clinical",
       "type": "clinical",
       "items": [
         { "questionId": 2, "scoredResponse": true, "point": 1 },
-        { "questionId": 4, "scoredResponse": true, "point": 1 }
+        { "questionId": 4, "scoredResponse": true, "point": 1 },
+        { "questionId": 6, "scoredResponse": false, "point": 1 }
       ],
-      "norms": [
+      "tScoreConversion": [
         { "raw": 0, "tScore": 40 },
         { "raw": 1, "tScore": 50 },
-        { "raw": 2, "tScore": 60 }
+        { "raw": 2, "tScore": 65 },
+        { "raw": 3, "tScore": 76 }
       ],
       "interpretationRules": [
-        { "min": 0, "max": 0, "label": "Rendah", "description": "Interpretasi demo, bukan diagnosis." },
-        { "min": 1, "max": 1, "label": "Sedang", "description": "Interpretasi contoh untuk simulasi." },
-        { "min": 2, "max": 999, "label": "Tinggi", "description": "Interpretasi contoh; rekomendasi telaah profesional." }
+        { "min": 0, "max": 1, "label": "Demo rendah/umum", "description": "Interpretasi demo, bukan diagnosis." },
+        { "min": 2, "max": 2, "label": "Demo elevated", "description": "Interpretasi contoh; area perlu dikonfirmasi profesional." },
+        { "min": 3, "max": 999, "label": "Demo high elevated", "description": "Interpretasi contoh; perlu evaluasi profesional." }
+      ]
+    },
+    {
+      "id": "clinical_demo_b_raw_only",
+      "code": "CD-B",
+      "name": "Clinical Demo B Raw Only",
+      "description": "Contoh skala klinis dummy tanpa konversi T-score untuk menguji label raw score.",
+      "group": "clinical",
+      "type": "clinical",
+      "items": [
+        { "questionId": 7, "scoredResponse": true, "point": 1 },
+        { "questionId": 8, "scoredResponse": false, "point": 1 }
+      ],
+      "interpretationRules": [
+        { "min": 0, "max": 0, "label": "Demo raw rendah", "description": "Raw score dummy rendah; belum dikonversi ke norma resmi." },
+        { "min": 1, "max": 999, "label": "Demo raw meningkat", "description": "Raw score dummy meningkat; jangan membuat klaim klinis kuat tanpa norma resmi." }
       ]
     }
   ]
