@@ -1,7 +1,8 @@
 import type { AssessmentResult } from '../types';
 import { ScoreCharts } from '../components/Charts';
+import { InterpretationReport } from '../components/InterpretationReport';
 import { ScoreTable } from '../components/ScoreTable';
-import { Badge, Button, Card, Disclaimer, PrivacyNotice } from '../components/ui';
+import { Badge, Button, Card } from '../components/ui';
 import { exportResultJson, exportResultsCsv, printReport } from '../utils/export';
 
 export const ResultsPage = ({ result, goHome }: { result: AssessmentResult; goHome: () => void }) => {
@@ -27,7 +28,7 @@ export const ResultsPage = ({ result, goHome }: { result: AssessmentResult; goHo
     </Card>
     <Card className="mb-6"><ScoreCharts scores={result.scores} /></Card>
     <Card className="mb-6"><h2 className="mb-4 text-xl font-black">Tabel Skor dan Interpretasi</h2><ScoreTable scores={result.scores} /></Card>
-    <Card className="mb-6"><h2 className="text-xl font-black">Analisa dan Rekomendasi</h2><p className="mt-3">Interpretasi otomatis dihasilkan berdasarkan konfigurasi skala yang diimport admin. Rekomendasi tindak lanjut: <strong>Perlu telaah profesional</strong>.</p><div className="mt-4 grid gap-4 lg:grid-cols-2"><Disclaimer /><PrivacyNotice /></div><div className="mt-12 text-left sm:text-right"><p className="font-bold">Tanda tangan pemeriksa</p><div className="mt-12 w-full border-t border-slate-400 pt-2 sm:ml-auto sm:w-64">Nama & SIP/izin praktik</div></div></Card>
+    <Card className="mb-6"><InterpretationReport scores={result.scores} /></Card>
     </div>
   );
 };
