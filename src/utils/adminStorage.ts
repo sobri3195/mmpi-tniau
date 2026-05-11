@@ -22,6 +22,10 @@ export const ADMIN_STORAGE_KEYS = {
   tokenSessions: 'sppg_mmpi2_token_sessions',
   adminSettings: 'sppg_mmpi2_admin_settings',
   summaryAnalysisConfig: 'sppg_mmpi2_summary_analysis_config',
+  rhTemplate: 'sppg_mmpi2_rh_template',
+  reportTemplate: 'sppg_mmpi2_report_template',
+  configValidationStatus: 'sppg_mmpi2_config_validation_status',
+  systemReadiness: 'sppg_mmpi2_system_readiness',
 } as const;
 
 export const ADMIN_PIN_KEY = 'sppg_mmpi2_admin_pin';
@@ -82,8 +86,8 @@ export const saveAdminResults = (results: AssessmentResult[]) => writeAdminJson(
 export const loadAdminSettings = () => readAdminJson<AdminReportSettings>(ADMIN_STORAGE_KEYS.adminSettings, {});
 export const saveAdminSettings = (settings: AdminReportSettings) => writeAdminJson(ADMIN_STORAGE_KEYS.adminSettings, settings);
 
-export const loadAuxConfig = <T = unknown>(key: 'normTable' | 'interpretationConfig' | 'interpretationRusdiMaslim' | 'interpretationHubertus' | 'codeTypeConfig' | 'codeTypeRusdiMaslim' | 'codeTypeHubertus' | 'summaryAnalysisConfig') => readAdminJson<T | null>(ADMIN_STORAGE_KEYS[key], null);
-export const saveAuxConfig = (key: 'normTable' | 'interpretationConfig' | 'interpretationRusdiMaslim' | 'interpretationHubertus' | 'codeTypeConfig' | 'codeTypeRusdiMaslim' | 'codeTypeHubertus' | 'summaryAnalysisConfig', value: unknown) => {
+export const loadAuxConfig = <T = unknown>(key: 'normTable' | 'interpretationConfig' | 'interpretationRusdiMaslim' | 'interpretationHubertus' | 'codeTypeConfig' | 'codeTypeRusdiMaslim' | 'codeTypeHubertus' | 'summaryAnalysisConfig' | 'rhTemplate' | 'reportTemplate' | 'configValidationStatus' | 'systemReadiness') => readAdminJson<T | null>(ADMIN_STORAGE_KEYS[key], null);
+export const saveAuxConfig = (key: 'normTable' | 'interpretationConfig' | 'interpretationRusdiMaslim' | 'interpretationHubertus' | 'codeTypeConfig' | 'codeTypeRusdiMaslim' | 'codeTypeHubertus' | 'summaryAnalysisConfig' | 'rhTemplate' | 'reportTemplate' | 'configValidationStatus' | 'systemReadiness', value: unknown) => {
   writeAdminJson(ADMIN_STORAGE_KEYS[key], value);
   const action = key === 'normTable' ? 'Impor norm table' : key === 'interpretationConfig' ? 'Impor interpretation config' : 'Impor code type config';
   writeAuditLog({ action, targetType: 'config', targetId: key, description: `Impor ${key}.` });
