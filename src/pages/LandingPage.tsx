@@ -1,10 +1,14 @@
+import { BrandLogo } from '../components/BrandLogo';
 import { Button, Card, Disclaimer, PrivacyNotice } from '../components/ui';
 
 export const LandingPage = ({ go, questionsCount, hasScoringConfig }: { go: (page: string) => void; questionsCount: number; hasScoringConfig: boolean }) => (
   <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
     <div className="grid items-center gap-8 lg:grid-cols-[1.2fr_.8fr]">
       <div>
-        <span className="rounded-full bg-teal-100 px-4 py-2 text-sm font-bold text-teal-800 dark:bg-teal-950 dark:text-teal-200">Kesehatan Jiwa TNI Angkatan Udara</span>
+        <div className="flex items-center gap-4">
+          <BrandLogo className="h-20 w-20 sm:h-24 sm:w-24" />
+          <span className="rounded-full bg-teal-100 px-4 py-2 text-sm font-bold text-teal-800 dark:bg-teal-950 dark:text-teal-200">Kesehatan Jiwa TNI Angkatan Udara</span>
+        </div>
         <h1 className="mt-6 text-3xl font-black tracking-tight text-slate-950 dark:text-white sm:text-4xl md:text-6xl">MMPI (Minnesota Multiphasic Personality Inventory)</h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg dark:text-slate-300">
           Tes ini bertujuan untuk administrasi asesmen melalui bank soal resmi/berizin yang diimpor admin. Sistem tidak memuat kunci scoring MMPI asli.

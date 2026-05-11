@@ -10,6 +10,7 @@ import { ResultsPage } from './pages/ResultsPage';
 import { TokenAccessPage } from './pages/TokenAccessPage';
 import { TestPage } from './pages/TestPage';
 import { Button, Card } from './components/ui';
+import { BrandLogo } from './components/BrandLogo';
 import { calculateRawScores, determineValidity, generateClinicalSummary, generateInterpretations, generateRecommendations, isDemoScoringConfig, validateScoringConfig } from './utils/scoring';
 import { loadCurrentSession, loadQuestions, loadResults, loadScoringConfig, saveCurrentSession, saveResult, STORAGE_KEYS } from './utils/storage';
 import { markTokenCompleted, touchTokenSession, validateSessionToken } from './utils/tokenAccess';
@@ -135,7 +136,10 @@ export default function App() {
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-teal-950 dark:text-slate-100">
       <nav className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur no-print dark:border-slate-800 dark:bg-slate-950/90">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <button onClick={() => setPage('landing', '/')} className="text-left text-lg font-black text-teal-700 dark:text-teal-300">MMPI TNI AU</button>
+          <button onClick={() => setPage('landing', '/')} className="inline-flex items-center gap-3 text-left text-lg font-black text-teal-700 dark:text-teal-300">
+            <BrandLogo className="h-11 w-11" />
+            <span>MMPI TNI AU</span>
+          </button>
           <div className="grid grid-cols-[auto_1fr_auto] gap-2 sm:flex sm:items-center">
             <Button variant="ghost" className="px-3" aria-label="Toggle dark mode" onClick={() => setDark(!dark)}>{dark ? '☀️' : '🌙'}</Button>
             <Button variant="ghost" className="whitespace-nowrap" onClick={resume}>{session ? 'Lanjutkan Draft' : 'Mulai Tes'}</Button>
