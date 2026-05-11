@@ -13,7 +13,7 @@ const loadResults = () => readAdminJson<AssessmentResult[]>(ADMIN_STORAGE_KEYS.r
 const saveResults = (results: AssessmentResult[]) => writeAdminJson(ADMIN_STORAGE_KEYS.results, results);
 const updateResultReview = (resultId: string, updater: (review: SpecialistReview, result: AssessmentResult) => SpecialistReview) => {
   const user = getCurrentUser();
-  if (!hasPermission(user, 'review.update')) throw new Error('Tidak memiliki akses review.');
+  if (!hasPermission(user, 'review.update')) throw new Error('Tidak memiliki akses telaah.');
   let updated: AssessmentResult | null = null;
   const results = loadResults().map((result) => {
     if (result.id !== resultId) return result;
@@ -32,7 +32,7 @@ export const ensureSpecialistReview = (result: AssessmentResult): SpecialistRevi
 export const createSpecialistReview = (resultId: string) => updateResultReview(resultId, (review) => ({ ...emptyReview(), ...review, status: review.status || 'pending' }));
 export const updateSpecialistReview = (resultId: string, patch: Partial<SpecialistReview>) => {
   const updated = updateResultReview(resultId, (review) => ({ ...review, ...patch }));
-  writeAuditLog({ action: 'Specialist reviewed result', targetType: 'result', targetId: resultId, description: 'Memperbarui catatan review spesialis.' });
+  writeAuditLog({ action: 'Specialist reviewed result', targetType: 'result', targetId: resultId, description: 'Memperbarui catatan telaah spesialis.' });
   return updated;
 };
 export const finalizeSpecialistReview = (resultId: string, patch: Partial<SpecialistReview>) => {

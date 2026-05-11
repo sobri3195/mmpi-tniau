@@ -40,16 +40,16 @@ export const TokenManagementPanel = ({ results, toast }: { results: AssessmentRe
       });
       saveTokens([...nextTokens, ...existing]);
       refresh();
-      toast(`${nextTokens.length} token berhasil diimport.`, 'teal');
+      toast(`${nextTokens.length} token berhasil diimpor.`, 'teal');
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Import token gagal.', 'rose');
+      toast(error instanceof Error ? error.message : 'Impor token gagal.', 'rose');
     }
   };
   const counts = tokens.reduce<Record<string, number>>((acc, token) => ({ ...acc, [token.status]: (acc[token.status] || 0) + 1 }), {});
   return <div className="space-y-6">
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"><StatCard label="Total token" value={tokens.length} /><StatCard label="Unused" value={counts.unused || 0} /><StatCard label="Active" value={counts.active || 0} tone="amber" /><StatCard label="Completed" value={counts.completed || 0} tone="teal" /><StatCard label="Revoked/Expired" value={(counts.revoked || 0) + (counts.expired || 0)} tone="rose" /></div>
     <TokenGenerator onCreated={(message) => { refresh(); toast(message, 'teal'); }} />
-    <Card><h2 className="text-xl font-black">Import Token CSV/JSON</h2><p className="mt-2 text-sm text-slate-600 dark:text-slate-300">CSV mendukung kolom: token, uniqueKey, participantName, participantNumber, unit, expiresAt, maxAttempts, notes. Token/uniqueKey kosong akan dibuat otomatis; duplikat akan ditolak.</p><label className="mt-4 inline-flex cursor-pointer rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white dark:bg-slate-100 dark:text-slate-900">Pilih file CSV/JSON<input className="hidden" type="file" accept=".csv,.json" onChange={(e) => importFile(e.target.files?.[0])} /></label></Card>
+    <Card><h2 className="text-xl font-black">Impor token CSV/JSON</h2><p className="mt-2 text-sm text-slate-600 dark:text-slate-300">CSV mendukung kolom: token, uniqueKey, participantName, participantNumber, unit, expiresAt, maxAttempts, notes. Token/uniqueKey kosong akan dibuat otomatis; duplikat akan ditolak.</p><label className="mt-4 inline-flex cursor-pointer rounded-2xl bg-slate-900 px-4 py-3 text-sm font-bold text-white dark:bg-slate-100 dark:text-slate-900">Pilih file CSV/JSON<input className="hidden" type="file" accept=".csv,.json" onChange={(e) => importFile(e.target.files?.[0])} /></label></Card>
     <TokenTable tokens={tokens} results={results} onChange={refresh} toast={toast} />
   </div>;
 };

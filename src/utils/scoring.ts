@@ -71,7 +71,7 @@ export { determineProtocolValidity };
 export const generateInterpretations = (scores: ScoreRow[]) => scores.map((score) => ({ scaleId: score.scaleId, label: score.category, description: score.interpretation }));
 
 export const generateClinicalSummary = (scores: ScoreRow[], validityStatus: ValidityStatus) => {
-  if (validityStatus.status === 'invalid') return 'Profil respons belum memadai untuk interpretasi klinis final. Disarankan review manual/retest oleh profesional berwenang.';
+  if (validityStatus.status === 'invalid') return 'Profil respons belum memadai untuk interpretasi klinis final. Disarankan telaah manual/tes ulang oleh profesional berwenang.';
   const clinicalScores = scores.filter((score) => score.type === 'clinical');
   const elevated = clinicalScores.filter((score) => score.tScore !== undefined && score.tScore >= 65);
   if (!clinicalScores.length) return 'Skala klinis MMPI-2 belum tersedia pada konfigurasi. Laporan hanya menampilkan skor yang dapat dihitung.';
@@ -80,10 +80,10 @@ export const generateClinicalSummary = (scores: ScoreRow[], validityStatus: Vali
 };
 
 export const generateRecommendations = (scores: ScoreRow[], validityStatus: ValidityStatus) => {
-  if (validityStatus.status === 'invalid') return ['Jangan buat kesimpulan klinis final dari profil ini.', 'Lakukan review manual/retest dan evaluasi kondisi saat tes, motivasi, pemahaman instruksi, kelelahan, atau defensiveness.'];
+  if (validityStatus.status === 'invalid') return ['Jangan buat kesimpulan klinis final dari profil ini.', 'Lakukan telaah manual/tes ulang dan evaluasi kondisi saat tes, motivasi, pemahaman instruksi, kelelahan, atau defensiveness.'];
   const high = scores.some((score) => score.type === 'clinical' && (score.tScore ?? 0) >= 75);
   const elevated = scores.some((score) => score.type === 'clinical' && (score.tScore ?? 0) >= 65);
-  if (validityStatus.status === 'caution') return ['Review manual protokol validitas.', 'Konfirmasi respons melalui wawancara klinis dan pertimbangkan retest bila diperlukan.'];
+  if (validityStatus.status === 'caution') return ['Lakukan telaah manual terhadap protokol validitas.', 'Konfirmasi respons melalui wawancara klinis dan pertimbangkan tes ulang bila diperlukan.'];
   if (high) return ['Evaluasi psikolog klinis/psikiater dan pendalaman riwayat gejala.', 'Pertimbangkan asesmen risiko; jangan ambil keputusan tunggal dari laporan otomatis.'];
   if (elevated) return ['Wawancara klinis terarah dan pemeriksaan psikologis tambahan bila perlu.', 'Monitoring kondisi emosional, stres kerja, dan fungsi interpersonal.'];
   return ['Dapat dilanjutkan sesuai prosedur institusi dengan tetap mempertimbangkan wawancara dan observasi.', 'Gunakan hasil sebagai data pendukung, bukan dasar tunggal diagnosis atau keputusan personel.'];

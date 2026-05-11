@@ -83,16 +83,16 @@ export const IdentityPage = ({ onSubmit }: { onSubmit: (identity: ParticipantIde
           <label>Tanggal lahir<RequiredMark /><Input type="text" inputMode="numeric" placeholder="DD-MM-YYYY" value={form.birthDateInput ?? ''} onChange={(e) => setDateOfBirth(e.target.value)} /><span className="mt-1 block text-xs text-slate-500">Ketik manual, contoh: 31-07-1995</span>{birthDateError && <span className="mt-1 block text-xs font-bold text-rose-600">{birthDateError}</span>}{form.age && !birthDateError && <span className="mt-1 block text-sm font-bold text-teal-700">Usia: {form.age} tahun</span>}</label>
           <label>Usia<RequiredMark /><Input type="number" min={MIN_AGE} max={MAX_AGE} value={form.age} readOnly /></label>
           <label>Jenis kelamin<RequiredMark /><Select value={form.gender} onChange={(e) => set('gender', e.target.value)}><option value="">Pilih</option><option>Pria</option><option>Wanita</option></Select></label>
-          <label>Status perkawinan<RequiredMark /><Select value={form.maritalStatus} onChange={(e) => set('maritalStatus', e.target.value)}><option value="">Pilih</option><option>Menikah</option><option>Belum Menikah</option></Select></label>
+          <label>Status perkawinan<RequiredMark /><Select value={form.maritalStatus} onChange={(e) => set('maritalStatus', e.target.value)}><option value="">Pilih</option><option>Menikah</option><option>Belum menikah</option></Select></label>
           <label>Pendidikan<RequiredMark /><Select value={form.education} onChange={(e) => set('education', e.target.value)}><option value="">Pilih</option><option>SMA</option><option>D3</option><option>S1</option><option>S2/S3</option></Select></label>
           <label>Pekerjaan<RequiredMark /><Input value={form.occupation} onChange={(e) => set('occupation', e.target.value)} /></label>
-          <label>Asal Satker<RequiredMark /><Input value={form.originWorkUnit} onChange={(e) => set('originWorkUnit', e.target.value)} /></label>
+          <label>Asal satker<RequiredMark /><Input value={form.originWorkUnit} onChange={(e) => set('originWorkUnit', e.target.value)} /></label>
           <label>Kesatuan<RequiredMark /><Input value={form.unit} onChange={(e) => set('unit', e.target.value)} /></label>
           <label>Tanggal asesmen<Input type="date" value={form.assessmentDate} onChange={(e) => set('assessmentDate', e.target.value)} /></label>
         </div>
         <label className="mt-5 flex gap-3 rounded-2xl bg-slate-50 p-4 text-sm dark:bg-slate-800"><input type="checkbox" checked={form.consent} onChange={(e) => set('consent', e.target.checked)} />Saya memahami tujuan asesmen, penyimpanan lokal, dan bahwa hasil perlu ditinjau profesional berwenang.</label>
         <div className="mt-5"><Disclaimer /></div>
-        <div className="mt-6 grid no-print sm:block"><Button disabled={!valid} onClick={() => onSubmit(form)}>Lanjut ke Instruksi</Button></div>
+        <div className="mt-6 grid no-print sm:block"><Button disabled={!valid} onClick={() => onSubmit(form)}>Lanjut ke instruksi</Button></div>
       </Card>
     </div>
   );

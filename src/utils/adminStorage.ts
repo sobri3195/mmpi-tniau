@@ -63,7 +63,7 @@ export const loadAdminQuestions = () => {
   if (questions.length) writeAdminJson(ADMIN_STORAGE_KEYS.questions, questions);
   return questions;
 };
-export const saveAdminQuestions = (questions: Question[]) => { writeAdminJson(ADMIN_STORAGE_KEYS.questions, normalizeQuestions(questions)); writeAuditLog({ action: 'Import questions', targetType: 'config', targetId: 'questions', description: `Import bank soal ${questions.length} item.` }); };
+export const saveAdminQuestions = (questions: Question[]) => { writeAdminJson(ADMIN_STORAGE_KEYS.questions, normalizeQuestions(questions)); writeAuditLog({ action: 'Impor questions', targetType: 'config', targetId: 'questions', description: `Impor bank soal ${questions.length} item.` }); };
 export const loadAdminScoringConfig = () => {
   const config = readAdminJson<ScoringConfig | null>(ADMIN_STORAGE_KEYS.scoringConfig, null);
   if (!config) return null;
@@ -71,7 +71,7 @@ export const loadAdminScoringConfig = () => {
   writeAdminJson(ADMIN_STORAGE_KEYS.scoringConfig, normalized);
   return normalized;
 };
-export const saveAdminScoringConfig = (config: ScoringConfig) => { writeAdminJson(ADMIN_STORAGE_KEYS.scoringConfig, normalizeScoringConfigResponses(config)); writeAuditLog({ action: 'Import scoring config', targetType: 'config', targetId: 'scoringConfig', description: 'Import scoringConfig.' }); };
+export const saveAdminScoringConfig = (config: ScoringConfig) => { writeAdminJson(ADMIN_STORAGE_KEYS.scoringConfig, normalizeScoringConfigResponses(config)); writeAuditLog({ action: 'Impor scoring config', targetType: 'config', targetId: 'scoringConfig', description: 'Impor scoringConfig.' }); };
 export const loadAdminResults = () => {
   const results = readAdminJson<AssessmentResult[]>(ADMIN_STORAGE_KEYS.results, []).map(normalizeResultAnswers);
   writeAdminJson(ADMIN_STORAGE_KEYS.results, results);
@@ -84,7 +84,7 @@ export const saveAdminSettings = (settings: AdminReportSettings) => writeAdminJs
 export const loadAuxConfig = <T = unknown>(key: 'normTable' | 'interpretationConfig' | 'interpretationRusdiMaslim' | 'interpretationHubertus' | 'codeTypeConfig' | 'codeTypeRusdiMaslim' | 'codeTypeHubertus') => readAdminJson<T | null>(ADMIN_STORAGE_KEYS[key], null);
 export const saveAuxConfig = (key: 'normTable' | 'interpretationConfig' | 'interpretationRusdiMaslim' | 'interpretationHubertus' | 'codeTypeConfig' | 'codeTypeRusdiMaslim' | 'codeTypeHubertus', value: unknown) => {
   writeAdminJson(ADMIN_STORAGE_KEYS[key], value);
-  const action = key === 'normTable' ? 'Import norm table' : key === 'interpretationConfig' ? 'Import interpretation config' : 'Import code type config';
-  writeAuditLog({ action, targetType: 'config', targetId: key, description: `Import ${key}.` });
+  const action = key === 'normTable' ? 'Impor norm table' : key === 'interpretationConfig' ? 'Impor interpretation config' : 'Impor code type config';
+  writeAuditLog({ action, targetType: 'config', targetId: key, description: `Impor ${key}.` });
 };
 export const clearAdminDataKey = (key: AdminStorageKey) => removeAdminKey(ADMIN_STORAGE_KEYS[key]);

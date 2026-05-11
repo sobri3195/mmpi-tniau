@@ -10,7 +10,7 @@ export const adminNavItems: AdminNavItem[] = [
   { path: '/admin/config', label: 'Config Management', permission: 'config.importQuestions' },
   { path: '/admin/interpretations', label: 'Konfigurasi Interpretasi', permission: 'config.importQuestions' },
   { path: '/admin/results', label: 'Results Management', permission: 'results.readAdministrative' },
-  { path: '/admin/review', label: 'Specialist Review', permission: 'review.create' },
+  { path: '/admin/review', label: 'Telaah spesialis', permission: 'review.create' },
   { path: '/admin/settings', label: 'Report Settings', roles: ['superadmin'] },
   { path: '/admin/backup', label: 'Backup & Restore', permission: 'backup.export' },
   { path: '/admin/audit', label: 'Audit Logs', permission: 'audit.read' },

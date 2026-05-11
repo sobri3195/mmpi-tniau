@@ -189,7 +189,7 @@
   {
     "id": 12,
     "code": "Q012",
-    "text": "Kehidupan seksualku cukup memuaskan (dapat berupa : fantasi seksual, Hubungan seksual, persepsi/perasaan yang berhubungan dengan perihal seksual).",
+    "text": "Kehidupan seksualku cukup memuaskan (dapat berupa: fantasi seksual, hubungan seksual, persepsi/perasaan yang berhubungan dengan perihal seksual).",
     "responseType": "plus_minus",
     "options": [
       {
@@ -3521,7 +3521,7 @@
   {
     "id": 208,
     "code": "Q208",
-    "text": "Aku Hampir tidak pernah merasakan jantungku berdebar-debar dan aku jarang mengalami sesak napas.",
+    "text": "Aku hampir tidak pernah merasakan jantungku berdebar-debar dan aku jarang mengalami sesak napas.",
     "responseType": "plus_minus",
     "options": [
       {
@@ -7227,7 +7227,7 @@
   {
     "id": 426,
     "code": "Q426",
-    "text": "Dahulu aku suka bermain jingkat dan lompat tali.",
+    "text": "Dahulu aku suka bermain engklek dan lompat tali.",
     "responseType": "plus_minus",
     "options": [
       {
@@ -7465,7 +7465,7 @@
   {
     "id": 440,
     "code": "Q440",
-    "text": "Aku biasanya memecah segala masalah sendiri daripada bertanya kepada orang lain.",
+    "text": "Aku biasanya memecahkan segala masalah sendiri daripada bertanya kepada orang lain.",
     "responseType": "plus_minus",
     "options": [
       {
@@ -9250,7 +9250,7 @@
   {
     "id": 545,
     "code": "Q545",
-    "text": "Aku selalu punya waktu yang terlau sedikit untuk melaksanakan sesuatu.",
+    "text": "Aku selalu punya waktu yang terlalu sedikit untuk melaksanakan sesuatu.",
     "responseType": "plus_minus",
     "options": [
       {

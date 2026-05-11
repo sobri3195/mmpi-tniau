@@ -71,14 +71,14 @@ export const generateSpecialistInterpretation = (resultOrScores: AssessmentResul
   const elevatedDomains = domainSummaries.filter((item) => item.elevatedScores.length).map((item) => item.domain);
   const codeType = generateCodeType(scores, scoringConfig);
 
-  const reviewStatus = validity.status === 'valid' ? 'Dapat ditelaah' : validity.status === 'caution' ? 'Perlu kehati-hatian' : 'Perlu review/retest';
+  const reviewStatus = validity.status === 'valid' ? 'Dapat ditelaah' : validity.status === 'caution' ? 'Perlu kehati-hatian' : 'Perlu telaah/tes ulang';
   const topScale = dominantScales[0] ? codeText(dominantScales[0]) : 'tidak tersedia';
   const executiveSummary = isDemo
     ? 'Konfigurasi perlu diverifikasi sebelum digunakan untuk interpretasi klinis atau personel.'
     : `Profil respons menunjukkan status ${validity.label}. Skala yang paling menonjol adalah ${topScale}. Temuan utama berada pada domain ${elevatedDomains.join(', ') || 'tidak ada elevasi bermakna berdasarkan data yang tersedia'}. Hasil ini memerlukan konfirmasi melalui wawancara klinis dan data pendukung.`;
 
   const validityNarrative = validity.status === 'invalid'
-    ? 'Profil respons belum memadai untuk interpretasi klinis final. Disarankan review manual/retest oleh profesional berwenang. Skor tetap ditampilkan dengan label interpretasi terbatas.'
+    ? 'Profil respons belum memadai untuk interpretasi klinis final. Disarankan telaah manual/tes ulang oleh profesional berwenang. Skor tetap ditampilkan dengan label interpretasi terbatas.'
     : `Berdasarkan profil validitas, hasil asesmen berada pada kategori ${validity.label}. ${summarizeValidityDomains(scores).join(' ')} Interpretasi klinis ${validity.status === 'caution' ? 'bersifat terbatas dan perlu kehati-hatian' : 'dapat dilakukan sebagai telaah awal'} serta perlu dikonfirmasi melalui wawancara klinis.`;
 
   const clinicalNarratives = validity.status === 'invalid' ? [] : clinicalScores.filter(elevated).map((score) => ({
@@ -92,13 +92,13 @@ export const generateSpecialistInterpretation = (resultOrScores: AssessmentResul
     ...scores.filter(marked).map((score) => `${codeText(score)} markedly elevated; perlu evaluasi klinis segera oleh profesional berwenang.`),
     ...scores.filter((score) => elevated(score) && scoreMatches(score, ['self-harm', 'suicide', 'bunuh', 'bdi'])).map((score) => `${codeText(score)} terkait indikator self-harm; perlu evaluasi klinis segera oleh profesional berwenang.`),
     ...scores.filter((score) => elevated(score) && scoreMatches(score, ['substance', 'addiction', 'zat', 'alkohol'])).map((score) => `${codeText(score)} terkait indikator penyalahgunaan zat; perlu asesmen lanjutan.`),
-    ...(validity.status === 'invalid' ? ['Respons invalid atau defensif/inkonsisten ekstrem; perlu review profesional/retest.'] : []),
+    ...(validity.status === 'invalid' ? ['Respons invalid atau defensif/inkonsisten ekstrem; perlu telaah profesional/tes ulang.'] : []),
   ];
 
   const recommendations = validity.status === 'invalid'
-    ? ['Jangan buat kesimpulan klinis dari laporan otomatis ini.', 'Lakukan review manual atau retest.', 'Evaluasi kondisi saat tes, motivasi, pemahaman instruksi, kelelahan, atau defensiveness.']
+    ? ['Jangan buat kesimpulan klinis dari laporan otomatis ini.', 'Lakukan telaah manual atau tes ulang.', 'Evaluasi kondisi saat tes, motivasi, pemahaman instruksi, kelelahan, atau defensiveness.']
     : validity.status === 'caution'
-      ? ['Review manual protokol validitas.', 'Konfirmasi respons dengan wawancara klinis.', 'Pertimbangkan retest jika indikator validitas tetap meragukan.']
+      ? ['Lakukan telaah manual terhadap protokol validitas.', 'Konfirmasi respons dengan wawancara klinis.', 'Pertimbangkan tes ulang jika indikator validitas tetap meragukan.']
       : riskFlags.length || elevatedScales.some(marked)
         ? ['Evaluasi psikolog klinis/psikiater.', 'Pendalaman riwayat gejala dan pertimbangkan asesmen risiko.', 'Jangan ambil keputusan tunggal dari laporan otomatis.']
         : elevatedScales.length
@@ -107,7 +107,7 @@ export const generateSpecialistInterpretation = (resultOrScores: AssessmentResul
 
   const limitations = [
     'Kesan ini bersifat awal dan tidak menggantikan pemeriksaan klinis.',
-    'Sistem tidak menyertakan soal, norma, atau kunci scoring MMPI proprietari; akurasi bergantung pada konfigurasi resmi/berizin yang diimpor admin.',
+    'Sistem tidak menyertakan soal, norma, atau kunci skoring MMPI proprietari; akurasi bergantung pada konfigurasi resmi/berizin yang diimpor admin.',
     'Hasil ini tidak boleh digunakan sebagai satu-satunya dasar diagnosis, keputusan kelayakan, penempatan, atau tindakan administratif. Keputusan akhir harus dibuat oleh profesional dan otoritas berwenang berdasarkan asesmen komprehensif.',
     ...scores.filter((score) => score.tScore === undefined).map((score) => `${codeText(score)} belum dikonversi ke norma resmi sehingga tidak boleh diinterpretasikan klinis kuat.`),
   ];
@@ -129,8 +129,8 @@ export const generateSpecialistInterpretation = (resultOrScores: AssessmentResul
     { term: 'Skala klinis', description: 'Sepuluh skala klinis utama MMPI-2 dibaca sebagai indikasi area eksplorasi, bukan diagnosis final.' },
     { term: 'RC Scales', description: 'Jika tersedia, RC scales membantu memetakan demoralization, somatic complaints, low positive emotions, cynicism, antisocial behavior, ideas of persecution, dysfunctional negative emotions, aberrant experiences, dan hypomanic activation.' },
     { term: 'Content/Supplementary/PSY-5', description: 'Jika tersedia, skala tambahan memperkaya telaah domain kecemasan, depresi, kesehatan, kemarahan, kerja, PTSD-related indicators, addiction potential, agresivitas, psychoticism, disconstraint, negative emotionality, dan introversion.' },
-    { term: 'Code Type', description: 'Code type dibuat hanya bila puncak skala klinis memenuhi batas T-score dan pemisahan yang cukup. Interpretasi spesifik hanya digunakan jika admin mengimpor rule berizin.' },
-    { term: 'Keterbatasan laporan', description: 'Raw score tanpa T-score resmi diberi badge norma belum tersedia dan tidak boleh digunakan untuk klaim klinis kuat.' },
+    { term: 'Code Type', description: 'Code type dibuat hanya bila puncak skala klinis memenuhi batas T-score dan pemisahan yang cukup. Interpretasi spesifik hanya digunakan jika admin mengimpor aturan berizin.' },
+    { term: 'Keterbatasan laporan', description: 'Raw score tanpa T-score resmi diberi penanda norma belum tersedia dan tidak boleh digunakan untuk klaim klinis kuat.' },
     { term: 'Disclaimer klinis', description: 'Hasil otomatis bukan diagnosis final dan harus dikonfirmasi oleh psikolog klinis, psikiater, atau pemeriksa berwenang.' },
     { term: 'Disclaimer personel/militer', description: 'Keputusan administratif/personel harus dibuat oleh tim berwenang dengan mempertimbangkan hasil klinis, wawancara, rekam medis, observasi, dan standar institusi.' },
   ];
