@@ -1,0 +1,46 @@
+[
+  {
+    "id": 1,
+    "code": "Q001",
+    "text": "Contoh item placeholder untuk uji alur aplikasi. Ganti dengan butir resmi/berizin sebelum penggunaan nyata.",
+    "responseType": "true_false",
+    "options": [
+      { "label": "Benar", "value": true },
+      { "label": "Salah", "value": false }
+    ],
+    "required": true
+  },
+  {
+    "id": 2,
+    "code": "Q002",
+    "text": "Contoh item dummy kedua; bukan butir MMPI asli dan tidak boleh dipakai untuk diagnosis.",
+    "responseType": "yes_no",
+    "options": [
+      { "label": "Ya", "value": true },
+      { "label": "Tidak", "value": false }
+    ],
+    "required": true
+  },
+  {
+    "id": 3,
+    "code": "Q003",
+    "text": "Placeholder pengujian tampilan pertanyaan. Import bank soal berizin melalui dashboard admin.",
+    "responseType": "true_false",
+    "options": [
+      { "label": "Benar", "value": true },
+      { "label": "Salah", "value": false }
+    ],
+    "required": true
+  },
+  {
+    "id": 4,
+    "code": "Q004",
+    "text": "Item contoh untuk memvalidasi penyimpanan progres lokal dan navigasi nomor soal.",
+    "responseType": "yes_no",
+    "options": [
+      { "label": "Ya", "value": true },
+      { "label": "Tidak", "value": false }
+    ],
+    "required": true
+  }
+]
