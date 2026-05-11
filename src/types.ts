@@ -121,19 +121,58 @@ export interface AccessToken {
   tokenId: string;
   token: string;
   uniqueKey: string;
-  participantName: string;
-  participantNumber: string;
-  unit: string;
+  status: AccessTokenStatus;
   createdAt: string;
   expiresAt: string;
-  status: AccessTokenStatus;
-  maxAttempts: number;
-  usedAttempts: number;
-  startedAt: string | null;
-  completedAt: string | null;
-  resultId: string | null;
-  notes: string;
+  participantName?: string;
+  participantNumber?: string;
+  unit?: string;
+  maxAttempts?: number;
+  usedAttempts?: number;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  resultId?: string | null;
+  notes?: string;
 }
+
+export interface SourceInterpretationConfig {
+  sourceName: 'Rusdi Maslim' | 'Hubertus' | string;
+  version: string;
+  isDemo: boolean;
+  validityInterpretations: Record<string, unknown>;
+  scaleInterpretations: Record<string, unknown>;
+  codeTypeInterpretations: Record<string, unknown>;
+  domainInterpretations: Record<string, unknown>;
+  recommendationRules: Record<string, unknown>;
+  appendix: Record<string, unknown>;
+}
+
+export interface SourceInterpretationResult {
+  available: boolean;
+  source: 'Rusdi Maslim' | 'Hubertus' | string;
+  message?: string;
+  isDemo?: boolean;
+  validityNarrative: string;
+  clinicalNarrative: string;
+  codeTypeNarrative: string;
+  domainNarrative: string;
+  recommendations: string[];
+  appendix: Record<string, unknown>;
+}
+
+export interface InterpretationComparison {
+  similarities: string[];
+  differences: string[];
+  cautionNotes: string[];
+  specialistRequired: boolean;
+}
+
+export interface DualInterpretations {
+  rusdiMaslim: SourceInterpretationResult;
+  hubertus: SourceInterpretationResult;
+  comparison: InterpretationComparison;
+}
+
 
 export interface TokenSessionBinding {
   sessionId: string;
@@ -192,6 +231,7 @@ export type SpecialistReviewStatus = 'pending' | 'reviewed' | 'retest_required' 
 
 export interface SpecialistReview {
   status: SpecialistReviewStatus;
+  selectedFinalInterpretation?: 'rusdi_maslim' | 'hubertus' | 'combined_professional_review' | 'not_selected' | 'further_interview' | 'retest_required' | 'referral_required';
   reviewerId: string;
   reviewerName: string;
   reviewerTitle: string;
@@ -208,7 +248,22 @@ export interface SpecialistReview {
 
 export interface AssessmentResult {
   id: string;
+  resultId?: string;
   identity: ParticipantIdentity;
+  participant?: ParticipantIdentity;
+  assessment?: {
+    instrument: 'MMPI' | string;
+    totalItems: number;
+    answerFormat: 'plus_minus' | string;
+    startedAt?: string;
+    startedDate?: string;
+    startedTime?: string;
+    submittedAt: string;
+    submittedDate: string;
+    submittedTime: string;
+    durationSeconds: number;
+    durationText: string;
+  };
   answers: Answers;
   answeredCount: number;
   totalQuestions: number;
@@ -225,7 +280,7 @@ export interface AssessmentResult {
   status: 'Selesai' | 'Perlu Review';
   specialistReview?: SpecialistReview;
   validityStatus?: ValidityStatus;
-  interpretations?: { scaleId: string; label: string; description: string }[];
+  interpretations?: DualInterpretations;
   clinicalSummary?: string;
   recommendations?: string[];
   isDemoConfig?: boolean;

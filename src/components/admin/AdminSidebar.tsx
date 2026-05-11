@@ -8,6 +8,7 @@ export const adminNavItems: AdminNavItem[] = [
   { path: '/admin/users', label: 'User Management', permission: 'users.read' },
   { path: '/admin/tokens', label: 'Token Management', permission: 'tokens.create' },
   { path: '/admin/config', label: 'Config Management', permission: 'config.importQuestions' },
+  { path: '/admin/interpretations', label: 'Konfigurasi Interpretasi', permission: 'config.importQuestions' },
   { path: '/admin/results', label: 'Results Management', permission: 'results.readAdministrative' },
   { path: '/admin/review', label: 'Specialist Review', permission: 'review.create' },
   { path: '/admin/settings', label: 'Report Settings', roles: ['superadmin'] },

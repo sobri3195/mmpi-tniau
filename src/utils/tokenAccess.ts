@@ -60,7 +60,7 @@ const updateToken = (tokenId: string, updater: (token: AccessToken) => AccessTok
 export const markTokenActive = (tokenId: string) => updateToken(tokenId, (token) => ({
   ...token,
   status: 'active',
-  usedAttempts: Math.min(token.maxAttempts, token.usedAttempts + 1),
+  usedAttempts: Math.min(token.maxAttempts ?? 1, (token.usedAttempts ?? 0) + 1),
   startedAt: token.startedAt || new Date().toISOString(),
 }));
 

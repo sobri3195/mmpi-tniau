@@ -7,6 +7,7 @@ import { ImportScoringPanel } from '../components/admin/ImportScoringPanel';
 import { ImportNormPanel } from '../components/admin/ImportNormPanel';
 import { ImportInterpretationPanel } from '../components/admin/ImportInterpretationPanel';
 import { ImportCodeTypePanel } from '../components/admin/ImportCodeTypePanel';
+import { InterpretationConfigPanel } from '../components/admin/InterpretationConfigPanel';
 import { ResultsManagementPanel } from '../components/admin/ResultsManagementPanel';
 import { SystemReadinessCheck } from '../components/admin/SystemReadinessCheck';
 import { AdminSettingsPanel } from '../components/admin/AdminSettingsPanel';
@@ -30,7 +31,11 @@ export const AdminDashboard = ({ questions, config, results, refresh, openResult
   const user = getCurrentUser();
   const normTable = loadAuxConfig('normTable');
   const interpretationConfig = loadAuxConfig('interpretationConfig');
+  const rusdiConfig = loadAuxConfig('interpretationRusdiMaslim');
+  const hubertusConfig = loadAuxConfig('interpretationHubertus');
   const codeTypeConfig = loadAuxConfig('codeTypeConfig');
+  const rusdiCodeTypeConfig = loadAuxConfig('codeTypeRusdiMaslim');
+  const hubertusCodeTypeConfig = loadAuxConfig('codeTypeHubertus');
   const settings = loadAdminSettings();
   const tokens = readAdminJson<AccessToken[]>(ADMIN_STORAGE_KEYS.accessTokens, []);
   const users = getUsers();
@@ -66,11 +71,13 @@ export const AdminDashboard = ({ questions, config, results, refresh, openResult
   const specialistDashboard = <div className="space-y-6"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"><StatCard label="Perlu review" value={summary.reviewReports} tone="amber" /><StatCard label="Caution" value={summary.caution} tone="amber" /><StatCard label="Invalid/retest" value={summary.invalid} tone="rose" /><StatCard label="Sudah direview" value={summary.reviewed} tone="teal" /><StatCard label="Laporan final" value={summary.finalReports} tone="teal" /></div><Card><h2 className="text-xl font-black">Aksi cepat Spesialis</h2><div className="mt-4 flex flex-wrap gap-3"><Button onClick={() => navigate('/admin/review')}>Review hasil terbaru</Button><Button variant="secondary" onClick={() => navigate('/admin/review')}>Cetak laporan final</Button><Button variant="ghost" onClick={() => navigate('/admin/review')}>Tambah catatan klinis</Button></div></Card></div>;
   const dashboard = user.role === 'superadmin' ? superadminDashboard : user.role === 'tester' ? testerDashboard : specialistDashboard;
   const configPage = <PermissionGuard permission="config.importQuestions"><div className="space-y-6"><ImportQuestionsPanel questions={questions} onRefresh={refresh} toast={() => undefined} /><ImportScoringPanel questions={questions} config={config} onRefresh={refresh} toast={() => undefined} /><ImportNormPanel normTable={normTable} config={config} onRefresh={refresh} toast={() => undefined} /><ImportInterpretationPanel config={interpretationConfig} onRefresh={refresh} toast={() => undefined} /><ImportCodeTypePanel config={codeTypeConfig} onRefresh={refresh} toast={() => undefined} /></div></PermissionGuard>;
-  const resultsPage = <PermissionGuard permission="results.readAdministrative"><ResultsManagementPanel results={user.role === 'tester' ? results.map((result) => ({ ...result, scores: [], interpretations: [], clinicalSummary: undefined, recommendations: [] })) : results} onRefresh={refresh} openResult={openResult} toast={() => undefined} /></PermissionGuard>;
+  const interpretationConfigPage = <PermissionGuard permission="config.importQuestions"><InterpretationConfigPanel rusdiConfig={rusdiConfig} hubertusConfig={hubertusConfig} rusdiCodeTypeConfig={rusdiCodeTypeConfig} hubertusCodeTypeConfig={hubertusCodeTypeConfig} scoringConfig={config} onRefresh={refresh} toast={() => undefined} /></PermissionGuard>;
+  const resultsPage = <PermissionGuard permission="results.readAdministrative"><ResultsManagementPanel results={user.role === 'tester' ? results.map((result) => ({ ...result, scores: [], interpretations: undefined, clinicalSummary: undefined, recommendations: [] })) : results} onRefresh={refresh} openResult={openResult} toast={() => undefined} /></PermissionGuard>;
 
   const content = currentPath === '/admin/users' ? <PermissionGuard permission="users.read"><UserManagementPage /></PermissionGuard>
     : currentPath === '/admin/tokens' ? <PermissionGuard permission="tokens.create"><TokenManagementPanel results={results} toast={() => undefined} /></PermissionGuard>
     : currentPath === '/admin/config' ? configPage
+    : currentPath === '/admin/interpretations' ? interpretationConfigPage
     : currentPath === '/admin/results' ? resultsPage
     : currentPath === '/admin/review' ? <PermissionGuard permission="review.create"><SpecialistReviewPage results={results} onRefresh={refresh} /></PermissionGuard>
     : currentPath === '/admin/settings' ? <PermissionGuard permission="system.reset"><AdminSettingsPanel onRefresh={refresh} toast={() => undefined} /></PermissionGuard>

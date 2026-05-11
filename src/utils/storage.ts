@@ -15,6 +15,10 @@ export const STORAGE_KEYS = {
   results: 'sppg_mmpi2_results',
   adminSettings: 'sppg_mmpi2_admin_settings',
   interpretationConfig: 'sppg_mmpi2_interpretation_config',
+  interpretationRusdiMaslim: 'sppg_mmpi2_interpretation_rusdi_maslim',
+  interpretationHubertus: 'sppg_mmpi2_interpretation_hubertus',
+  codeTypeRusdiMaslim: 'sppg_mmpi2_code_type_rusdi_maslim',
+  codeTypeHubertus: 'sppg_mmpi2_code_type_hubertus',
   normTable: 'sppg_mmpi2_norm_table',
   codeTypeConfig: 'sppg_mmpi2_code_type_config',
 } as const;
@@ -103,5 +107,5 @@ export const exportResults = () => loadResults();
 export const resetParticipantData = () => [STORAGE_KEYS.currentSession, STORAGE_KEYS.results].forEach((key) => localStorage.removeItem(key));
 export const resetAllLocalData = () => Object.values(STORAGE_KEYS).forEach((key) => localStorage.removeItem(key));
 
-export const saveAuxiliaryConfig = (key: 'interpretationConfig' | 'normTable' | 'codeTypeConfig', value: unknown) => writeJson(STORAGE_KEYS[key], value);
-export const loadAuxiliaryConfig = <T = unknown>(key: 'interpretationConfig' | 'normTable' | 'codeTypeConfig'): T | null => readJson<T | null>(STORAGE_KEYS[key], null);
+export const saveAuxiliaryConfig = (key: 'interpretationConfig' | 'interpretationRusdiMaslim' | 'interpretationHubertus' | 'normTable' | 'codeTypeConfig' | 'codeTypeRusdiMaslim' | 'codeTypeHubertus', value: unknown) => writeJson(STORAGE_KEYS[key], value);
+export const loadAuxiliaryConfig = <T = unknown>(key: 'interpretationConfig' | 'interpretationRusdiMaslim' | 'interpretationHubertus' | 'normTable' | 'codeTypeConfig' | 'codeTypeRusdiMaslim' | 'codeTypeHubertus'): T | null => readJson<T | null>(STORAGE_KEYS[key], null);

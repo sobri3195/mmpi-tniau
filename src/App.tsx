@@ -11,8 +11,8 @@ import { TokenAccessPage } from './pages/TokenAccessPage';
 import { TestPage } from './pages/TestPage';
 import { Button, Card } from './components/ui';
 import { BrandLogo } from './components/BrandLogo';
-import { calculateRawScores, determineValidity, generateClinicalSummary, generateInterpretations, generateRecommendations, isDemoScoringConfig, validateScoringConfig } from './utils/scoring';
-import { loadCurrentSession, loadQuestions, loadResults, loadScoringConfig, saveCurrentSession, saveResult, STORAGE_KEYS } from './utils/storage';
+import { calculateRawScores, determineValidity, generateClinicalSummary, generateRecommendations, isDemoScoringConfig, validateScoringConfig } from './utils/scoring';
+import { loadAuxiliaryConfig, loadCurrentSession, loadQuestions, loadResults, loadScoringConfig, saveCurrentSession, saveResult, STORAGE_KEYS } from './utils/storage';
 import { markTokenCompleted, touchTokenSession, validateSessionToken } from './utils/tokenAccess';
 import { hasAnyUser } from './utils/userStorage';
 import { validateSession } from './utils/session';
@@ -20,6 +20,7 @@ import { writeAuditLog } from './utils/auditLog';
 import { buildStartTiming, buildSubmitTiming } from './utils/time';
 import { orderQuestionsForSession } from './utils/questions';
 import { normalizeAnswers } from './utils/answerFormat';
+import { buildDualInterpretations } from './utils/sourceInterpretations';
 
 export type Page = 'landing' | 'access' | 'identity' | 'instructions' | 'test' | 'result' | 'admin' | 'scoring-missing';
 
@@ -104,7 +105,9 @@ export default function App() {
     const submitTiming = buildSubmitTiming(s.startedAt);
     const result: AssessmentResult = {
       id: s.id,
+      resultId: s.id,
       identity: s.identity,
+      participant: s.identity,
       answers: normalizedAnswers,
       answeredCount: Object.keys(normalizedAnswers).length,
       totalQuestions: latestQuestions.length,
@@ -117,11 +120,12 @@ export default function App() {
       durationSeconds: submitTiming.durationSeconds,
       durationText: submitTiming.durationText,
       durationLabel: submitTiming.durationText,
+      assessment: { instrument: 'MMPI', totalItems: latestQuestions.length, answerFormat: 'plus_minus', startedAt: s.startedAt, startedDate: s.startedDate, startedTime: s.startedTime, submittedAt: submitTiming.submittedAt, submittedDate: submitTiming.submittedDate, submittedTime: submitTiming.submittedTime, durationSeconds: submitTiming.durationSeconds, durationText: submitTiming.durationText },
       scores,
       status: validityStatus.status === 'invalid' || validityStatus.status === 'caution' || isDemoScoringConfig(latestConfig) ? 'Perlu Review' : 'Selesai',
       validityStatus,
       isDemoConfig: isDemoScoringConfig(latestConfig),
-      interpretations: generateInterpretations(scores),
+      interpretations: buildDualInterpretations(scores, validityStatus, loadAuxiliaryConfig('interpretationRusdiMaslim'), loadAuxiliaryConfig('interpretationHubertus')),
       clinicalSummary: generateClinicalSummary(scores, validityStatus),
       recommendations: generateRecommendations(scores, validityStatus),
       specialistReview: {
