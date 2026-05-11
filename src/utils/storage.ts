@@ -2,6 +2,8 @@ import sampleQuestions from '../data/sampleQuestions.json';
 import sampleScoringConfig from '../data/sampleScoringConfig.json';
 import type { AssessmentResult, CurrentSession, Question, ScoringConfig } from '../types';
 
+const BUNDLED_QUESTIONS = sampleQuestions as Question[];
+
 export const STORAGE_KEYS = {
   questions: 'sppg_mmpi_questions',
   scoringConfig: 'sppg_mmpi_scoring_config',
@@ -22,9 +24,18 @@ const readJson = <T>(key: string, fallback: T): T => {
 
 const writeJson = (key: string, value: unknown) => localStorage.setItem(key, JSON.stringify(value));
 
-export const loadQuestions = (): Question[] => readJson<Question[]>(STORAGE_KEYS.questions, []);
+const isLegacyPlaceholderBank = (questions: Question[]) =>
+  questions.length > 0 &&
+  questions.length < BUNDLED_QUESTIONS.length &&
+  questions.some((question) => question.text.toLowerCase().includes('placeholder'));
+
+export const loadQuestions = (): Question[] => {
+  const savedQuestions = readJson<Question[] | null>(STORAGE_KEYS.questions, null);
+  if (!savedQuestions?.length || isLegacyPlaceholderBank(savedQuestions)) return BUNDLED_QUESTIONS;
+  return savedQuestions;
+};
 export const saveQuestions = (questions: Question[]) => writeJson(STORAGE_KEYS.questions, questions);
-export const loadDemoQuestions = (): Question[] => sampleQuestions as Question[];
+export const loadDemoQuestions = (): Question[] => BUNDLED_QUESTIONS;
 
 export const loadScoringConfig = (): ScoringConfig | null => readJson<ScoringConfig | null>(STORAGE_KEYS.scoringConfig, null);
 export const saveScoringConfig = (config: ScoringConfig) => writeJson(STORAGE_KEYS.scoringConfig, config);

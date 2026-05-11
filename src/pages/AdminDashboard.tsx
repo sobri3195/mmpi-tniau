@@ -39,14 +39,20 @@ export const AdminDashboard = ({ questions, config, results, refresh, openResult
     } catch (err) { setMessage(`Gagal import: ${err instanceof Error ? err.message : 'format tidak valid'}`); }
   };
   const remove = (id: string) => { saveResults(results.filter((r) => r.id !== id)); refresh(); };
-  const loadDemo = () => { saveQuestions(loadDemoQuestions()); saveScoringConfig(loadDemoScoringConfig()); setMessage('Dummy demo berhasil dimuat. Jangan gunakan untuk diagnosis.'); refresh(); };
+  const loadDemo = () => {
+    const bundledQuestions = loadDemoQuestions();
+    saveQuestions(bundledQuestions);
+    saveScoringConfig(loadDemoScoringConfig());
+    setMessage(`Bank soal bawaan berhasil dimuat: ${bundledQuestions.length} soal. Konfigurasi scoring tetap demo dan jangan gunakan untuk diagnosis.`);
+    refresh();
+  };
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-3xl font-black">Admin Dashboard</h1><p className="text-slate-500">Kelola bank soal berizin, scoring, hasil, dan data lokal.</p></div><Button variant="ghost" onClick={() => location.reload()}>Refresh</Button></div>
       <div className="grid gap-6 lg:grid-cols-3">
         <Card><h2 className="font-black">Bank Soal</h2><p className="mt-2 text-sm text-slate-500">Preview: {questions.length} soal</p>{!questions.length && <p className="mt-3 text-sm font-bold text-amber-700">Warning: belum ada question bank.</p>}<input className="mt-4 block w-full text-sm" type="file" accept=".json,.csv" onChange={(e) => importFile('questions')(e.target.files?.[0])} /></Card>
         <Card><h2 className="font-black">Scoring Config</h2><p className="mt-2 text-sm text-slate-500">{config?.instrumentName ?? 'Belum tersedia'}</p>{validateScoringConfig(config) && <p className="mt-3 text-sm font-bold text-amber-700">{validateScoringConfig(config)}</p>}<input className="mt-4 block w-full text-sm" type="file" accept=".json" onChange={(e) => importFile('scoring')(e.target.files?.[0])} /></Card>
-        <Card><h2 className="font-black">Aksi Data</h2><div className="mt-4 flex flex-wrap gap-2"><Button onClick={loadDemo}>Muat Dummy Demo</Button><Button variant="ghost" onClick={() => exportResultsJson(results)}>Export JSON</Button><Button variant="ghost" onClick={() => exportResultsCsv(results)}>Export CSV</Button><Button variant="danger" onClick={() => { if (confirm('Hapus semua data lokal?')) { resetAllLocalData(); refresh(); } }}>Reset Semua</Button></div></Card>
+        <Card><h2 className="font-black">Aksi Data</h2><div className="mt-4 flex flex-wrap gap-2"><Button onClick={loadDemo}>Muat 567 Soal Bawaan</Button><Button variant="ghost" onClick={() => exportResultsJson(results)}>Export JSON</Button><Button variant="ghost" onClick={() => exportResultsCsv(results)}>Export CSV</Button><Button variant="danger" onClick={() => { if (confirm('Hapus semua data lokal?')) { resetAllLocalData(); refresh(); } }}>Reset Semua</Button></div></Card>
       </div>
       {message && <div className="mt-6"><Card><p className="font-semibold">{message}</p></Card></div>}
       <div className="mt-6"><PrivacyNotice /></div>
