@@ -11,30 +11,44 @@ import { TokenAccessPage } from './pages/TokenAccessPage';
 import { TestPage } from './pages/TestPage';
 import { Button, Card } from './components/ui';
 import { calculateRawScores, determineValidity, generateClinicalSummary, generateInterpretations, generateRecommendations, isDemoScoringConfig, validateScoringConfig } from './utils/scoring';
-import { clearCurrentSession, loadCurrentSession, loadQuestions, loadResults, loadScoringConfig, saveCurrentSession, saveResult, STORAGE_KEYS } from './utils/storage';
+import { loadCurrentSession, loadQuestions, loadResults, loadScoringConfig, saveCurrentSession, saveResult, STORAGE_KEYS } from './utils/storage';
 import { markTokenCompleted, touchTokenSession, validateSessionToken } from './utils/tokenAccess';
 import { hasAnyUser } from './utils/userStorage';
 import { validateSession } from './utils/session';
 import { writeAuditLog } from './utils/auditLog';
+import { buildStartTiming, buildSubmitTiming } from './utils/time';
+import { orderQuestionsForSession } from './utils/questions';
 
 export type Page = 'landing' | 'access' | 'identity' | 'instructions' | 'test' | 'result' | 'admin' | 'scoring-missing';
 
-const newSession = (identity: ParticipantIdentity, existing?: CurrentSession | null): CurrentSession => ({
-  id: existing?.id || crypto.randomUUID(),
-  sessionId: existing?.sessionId || existing?.id || crypto.randomUUID(),
-  tokenId: existing?.tokenId,
-  token: existing?.token,
-  uniqueKey: existing?.uniqueKey,
-  participant: identity,
-  identity,
-  answers: existing?.answers || {},
-  currentIndex: existing?.currentIndex || 0,
-  mode: existing?.mode || 'single',
-  status: 'Draft',
-  startedAt: existing?.startedAt || new Date().toISOString(),
-  lastSavedAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-});
+const newSession = (identity: ParticipantIdentity, questions: { id: number }[], existing?: CurrentSession | null): CurrentSession => {
+  const startTiming = existing?.startedAt
+    ? { startedAt: existing.startedAt, startedDate: existing.startedDate ?? existing.startedAt.slice(0, 10), startedTime: existing.startedTime ?? new Date(existing.startedAt).toLocaleTimeString('id-ID', { hour12: false }) }
+    : buildStartTiming();
+  const now = new Date().toISOString();
+  return {
+    id: existing?.id || crypto.randomUUID(),
+    sessionId: existing?.sessionId || existing?.id || crypto.randomUUID(),
+    tokenId: existing?.tokenId,
+    token: existing?.token,
+    uniqueKey: existing?.uniqueKey,
+    participant: identity,
+    identity,
+    answers: existing?.answers || {},
+    currentIndex: existing?.currentIndex || 0,
+    mode: existing?.mode || 'single',
+    status: 'Draft',
+    ...startTiming,
+    submittedAt: existing?.submittedAt,
+    submittedDate: existing?.submittedDate,
+    submittedTime: existing?.submittedTime,
+    durationSeconds: existing?.durationSeconds ?? startTiming.durationSeconds,
+    durationText: existing?.durationText ?? startTiming.durationText,
+    questionOrder: existing?.questionOrder?.length ? existing.questionOrder : questions.map((question) => question.id),
+    lastSavedAt: now,
+    updatedAt: now,
+  };
+};
 
 export default function App() {
   const routeToPage = (pathname: string): Page => {
@@ -68,12 +82,12 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify({ ...currentSettings, dark }));
   }, [dark]);
   const refresh = () => { setQuestions(loadQuestions()); setConfig(loadScoringConfig()); setResults(loadResults()); };
-  const startIdentity = (identity: ParticipantIdentity) => { const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } const s = newSession(identity, session); setSession(s); saveCurrentSession(s); touchTokenSession(s); writeAuditLog({ action: 'Participant started test', targetType: 'token', targetId: s.tokenId ?? '', description: `Peserta ${identity.name} memulai tes.` }); setPage('instructions', '/participant'); };
+  const startIdentity = (identity: ParticipantIdentity) => { const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } const s = newSession(identity, questions, session); setSession(s); saveCurrentSession(s); touchTokenSession(s); writeAuditLog({ action: 'Participant started test', targetType: 'token', targetId: s.tokenId ?? '', description: `Peserta ${identity.name} memulai tes.` }); setPage('instructions', '/participant'); };
   const submit = (s: CurrentSession) => {
     const tokenValidation = validateSessionToken(s);
     if (!tokenValidation.valid) { setSubmitError(tokenValidation.message); setPage('scoring-missing'); return; }
     const latestConfig = loadScoringConfig();
-    const latestQuestions = loadQuestions();
+    const latestQuestions = orderQuestionsForSession(loadQuestions(), s.questionOrder);
     const validationError = validateScoringConfig(latestConfig, latestQuestions);
     saveCurrentSession({ ...s, status: 'Draft', updatedAt: new Date().toISOString() });
     setSession(s);
@@ -84,18 +98,22 @@ export default function App() {
     }
     const scores = calculateRawScores(s.answers, latestConfig!);
     const validityStatus = determineValidity(scores, latestConfig!);
-    const startedAt = new Date(s.updatedAt).getTime();
-    const durationMs = Number.isFinite(startedAt) ? Date.now() - startedAt : 0;
-    const durationLabel = durationMs > 0 ? `${Math.floor(durationMs / 60000)} menit ${Math.floor((durationMs % 60000) / 1000)} detik` : '-';
+    const submitTiming = buildSubmitTiming(s.startedAt);
     const result: AssessmentResult = {
       id: s.id,
       identity: s.identity,
       answers: s.answers,
       answeredCount: Object.keys(s.answers).length,
       totalQuestions: latestQuestions.length,
-      submittedAt: new Date().toISOString(),
-      startedAt: s.updatedAt,
-      durationLabel,
+      submittedAt: submitTiming.submittedAt,
+      submittedDate: submitTiming.submittedDate,
+      submittedTime: submitTiming.submittedTime,
+      startedAt: s.startedAt,
+      startedDate: s.startedDate,
+      startedTime: s.startedTime,
+      durationSeconds: submitTiming.durationSeconds,
+      durationText: submitTiming.durationText,
+      durationLabel: submitTiming.durationText,
       scores,
       status: validityStatus.status === 'invalid' || validityStatus.status === 'caution' || isDemoScoringConfig(latestConfig) ? 'Perlu Review' : 'Selesai',
       validityStatus,
@@ -108,8 +126,9 @@ export default function App() {
         validityNotes: '', clinicalImpression: '', riskNotes: '', recommendations: '', limitations: '', finalConclusion: '', isLocked: false,
       },
     };
+    saveCurrentSession({ ...s, status: 'Selesai', ...submitTiming, updatedAt: submitTiming.submittedAt });
     saveResult(result);
-    writeAuditLog({ action: 'Participant submitted test', targetType: 'result', targetId: result.id, description: `Peserta ${result.identity.name} submit tes.` }); if (s.tokenId) markTokenCompleted(s.tokenId, result.id); clearCurrentSession(); setActiveResult(result); setSession(null); refresh(); setPage('result');
+    writeAuditLog({ action: 'Participant submitted test', targetType: 'result', targetId: result.id, description: `Peserta ${result.identity.name} submit tes.` }); if (s.tokenId) markTokenCompleted(s.tokenId, result.id); setActiveResult(result); setSession(null); refresh(); setPage('result');
   };
   const resume = () => { const validation = validateSessionToken(session); if (validation.valid && session) setPage('test', '/test'); else { setAccessMessage(validation.message || 'Silakan masukkan token akses dan unique key terlebih dahulu.'); setPage('access', '/access'); } };
   return (
@@ -128,7 +147,7 @@ export default function App() {
       {page === 'access' && <TokenAccessPage reason={accessMessage} onVerified={() => { const next = loadCurrentSession(); setSession(next); setAccessMessage(''); setPage('identity', '/participant'); }} />}
       {page === 'identity' && <IdentityPage onSubmit={startIdentity} />}
       {page === 'instructions' && <InstructionsPage onStart={() => { const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } setPage('test', '/test'); }} questionsCount={questions.length} hasScoringConfig={Boolean(config)} />}
-      {page === 'test' && session && <TestPage session={session} questions={questions} hasScoringConfig={Boolean(config)} onSubmit={submit} onExit={() => setPage('landing', '/')} onChange={(next) => { setSession(next); touchTokenSession(next); }} />}
+      {page === 'test' && session && <TestPage session={session} questions={orderQuestionsForSession(questions, session.questionOrder)} hasScoringConfig={Boolean(config)} onSubmit={submit} onExit={() => setPage('landing', '/')} onChange={(next) => { setSession(next); touchTokenSession(next); }} />}
       {page === 'scoring-missing' && <ScoringMissingPage message={submitError} goAdmin={() => { refresh(); setPage('admin', '/admin'); }} saveDraft={() => session && saveCurrentSession(session)} backToTest={() => setPage('test', '/test')} />}
       {page === 'result' && activeResult && <ResultsPage result={activeResult} scoringConfig={config} goHome={() => setPage('landing', '/')} />}
       {page === 'admin' && (() => {

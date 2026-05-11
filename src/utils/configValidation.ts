@@ -23,11 +23,17 @@ export const validateQuestions = (questions: unknown): ValidationResult => {
   }
   if (questions.length !== 567) result.warnings.push(`Jumlah soal harus 567; saat ini ${questions.length}.`);
   const ids = new Set<number>();
+  const numbers = new Set<number>();
   questions.forEach((question, index) => {
     const q = question as Partial<Question>;
     if (!Number.isFinite(Number(q.id))) result.errors.push(`Item baris ${index + 1} tidak punya id numerik.`);
     if (ids.has(Number(q.id))) result.errors.push(`ID soal duplikat: ${q.id}.`);
     ids.add(Number(q.id));
+    const rawNumber = (q as Partial<Question>).number ?? (q as Partial<Question>).order;
+    const numericNumber = Number(rawNumber);
+    if (!Number.isFinite(numericNumber) || numericNumber <= 0) result.warnings.push(`Item ${q.id ?? index + 1} tidak punya nomor/order; sistem akan memakai urutan array ${index + 1}.`);
+    else if (numbers.has(numericNumber)) result.warnings.push(`Nomor soal duplikat: ${numericNumber}.`);
+    if (Number.isFinite(numericNumber) && numericNumber > 0) numbers.add(numericNumber);
     if (!String(q.code ?? '').trim()) result.errors.push(`Item ${q.id ?? index + 1} tidak punya code.`);
     if (!String(q.text ?? '').trim()) result.errors.push(`Item ${q.id ?? index + 1} tidak punya text.`);
     if (!['true_false', 'yes_no'].includes(String(q.responseType))) result.errors.push(`Item ${q.id ?? index + 1} punya responseType tidak valid.`);
