@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react';
+import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 
 export const Card = ({ children, className = '' }: { children: ReactNode; className?: string }) => (
   <section className={`print-card rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 sm:rounded-3xl sm:p-6 ${className}`}>{children}</section>
@@ -26,6 +26,7 @@ export const Badge = ({ children, tone = 'slate' }: { children: ReactNode; tone?
 
 export const Input = (props: InputHTMLAttributes<HTMLInputElement>) => <input className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-teal-950" {...props} />;
 export const Select = (props: SelectHTMLAttributes<HTMLSelectElement>) => <select className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-teal-950" {...props} />;
+export const Textarea = (props: TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea className="min-h-28 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-950 dark:focus:ring-teal-950" {...props} />;
 
 export const Disclaimer = () => (
   <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm sm:p-4 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">

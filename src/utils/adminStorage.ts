@@ -8,7 +8,11 @@ export const ADMIN_STORAGE_KEYS = {
   scoringConfig: 'sppg_mmpi2_scoring_config',
   normTable: 'sppg_mmpi2_norm_table',
   interpretationConfig: 'sppg_mmpi2_interpretation_config',
+  interpretationRusdiMaslim: 'sppg_mmpi2_interpretation_rusdi_maslim',
+  interpretationHubertus: 'sppg_mmpi2_interpretation_hubertus',
   codeTypeConfig: 'sppg_mmpi2_code_type_config',
+  codeTypeRusdiMaslim: 'sppg_mmpi2_code_type_rusdi_maslim',
+  codeTypeHubertus: 'sppg_mmpi2_code_type_hubertus',
   results: 'sppg_mmpi2_results',
   currentSession: 'sppg_mmpi2_current_session',
   accessTokens: 'sppg_mmpi2_access_tokens',
@@ -77,8 +81,8 @@ export const saveAdminResults = (results: AssessmentResult[]) => writeAdminJson(
 export const loadAdminSettings = () => readAdminJson<AdminReportSettings>(ADMIN_STORAGE_KEYS.adminSettings, {});
 export const saveAdminSettings = (settings: AdminReportSettings) => writeAdminJson(ADMIN_STORAGE_KEYS.adminSettings, settings);
 
-export const loadAuxConfig = <T = unknown>(key: 'normTable' | 'interpretationConfig' | 'codeTypeConfig') => readAdminJson<T | null>(ADMIN_STORAGE_KEYS[key], null);
-export const saveAuxConfig = (key: 'normTable' | 'interpretationConfig' | 'codeTypeConfig', value: unknown) => {
+export const loadAuxConfig = <T = unknown>(key: 'normTable' | 'interpretationConfig' | 'interpretationRusdiMaslim' | 'interpretationHubertus' | 'codeTypeConfig' | 'codeTypeRusdiMaslim' | 'codeTypeHubertus') => readAdminJson<T | null>(ADMIN_STORAGE_KEYS[key], null);
+export const saveAuxConfig = (key: 'normTable' | 'interpretationConfig' | 'interpretationRusdiMaslim' | 'interpretationHubertus' | 'codeTypeConfig' | 'codeTypeRusdiMaslim' | 'codeTypeHubertus', value: unknown) => {
   writeAdminJson(ADMIN_STORAGE_KEYS[key], value);
   const action = key === 'normTable' ? 'Import norm table' : key === 'interpretationConfig' ? 'Import interpretation config' : 'Import code type config';
   writeAuditLog({ action, targetType: 'config', targetId: key, description: `Import ${key}.` });

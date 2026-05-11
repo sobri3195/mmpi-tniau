@@ -8,7 +8,7 @@ export const validateTokenAccess = (tokenValue: string, uniqueKeyValue: string) 
   if (token.status === 'revoked') return { valid: false, message: 'Token dibatalkan admin.', token, session: null };
   if (token.status === 'completed') return { valid: false, message: 'Token sudah selesai.', token, session: null };
   if (token.status === 'active') return { valid: false, message: 'Token sudah digunakan.', token, session: null };
-  if (token.usedAttempts >= token.maxAttempts) return { valid: false, message: 'Token sudah melebihi batas percobaan.', token, session: null };
+  if ((token.usedAttempts ?? 0) >= (token.maxAttempts ?? 1)) return { valid: false, message: 'Token sudah melebihi batas percobaan.', token, session: null };
   markTokenActive(token.tokenId);
   const session = bindTokenToSession(token.tokenId);
   return { valid: Boolean(session), message: session ? '' : 'Token tidak ditemukan.', token, session };
