@@ -44,7 +44,7 @@ export default function App() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-teal-950 dark:text-slate-100">
       <nav className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur no-print dark:border-slate-800 dark:bg-slate-950/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3"><button onClick={() => setPage('landing')} className="font-black text-teal-700 dark:text-teal-300">MMPI SPPG</button><div className="flex gap-2"><Button variant="ghost" onClick={() => setDark(!dark)}>{dark ? '☀️' : '🌙'}</Button><Button variant="ghost" onClick={resume}>{session ? 'Lanjutkan Draft' : 'Mulai Tes'}</Button><Button variant="secondary" onClick={() => { refresh(); setPage('admin'); }}>Admin</Button></div></div>
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3"><button onClick={() => setPage('landing')} className="font-black text-teal-700 dark:text-teal-300">MMPI TNI AU</button><div className="flex gap-2"><Button variant="ghost" onClick={() => setDark(!dark)}>{dark ? '☀️' : '🌙'}</Button><Button variant="ghost" onClick={resume}>{session ? 'Lanjutkan Draft' : 'Mulai Tes'}</Button><Button variant="secondary" onClick={() => { refresh(); setPage('admin'); }}>Admin</Button></div></div>
       </nav>
       {page === 'landing' && <LandingPage go={(p) => setPage(p as Page)} />}
       {page === 'identity' && <IdentityPage onSubmit={startIdentity} />}

@@ -8,7 +8,7 @@ export const InstructionsPage = ({ onStart }: { onStart: () => void }) => (
         <li>Jawab setiap item sesuai kondisi diri Anda secara jujur.</li>
         <li>Tidak ada jawaban benar atau salah secara umum; pilihan mengikuti format bank soal: Benar/Salah atau Ya/Tidak.</li>
         <li>Progres akan tersimpan otomatis di localStorage sehingga dapat dilanjutkan pada browser yang sama.</li>
-        <li>Estimasi waktu bergantung jumlah item pada bank soal resmi yang diimport admin.</li>
+        <li>Estimasi waktu pengisian sekitar 60-90 menit, bergantung jumlah item pada bank soal resmi yang diimport admin.</li>
         <li>Pastikan seluruh soal terjawab sebelum menekan submit.</li>
       </ol>
       <div className="mt-6"><Disclaimer /></div>
