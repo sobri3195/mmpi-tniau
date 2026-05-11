@@ -6,15 +6,58 @@ import { saveCurrentSession } from '../utils/storage';
 export const TestPage = ({ session, questions, hasScoringConfig, onSubmit, onExit, onChange }: { session: CurrentSession; questions: Question[]; hasScoringConfig: boolean; onSubmit: (s: CurrentSession) => void; onExit: () => void; onChange: (s: CurrentSession) => void }) => {
   const [local, setLocal] = useState(session);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notice, setNotice] = useState('');
   const answered = Object.keys(local.answers).length;
   const progress = questions.length ? Math.round((answered / questions.length) * 100) : 0;
   const question = questions[local.currentIndex];
-  const missing = useMemo(() => questions.filter((q) => q.required && local.answers[String(q.id)] === undefined), [questions, local.answers]);
+  const isAnswered = (q: Question) => local.answers[String(q.id)] !== undefined;
+  const missing = useMemo(() => questions.map((q, index) => ({ q, index })).filter(({ q }) => !isAnswered(q)), [questions, local.answers]);
+  const firstMissingIndex = missing[0]?.index ?? questions.length;
+  const currentAnswered = question ? isAnswered(question) : false;
+  const canOpenQuestion = (index: number) => index <= firstMissingIndex;
+  const visibleQuestions = questions.slice(0, Math.min(questions.length, firstMissingIndex + 1));
   const update = (patch: Partial<CurrentSession>) => {
     const next = { ...local, ...patch, updatedAt: new Date().toISOString() };
     setLocal(next); saveCurrentSession(next); onChange(next);
   };
-  const answer = (id: number, value: AnswerValue) => update({ answers: { ...local.answers, [String(id)]: value } });
+  const showRequiredNotice = (index = local.currentIndex) => {
+    setNotice(`Wajib jawab dulu soal nomor ${index + 1} sebelum melanjutkan.`);
+  };
+  const goToQuestion = (index: number) => {
+    if (!canOpenQuestion(index)) {
+      showRequiredNotice(firstMissingIndex);
+      update({ currentIndex: firstMissingIndex });
+      return;
+    }
+    setNotice('');
+    update({ currentIndex: index });
+  };
+  const answer = (id: number, value: AnswerValue) => {
+    setNotice('Jawaban otomatis tersimpan di perangkat ini.');
+    update({ answers: { ...local.answers, [String(id)]: value } });
+  };
+  const nextQuestion = () => {
+    if (!question || local.currentIndex >= questions.length - 1) return;
+    if (!currentAnswered) {
+      showRequiredNotice();
+      return;
+    }
+    setNotice('');
+    update({ currentIndex: Math.min(questions.length - 1, local.currentIndex + 1) });
+  };
+  const submit = () => {
+    const unanswered = questions.map((q, index) => ({ q, index })).filter(({ q }) => !isAnswered(q));
+    if (unanswered.length > 0) {
+      const firstUnanswered = unanswered[0].index;
+      const numbers = unanswered.map(({ index }) => index + 1).join(', ');
+      setNotice(`Belum bisa submit. ${unanswered.length} dari ${questions.length} soal belum dijawab. Nomor soal kosong: ${numbers}.`);
+      update({ currentIndex: firstUnanswered, mode: 'single' });
+      return;
+    }
+    setIsSubmitting(true);
+    setNotice('');
+    setTimeout(() => { onSubmit(local); setIsSubmitting(false); }, 0);
+  };
   const renderQuestion = (q: Question, index: number) => (
     <div key={q.id} className="rounded-2xl border border-slate-200 p-4 sm:rounded-3xl sm:p-5 dark:border-slate-800">
       <div className="flex flex-wrap items-center justify-between gap-3"><Badge>Soal {index + 1} / {questions.length}</Badge><span className="font-mono text-xs text-slate-500">{q.code}</span></div>
@@ -30,17 +73,18 @@ export const TestPage = ({ session, questions, hasScoringConfig, onSubmit, onExi
       <Card className="mb-6 no-print">
         <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-black">Tes Berlangsung</h1><p className="text-sm text-slate-500">Autosave aktif • {answered}/{questions.length} terjawab</p></div><Badge tone="amber">Draft</Badge></div>
         <div className="mt-4 h-3 rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-3 rounded-full bg-teal-500" style={{ width: `${progress}%` }} /></div>
-        <div className="mt-4 flex gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible sm:pb-0">{questions.map((q, i) => <button key={q.id} onClick={() => update({ currentIndex: i })} className={`h-10 w-10 shrink-0 rounded-xl text-sm font-bold ${local.answers[String(q.id)] !== undefined ? 'bg-teal-600 text-white' : 'bg-slate-100 dark:bg-slate-800'} ${i === local.currentIndex ? 'ring-2 ring-blue-500' : ''}`}>{i + 1}</button>)}</div>
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible sm:pb-0">{questions.map((q, i) => <button key={q.id} onClick={() => goToQuestion(i)} aria-disabled={!canOpenQuestion(i)} className={`h-10 w-10 shrink-0 rounded-xl text-sm font-bold ${local.answers[String(q.id)] !== undefined ? 'bg-teal-600 text-white' : 'bg-slate-100 dark:bg-slate-800'} ${i === local.currentIndex ? 'ring-2 ring-blue-500' : ''} ${!canOpenQuestion(i) ? 'cursor-not-allowed opacity-45' : ''}`}>{i + 1}</button>)}</div>
         {!hasScoringConfig && <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">Tes dapat dikerjakan, tetapi Submit Hasil belum dapat dihitung sebelum admin mengimpor konfigurasi scoring.</div>}
         <div className="mt-4 grid gap-3 sm:flex sm:flex-wrap"><Button variant="ghost" onClick={() => update({ mode: local.mode === 'single' ? 'list' : 'single' })}>Mode: {local.mode === 'single' ? 'Satu soal' : 'Daftar'}</Button><Button variant="ghost" onClick={onExit}>Simpan & Lanjutkan Nanti</Button></div>
       </Card>
       <Card>
-        {local.mode === 'single' ? renderQuestion(question, local.currentIndex) : <div className="space-y-4">{questions.map(renderQuestion)}</div>}
+        {local.mode === 'single' ? renderQuestion(question, local.currentIndex) : <div className="space-y-4">{visibleQuestions.map((q, index) => renderQuestion(q, index))}</div>}
+        {notice && <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">{notice}</div>}
         <div className="mt-6 grid gap-3 no-print sm:flex sm:flex-wrap sm:justify-between">
-          <Button variant="ghost" disabled={local.currentIndex === 0} onClick={() => update({ currentIndex: Math.max(0, local.currentIndex - 1) })}>Sebelumnya</Button>
-          <div className="grid gap-3 sm:flex"><Button variant="ghost" disabled={local.currentIndex === questions.length - 1} onClick={() => update({ currentIndex: Math.min(questions.length - 1, local.currentIndex + 1) })}>Berikutnya</Button><Button disabled={missing.length > 0 || isSubmitting} onClick={() => { setIsSubmitting(true); setTimeout(() => { onSubmit(local); setIsSubmitting(false); }, 0); }}>{isSubmitting ? 'Memproses...' : 'Submit Hasil'}</Button></div>
+          <Button variant="ghost" disabled={local.currentIndex === 0} onClick={() => goToQuestion(Math.max(0, local.currentIndex - 1))}>Sebelumnya</Button>
+          <div className="grid gap-3 sm:flex"><Button variant="ghost" disabled={local.currentIndex === questions.length - 1} aria-disabled={!currentAnswered} className={!currentAnswered ? 'opacity-50' : ''} onClick={nextQuestion}>Berikutnya</Button><Button disabled={isSubmitting} onClick={submit}>{isSubmitting ? 'Memproses...' : 'Submit Hasil'}</Button></div>
         </div>
-        {missing.length > 0 && <p className="mt-4 text-sm font-semibold text-amber-700">Belum bisa submit: {missing.length} soal wajib belum dijawab.</p>}
+        {missing.length > 0 && <p className="mt-4 text-sm font-semibold text-amber-700">Belum bisa submit: {missing.length} dari {questions.length} soal belum dijawab.</p>}
       </Card>
     </div>
   );
