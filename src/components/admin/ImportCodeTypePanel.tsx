@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, Card } from '../ui';
 import { downloadFile } from '../../utils/export';
-import { clearAdminDataKey, saveAuxKonfigurasi } from '../../utils/adminStorage';
+import { clearAdminDataKey, saveAuxConfig } from '../../utils/adminStorage';
 import { validateCodeTypeConfig, type ValidationResult } from '../../utils/configValidation';
 import { EmptyState, PanelTitle, TemplateButton, ValidationMessages } from './AdminCommon';
 

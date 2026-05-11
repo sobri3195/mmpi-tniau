@@ -9,6 +9,7 @@ export const adminNavItems: AdminNavItem[] = [
   { path: '/admin/tokens', label: 'Token Management', permission: 'tokens.create' },
   { path: '/admin/config', label: 'Config Management', permission: 'config.importQuestions' },
   { path: '/admin/interpretations', label: 'Konfigurasi Interpretasi', permission: 'config.importQuestions' },
+  { path: '/admin/summary-analysis', label: 'Konfigurasi Analisa Ringkas', permission: 'config.importQuestions' },
   { path: '/admin/results', label: 'Results Management', permission: 'results.readAdministrative' },
   { path: '/admin/rh', label: 'RH Skrining', permission: 'results.readAdministrative' },
   { path: '/admin/review', label: 'Telaah spesialis', permission: 'review.create' },

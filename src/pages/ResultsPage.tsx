@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { AssessmentResult, ScoringConfig, SourceInterpretationResult } from '../types';
+import type { AssessmentResult, ScoringConfig, SourceInterpretationResult, SummaryAnalysisConfig } from '../types';
 import { ScoreCharts } from '../components/Charts';
 import { InterpretationReport } from '../components/InterpretationReport';
 import { ScoreTable } from '../components/ScoreTable';
@@ -7,12 +7,14 @@ import { Badge, Button, Card, Select, Textarea } from '../components/ui';
 import { exportResultJson, exportResultsCsv, printReport } from '../utils/export';
 import { generateSpecialistInterpretation } from '../utils/interpretation';
 import { RHReportSection } from '../components/report/RHReportSection';
-import { getRHFormByResultId } from '../utils/storage';
+import { SummaryAnalysisSection } from '../components/report/SummaryAnalysisSection';
+import { AppendixSection } from '../components/AppendixSection';
+import { getRHFormByResultId, loadAuxiliaryConfig } from '../utils/storage';
 
 const DISCLAIMER = 'Interpretasi Rusdi Maslim dan Hubertus ditampilkan sebagai bahan telaah profesional. Perbedaan hasil atau penekanan interpretasi harus ditinjau oleh spesialis/dokter jiwa/psikolog klinis. Laporan otomatis ini bukan diagnosis final dan tidak boleh menjadi satu-satunya dasar keputusan klinis, administratif, atau personel.';
 
 export const ResultsPage = ({ result, scoringConfig, goHome }: { result: AssessmentResult; scoringConfig?: ScoringConfig | null; goHome: () => void }) => {
-  const [tab, setTab] = useState<'summary' | 'rusdi' | 'hubertus' | 'comparison' | 'review'>('summary');
+  const [tab, setTab] = useState<'summary' | 'rusdi' | 'hubertus' | 'summaryAnalysis' | 'rh' | 'review' | 'appendix'>('summary');
   const submittedAt = new Date(result.submittedAt);
   const submittedDateTime = submittedAt.toLocaleString('id-ID');
   const startedDate = result.startedDate || (result.startedAt ? result.startedAt.slice(0, 10) : '');
@@ -24,9 +26,10 @@ export const ResultsPage = ({ result, scoringConfig, goHome }: { result: Assessm
   const statusLabel = result.status === 'Perlu Review' ? 'Perlu telaah' : result.status;
   const dual = result.interpretations;
   const rhForm = getRHFormByResultId(result.id);
+  const summaryAnalysisConfig = loadAuxiliaryConfig<SummaryAnalysisConfig>('summaryAnalysisConfig');
   const canPrintFinal = Boolean(result.rhCompleted && rhForm?.status === 'completed');
   const tabs = [
-    ['summary', 'Ringkasan skor'], ['rusdi', 'Interpretasi Rusdi Maslim'], ['hubertus', 'Interpretasi Hubertus'], ['comparison', 'Perbandingan'], ['review', 'Catatan spesialis / finalisasi'],
+    ['summary', 'Ringkasan Skor dan Grafik'], ['rusdi', 'Interpretasi Rusdi Maslim'], ['hubertus', 'Interpretasi Hubertus'], ['summaryAnalysis', 'Analisa Ringkas TNI AU'], ['rh', 'RH Skrining'], ['review', 'Catatan Spesialis'], ['appendix', 'Lampiran'],
   ] as const;
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
@@ -37,7 +40,6 @@ export const ResultsPage = ({ result, scoringConfig, goHome }: { result: Assessm
         <div className="mt-6 grid gap-3 no-print sm:flex sm:flex-wrap"><Button onClick={() => exportResultJson(result)}>Ekspor JSON</Button><Button variant="ghost" onClick={() => exportResultsCsv([result])}>Ekspor CSV</Button><Button variant="secondary" disabled={!canPrintFinal} onClick={printReport}>Cetak / PDF</Button><Button variant="ghost" onClick={goHome}>Beranda</Button></div>
       </Card>
       {!canPrintFinal && <Card className="mb-6 border-rose-200"><p className="font-bold text-rose-700">Laporan final belum dapat dicetak karena RH Skrining belum lengkap.</p></Card>}
-      <RHReportSection form={rhForm} />
       <div className="no-print mb-6 flex flex-wrap gap-2">{tabs.map(([id, label]) => <button key={id} type="button" onClick={() => setTab(id)} className={`rounded-2xl px-4 py-2 text-sm font-bold ${tab === id ? 'bg-teal-600 text-white' : 'bg-white shadow-sm hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800'}`}>TAB {tabs.findIndex(([key]) => key === id) + 1}: {label}</button>)}</div>
 
       <section className={tab === 'summary' ? 'space-y-6' : 'hidden print:block print:space-y-6'}>
@@ -48,8 +50,10 @@ export const ResultsPage = ({ result, scoringConfig, goHome }: { result: Assessm
 
       <section className={tab === 'rusdi' ? '' : 'hidden print:block'}><Card className="mb-6"><SourceInterpretationSection title="Interpretasi Rusdi Maslim" interpretation={dual?.rusdiMaslim} unavailable="Interpretasi Rusdi Maslim belum diimpor admin." /></Card></section>
       <section className={tab === 'hubertus' ? '' : 'hidden print:block'}><Card className="mb-6"><SourceInterpretationSection title="Interpretasi Hubertus" interpretation={dual?.hubertus} unavailable="Interpretasi Hubertus belum diimpor admin." /></Card></section>
-      <section className={tab === 'comparison' ? '' : 'hidden print:block'}><Card className="mb-6"><h2 className="text-xl font-black">Perbandingan Interpretasi Rusdi Maslim dan Hubertus</h2><ComparisonSection result={result} /></Card></section>
+      <section className={tab === 'summaryAnalysis' ? '' : 'hidden print:block'}><SummaryAnalysisSection result={result} config={summaryAnalysisConfig} rhForm={rhForm} /></section>
+      <section className={tab === 'rh' ? '' : 'hidden print:block'}><RHReportSection form={rhForm} /></section>
       <section className={tab === 'review' ? '' : 'hidden print:block'}><Card className="mb-6"><SpecialistFinalization result={result} /></Card></section>
+      <section className={tab === 'appendix' ? '' : 'hidden print:block'}><AppendixSection result={result} scoringConfig={scoringConfig} /></section>
       {!report.isDemo && <Card className="mb-6 print:block"><InterpretationReport result={result} scoringConfig={scoringConfig} /></Card>}
       <Card className="mb-6"><h2 className="text-xl font-black">Disclaimer</h2><p className="mt-3 text-sm leading-6">{DISCLAIMER}</p></Card>
     </div>

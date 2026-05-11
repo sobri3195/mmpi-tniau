@@ -23,6 +23,7 @@ import { buildStartTiming, buildSubmitTiming } from './utils/time';
 import { orderQuestionsForSession } from './utils/questions';
 import { normalizeAnswers } from './utils/answerFormat';
 import { buildDualInterpretations } from './utils/sourceInterpretations';
+import { buildSummaryAnalysis, loadSummaryAnalysisConfig } from './utils/summaryAnalysis';
 
 export type Page = 'landing' | 'access' | 'identity' | 'instructions' | 'test' | 'result' | 'rh-skrining' | 'rh-review' | 'admin' | 'scoring-missing';
 
@@ -122,6 +123,7 @@ export default function App() {
     const scores = calculateRawScores(normalizedAnswers, latestConfig!);
     const validityStatus = determineValidity(scores, latestConfig!);
     const submitTiming = buildSubmitTiming(s.startedAt);
+    const summaryConfig = loadSummaryAnalysisConfig();
     const result: AssessmentResult = {
       id: s.id,
       resultId: s.id,
@@ -156,6 +158,7 @@ export default function App() {
       rhCompleted: false,
       rhSummary: { hasMedicalRedFlags: false, hasPsychiatricRedFlags: false, hasSubstanceHistory: false, hasLegalHistory: false, needsSpecialistReview: false },
     };
+    result.summaryAnalysis = buildSummaryAnalysis(result, summaryConfig);
     saveCurrentSession({ ...s, answers: normalizedAnswers, status: 'mmpi_completed_pending_rh', mmpiStatus: 'mmpi_completed_pending_rh', rhStatus: 'not_started', ...submitTiming, updatedAt: submitTiming.submittedAt });
     saveResult(result);
     writeAuditLog({ action: 'Participant submitted MMPI pending RH', targetType: 'result', targetId: result.id, description: `Peserta ${result.identity.name} submit MMPI dan wajib mengisi RH.` }); setActiveResult(result); refresh(); setPage('rh-skrining', '/rh-skrining');
