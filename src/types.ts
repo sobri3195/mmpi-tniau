@@ -53,8 +53,13 @@ export interface ScoringConfig {
 export interface ParticipantIdentity {
   name: string;
   participantNumber?: string;
+  dateOfBirth: string;
   age: string;
   gender: string;
+  maritalStatus: string;
+  education: string;
+  occupation: string;
+  originWorkUnit: string;
   unit: string;
   assessmentDate: string;
   consent: boolean;

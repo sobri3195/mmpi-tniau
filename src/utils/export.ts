@@ -13,13 +13,18 @@ export const downloadFile = (filename: string, content: string, mime = 'applicat
 const escapeCsv = (value: unknown) => `"${String(value ?? '').replaceAll('"', '""')}"`;
 
 export const resultToCsv = (results: AssessmentResult[]) => {
-  const rows = [['id', 'nama', 'nomor_peserta', 'usia', 'gender', 'unit', 'tanggal_submit', 'status', 'skor']];
+  const rows = [['id', 'nama', 'nomor_peserta', 'tanggal_lahir', 'usia', 'gender', 'status_perkawinan', 'pendidikan', 'pekerjaan', 'asal_satker', 'kesatuan', 'tanggal_submit', 'status', 'skor']];
   results.forEach((result) => rows.push([
     result.id,
     result.identity.name,
     result.identity.participantNumber ?? '',
+    result.identity.dateOfBirth ?? '',
     result.identity.age,
     result.identity.gender,
+    result.identity.maritalStatus ?? '',
+    result.identity.education ?? '',
+    result.identity.occupation ?? '',
+    result.identity.originWorkUnit ?? '',
     result.identity.unit,
     result.submittedAt,
     result.status,

@@ -1,6 +1,6 @@
-# Asesmen MMPI SPPG
+# Asesmen MMPI TNI Angkatan Udara
 
-Aplikasi React + Vite + TypeScript untuk administrasi asesmen MMPI kebutuhan SPPG tanpa backend. Semua data disimpan di `localStorage` browser/perangkat pengguna.
+Aplikasi React + Vite + TypeScript untuk administrasi asesmen MMPI kebutuhan Kesehatan Jiwa TNI Angkatan Udara tanpa backend. Semua data disimpan di `localStorage` browser/perangkat pengguna.
 
 ## Prinsip Etis dan Klinis
 
@@ -11,13 +11,13 @@ Aplikasi React + Vite + TypeScript untuk administrasi asesmen MMPI kebutuhan SPP
 
 ## Fitur
 
-- Landing page, formulir identitas, instruksi, halaman tes, laporan hasil, dan admin dashboard.
+- Landing page TNI AU, formulir identitas sesuai kebutuhan MMPI, instruksi, halaman tes, laporan hasil, dan admin dashboard.
 - Import bank soal JSON/CSV resmi/berizin.
 - Import konfigurasi skala/scoring JSON berbasis konfigurasi; tidak ada kunci rahasia hardcoded.
 - Autosave progres peserta ke `sppg_mmpi_current_session`.
 - Scoring raw score per skala, interpretasi rentang skor, dan konversi T-score opsional jika norma tersedia.
 - Grafik bar dan radar dengan Recharts.
-- Export JSON/CSV, cetak laporan/PDF melalui print browser, dark mode, dan reset data lokal.
+- Export JSON/CSV yang memuat identitas responden, cetak laporan/PDF melalui print browser, dark mode, dan reset data lokal.
 
 ## LocalStorage Keys
 

@@ -8,12 +8,14 @@ export const ResultsPage = ({ result, goHome }: { result: AssessmentResult; goHo
   <div className="mx-auto max-w-6xl px-4 py-8">
     <Card className="mb-6">
       <div className="flex flex-wrap justify-between gap-4">
-        <div><p className="text-sm font-bold text-teal-600">Header SPPG</p><h1 className="text-3xl font-black">Laporan Hasil Asesmen</h1><p className="text-slate-500">Submit: {new Date(result.submittedAt).toLocaleString('id-ID')}</p></div>
+        <div><p className="text-sm font-bold text-teal-600">Kesehatan Jiwa TNI Angkatan Udara</p><h1 className="text-3xl font-black">Laporan Hasil Asesmen</h1><p className="text-slate-500">Submit: {new Date(result.submittedAt).toLocaleString('id-ID')}</p></div>
         <Badge tone={result.status === 'Perlu Review' ? 'amber' : 'teal'}>{result.status}</Badge>
       </div>
       <div className="mt-6 grid gap-4 md:grid-cols-3">
-        <Info label="Nama" value={result.identity.name} /><Info label="Nomor" value={result.identity.participantNumber || '-'} /><Info label="Usia" value={result.identity.age} />
-        <Info label="Jenis kelamin" value={result.identity.gender} /><Info label="Unit" value={result.identity.unit} /><Info label="Soal dijawab" value={`${result.answeredCount}/${result.totalQuestions}`} />
+        <Info label="Nama" value={result.identity.name} /><Info label="Tanggal lahir" value={result.identity.dateOfBirth || '-'} /><Info label="Usia" value={result.identity.age} />
+        <Info label="Jenis kelamin" value={result.identity.gender} /><Info label="Status perkawinan" value={result.identity.maritalStatus || '-'} /><Info label="Pendidikan" value={result.identity.education || '-'} />
+        <Info label="Pekerjaan" value={result.identity.occupation || '-'} /><Info label="Asal Satker" value={result.identity.originWorkUnit || '-'} /><Info label="Kesatuan" value={result.identity.unit} />
+        <Info label="Soal dijawab" value={`${result.answeredCount}/${result.totalQuestions}`} />
       </div>
       <div className="mt-6 flex flex-wrap gap-3 no-print"><Button onClick={() => exportResultJson(result)}>Export JSON</Button><Button variant="ghost" onClick={() => exportResultsCsv([result])}>Export CSV</Button><Button variant="secondary" onClick={printReport}>Cetak / PDF</Button><Button variant="ghost" onClick={goHome}>Beranda</Button></div>
     </Card>
