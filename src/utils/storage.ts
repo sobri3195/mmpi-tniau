@@ -52,7 +52,7 @@ const isLegacyPlaceholderBank = (questions: Question[]) =>
 
 export const loadQuestions = (): Question[] => {
   const savedQuestions = readJsonWithLegacy<Question[] | null>(STORAGE_KEYS.questions, LEGACY_STORAGE_KEYS.questions, null);
-  if (!savedQuestions?.length || isLegacyPlaceholderBank(savedQuestions)) return BUNDLED_QUESTIONS;
+  if (!savedQuestions?.length || isLegacyPlaceholderBank(savedQuestions)) return [];
   return savedQuestions;
 };
 export const saveQuestions = (questions: Question[]) => writeJson(STORAGE_KEYS.questions, questions);
