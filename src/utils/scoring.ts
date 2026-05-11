@@ -1,5 +1,6 @@
 import type { Answers, Question, ScaleConfig, ScoreRow, ScoringConfig, ValidityStatus } from '../types';
 import { determineProtocolValidity } from './validity';
+import { isAnswerValue, normalizeAnswerValue, REQUIRED_TOTAL_QUESTIONS } from './answerFormat';
 
 export const getScaleGroup = (scale: ScaleConfig) => (scale.group ?? scale.type ?? 'other').toString().toLowerCase();
 const getNorms = (scale: ScaleConfig) => scale.tScoreConversion ?? scale.norms ?? [];
@@ -42,8 +43,8 @@ export const categorizeScore = (score: number, scaleConfig: ScaleConfig, isTScor
 
 export const calculateRawScores = (answers: Answers, scoringConfig: ScoringConfig): ScoreRow[] => scoringConfig.scales.map((scale) => {
   const rawScore = scale.items.reduce((total, item) => {
-    const answer = answers[String(item.questionId)];
-    return answer === item.scoredResponse ? total + Number(item.point || 0) : total;
+    const answer = normalizeAnswerValue(answers[String(item.questionId)]);
+    return answer !== undefined && answer === item.scoredResponse ? total + Number(item.point || 0) : total;
   }, 0);
   const tScore = convertRawToTScore(rawScore, scale);
   const category = categorizeScore(tScore ?? rawScore, scale, tScore !== undefined, scoringConfig);
@@ -92,11 +93,13 @@ export const validateScoringConfig = (config: ScoringConfig | null, questions?: 
   if (!config) return 'Konfigurasi scoring belum tersedia.';
   if (!Array.isArray(config.scales) || config.scales.length === 0) return 'Konfigurasi scoring harus memiliki minimal satu skala.';
   if (options?.requireOfficial && isDemoScoringConfig(config)) return 'Konfigurasi perlu diverifikasi sebelum dipakai untuk laporan final klinis/personel.';
-  if (questions && questions.length !== 567) return `Total item harus 567 untuk MMPI-2; saat ini ${questions.length}.`;
+  if (questions && questions.length !== REQUIRED_TOTAL_QUESTIONS) return `Total item harus ${REQUIRED_TOTAL_QUESTIONS} untuk MMPI-2; saat ini ${questions.length}.`;
   const invalid = config.scales.find((scale) => !scale.id || !(scale.code ?? scale.id) || !scale.name || !scale.group || !Array.isArray(scale.items) || scale.items.length === 0);
   if (invalid) return `Skala ${invalid?.id || '(tanpa ID)'} harus punya id, code, name, group, dan items.`;
   const itemWithoutQuestion = config.scales.flatMap((scale) => scale.items.map((item) => ({ scaleId: scale.id, questionId: item.questionId }))).find((item) => !Number.isFinite(item.questionId));
   if (itemWithoutQuestion) return `Item scoring pada skala ${itemWithoutQuestion.scaleId} memiliki questionId tidak valid.`;
+  const itemWithInvalidResponse = config.scales.flatMap((scale) => scale.items.map((item) => ({ scaleId: scale.id, questionId: item.questionId, scoredResponse: item.scoredResponse }))).find((item) => !isAnswerValue(item.scoredResponse));
+  if (itemWithInvalidResponse) return `Item scoring pada skala ${itemWithInvalidResponse.scaleId} questionId ${itemWithInvalidResponse.questionId} wajib memakai scoredResponse "+" atau "-".`;
   if (questions?.length) {
     const questionIds = new Set(questions.map((question) => question.id));
     const missing = config.scales.flatMap((scale) => scale.items.map((item) => ({ scaleId: scale.id, questionId: item.questionId }))).filter((item) => !questionIds.has(item.questionId));

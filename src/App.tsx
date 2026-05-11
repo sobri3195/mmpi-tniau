@@ -19,6 +19,7 @@ import { validateSession } from './utils/session';
 import { writeAuditLog } from './utils/auditLog';
 import { buildStartTiming, buildSubmitTiming } from './utils/time';
 import { orderQuestionsForSession } from './utils/questions';
+import { normalizeAnswers } from './utils/answerFormat';
 
 export type Page = 'landing' | 'access' | 'identity' | 'instructions' | 'test' | 'result' | 'admin' | 'scoring-missing';
 
@@ -35,7 +36,7 @@ const newSession = (identity: ParticipantIdentity, questions: { id: number }[], 
     uniqueKey: existing?.uniqueKey,
     participant: identity,
     identity,
-    answers: existing?.answers || {},
+    answers: normalizeAnswers(existing?.answers || {}),
     currentIndex: existing?.currentIndex || 0,
     mode: existing?.mode || 'single',
     status: 'Draft',
@@ -97,14 +98,15 @@ export default function App() {
       setPage('scoring-missing');
       return;
     }
-    const scores = calculateRawScores(s.answers, latestConfig!);
+    const normalizedAnswers = normalizeAnswers(s.answers);
+    const scores = calculateRawScores(normalizedAnswers, latestConfig!);
     const validityStatus = determineValidity(scores, latestConfig!);
     const submitTiming = buildSubmitTiming(s.startedAt);
     const result: AssessmentResult = {
       id: s.id,
       identity: s.identity,
-      answers: s.answers,
-      answeredCount: Object.keys(s.answers).length,
+      answers: normalizedAnswers,
+      answeredCount: Object.keys(normalizedAnswers).length,
       totalQuestions: latestQuestions.length,
       submittedAt: submitTiming.submittedAt,
       submittedDate: submitTiming.submittedDate,
@@ -127,7 +129,7 @@ export default function App() {
         validityNotes: '', clinicalImpression: '', riskNotes: '', recommendations: '', limitations: '', finalConclusion: '', isLocked: false,
       },
     };
-    saveCurrentSession({ ...s, status: 'Selesai', ...submitTiming, updatedAt: submitTiming.submittedAt });
+    saveCurrentSession({ ...s, answers: normalizedAnswers, status: 'Selesai', ...submitTiming, updatedAt: submitTiming.submittedAt });
     saveResult(result);
     writeAuditLog({ action: 'Participant submitted test', targetType: 'result', targetId: result.id, description: `Peserta ${result.identity.name} submit tes.` }); if (s.tokenId) markTokenCompleted(s.tokenId, result.id); setActiveResult(result); setSession(null); refresh(); setPage('result');
   };

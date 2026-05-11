@@ -6,7 +6,7 @@ import { clearAdminDataKey, saveAdminScoringConfig } from '../../utils/adminStor
 import { validateScoringConfigAdmin, type ValidationResult } from '../../utils/configValidation';
 import { PanelTitle, TemplateButton, ValidationMessages } from './AdminCommon';
 
-const templateScoring = { instrument: 'MMPI-2 Placeholder - ganti dengan konfigurasi resmi/berizin', totalItems: 567, scales: [{ id: 'placeholder_validity', code: 'VAL_PLACEHOLDER', name: 'Validity Placeholder', group: 'validity', items: [{ questionId: 1, scoredResponse: true, point: 1 }], interpretationRules: [], tScoreConversion: [] }, { id: 'placeholder_clinical', code: 'CLIN_PLACEHOLDER', name: 'Clinical Placeholder', group: 'clinical', items: [{ questionId: 2, scoredResponse: false, point: 1 }], interpretationRules: [], tScoreConversion: [] }] };
+const templateScoring = { instrument: 'MMPI-2 Placeholder - ganti dengan konfigurasi resmi/berizin', totalItems: 567, scales: [{ id: 'placeholder_validity', code: 'VAL_PLACEHOLDER', name: 'Validity Placeholder', group: 'validity', items: [{ questionId: 1, scoredResponse: '+', point: 1 }], interpretationRules: [], tScoreConversion: [] }, { id: 'placeholder_clinical', code: 'CLIN_PLACEHOLDER', name: 'Clinical Placeholder', group: 'clinical', items: [{ questionId: 2, scoredResponse: '-', point: 1 }], interpretationRules: [], tScoreConversion: [] }] };
 
 export const ImportScoringPanel = ({ questions, config, onRefresh, toast }: { questions: Question[]; config: ScoringConfig | null; onRefresh: () => void; toast: (message: string, tone?: 'teal' | 'amber' | 'rose') => void }) => {
   const [draft, setDraft] = useState<ScoringConfig | null>(null);

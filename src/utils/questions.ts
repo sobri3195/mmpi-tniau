@@ -1,4 +1,5 @@
 import type { Question } from '../types';
+import { normalizeQuestionResponses } from './answerFormat';
 
 const asNumber = (value: unknown) => {
   const numeric = Number(value);
@@ -10,13 +11,13 @@ export const questionNumberPadded = (question: Question, index: number) => Strin
 
 export const normalizeQuestions = (questions: Question[]): Question[] => questions.map((question, index) => {
   const number = questionNumber(question, index);
-  return {
+  return normalizeQuestionResponses({
     ...question,
     id: Number(question.id),
     number,
     order: number,
     code: question.code || `Q${String(number).padStart(3, '0')}`,
-  };
+  });
 });
 
 export const orderQuestionsForSession = (questions: Question[], questionOrder?: number[]) => {

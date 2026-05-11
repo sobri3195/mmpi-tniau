@@ -1,6 +1,6 @@
-export type AnswerValue = boolean | string | number;
+export type AnswerValue = '+' | '-';
 
-export type ResponseType = 'true_false' | 'yes_no';
+export type ResponseType = 'plus_minus';
 
 export interface QuestionOption {
   label: string;
