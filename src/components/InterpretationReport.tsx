@@ -1,11 +1,13 @@
-import type { ScoreRow } from '../types';
+import type { ScoreRow, ValidityStatus } from '../types';
 import { generateSpecialistInterpretation, getScoreTone } from '../utils/interpretation';
 import { Badge, Disclaimer, PrivacyNotice } from './ui';
 
 const formatScore = (score: ScoreRow) => (score.tScore !== undefined ? `T=${score.tScore}` : `Raw=${score.rawScore}`);
 
-export const InterpretationReport = ({ scores }: { scores: ScoreRow[] }) => {
+export const InterpretationReport = ({ scores, validityStatus, clinicalSummary, recommendations }: { scores: ScoreRow[]; validityStatus?: ValidityStatus; clinicalSummary?: string; recommendations?: string[] }) => {
   const report = generateSpecialistInterpretation(scores);
+  const finalClinicalSummary = validityStatus?.status === 'invalid' ? 'Status validitas invalid/perlu review. Kesimpulan klinis final tidak ditampilkan dan perlu review/retest oleh profesional.' : (clinicalSummary ?? report.clinicalSummary);
+  const finalRecommendations = recommendations?.length ? recommendations : report.recommendations;
 
   return (
     <div className="space-y-6">
@@ -24,7 +26,7 @@ export const InterpretationReport = ({ scores }: { scores: ScoreRow[] }) => {
         </section>
         <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
           <h3 className="font-black">2. Kesan Klinis Utama</h3>
-          <p className="mt-2 text-sm leading-6">{report.clinicalSummary}</p>
+          <p className="mt-2 text-sm leading-6">{finalClinicalSummary}</p>
         </section>
       </div>
 
@@ -51,7 +53,7 @@ export const InterpretationReport = ({ scores }: { scores: ScoreRow[] }) => {
       <section className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
         <h3 className="font-black">4. Rekomendasi Tindak Lanjut</h3>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6">
-          {report.recommendations.map((item) => <li key={item}>{item}</li>)}
+          {finalRecommendations.map((item) => <li key={item}>{item}</li>)}
         </ul>
       </section>
 

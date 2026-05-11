@@ -36,12 +36,21 @@ export interface NormConversion {
 
 export interface ScaleConfig {
   id: string;
+  code?: string;
   name: string;
   description: string;
   type?: 'validity' | 'clinical' | 'content' | 'other';
+  group?: 'validity' | 'clinical' | 'content' | 'other';
   items: ScoringItem[];
   interpretationRules: InterpretationRule[];
   norms?: NormConversion[];
+  tScoreConversion?: NormConversion[];
+}
+
+export interface ValidityStatus {
+  status: 'valid' | 'caution' | 'invalid' | 'unknown';
+  label: string;
+  reasons: string[];
 }
 
 export interface ScoringConfig {
@@ -86,6 +95,7 @@ export interface ScoreRow {
   interpretation: string;
   normStatus: string;
   type?: string;
+  code?: string;
 }
 
 export interface AssessmentResult {
@@ -97,4 +107,8 @@ export interface AssessmentResult {
   submittedAt: string;
   scores: ScoreRow[];
   status: 'Selesai' | 'Perlu Review';
+  validityStatus?: ValidityStatus;
+  interpretations?: { scaleId: string; label: string; description: string }[];
+  clinicalSummary?: string;
+  recommendations?: string[];
 }

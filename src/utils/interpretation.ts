@@ -57,7 +57,7 @@ export const generateSpecialistInterpretation = (scores: ScoreRow[]): Specialist
       : 'Indikator validitas yang tersedia tidak menunjukkan peringatan mayor berdasarkan aturan konfigurasi yang diimpor. Profil tetap perlu diverifikasi oleh pemeriksa berwenang.';
 
   const clinicalSummary = elevatedScales.length > 0
-    ? `Profil menunjukkan elevasi bermakna pada ${elevatedScales.length} skala utama, terutama ${elevatedScales.slice(0, 3).map((score) => `${score.scaleId} (${score.scaleName})`).join(', ')}. Area tersebut menjadi fokus eksplorasi klinis lanjutan.`
+    ? `Profil mengindikasikan elevasi pada ${elevatedScales.length} skala utama, terutama ${elevatedScales.slice(0, 3).map((score) => `${score.scaleId} (${score.scaleName})`).join(', ')}. Area tersebut perlu dikonfirmasi dan menjadi fokus eksplorasi klinis lanjutan.`
     : borderlineScales.length > 0
       ? `Tidak tampak elevasi tinggi yang dominan, namun terdapat area waspada pada ${borderlineScales.slice(0, 3).map((score) => `${score.scaleId} (${score.scaleName})`).join(', ')}.`
       : 'Tidak tampak elevasi klinis menonjol berdasarkan aturan konfigurasi yang tersedia. Tetap pertimbangkan keluhan aktual, riwayat, fungsi kerja, dan observasi pemeriksa.';
@@ -86,6 +86,9 @@ export const generateSpecialistInterpretation = (scores: ScoreRow[]): Specialist
     { term: 'Elevasi klinis', description: `Pada laporan otomatis ini, T-score ≥ ${ELEVATED_T_SCORE} atau label kategori tinggi/bermakna diperlakukan sebagai area yang perlu eksplorasi klinis.` },
     { term: 'Area waspada', description: `T-score ${BORDERLINE_T_SCORE}-${ELEVATED_T_SCORE - 1} atau label sedang/waspada diperlakukan sebagai temuan yang perlu dikonfirmasi dengan wawancara.` },
     { term: 'Skala validitas', description: 'Skala yang membantu menilai gaya respons, konsistensi, defensivitas, atau kemungkinan over-reporting/under-reporting sesuai pedoman instrumen.' },
+    { term: 'Skala klinis', description: 'Skala yang menggambarkan area kecenderungan klinis dan harus dikonfirmasi melalui evaluasi profesional, bukan diagnosis final.' },
+    { term: 'Kategori interpretasi', description: 'T-score <50 rendah, 50–64 dalam batas umum, 65–74 elevated/perlu perhatian, dan ≥75 high elevated/perlu evaluasi profesional.' },
+    { term: 'Batasan interpretasi', description: 'Raw score tanpa T-score diberi label belum dikonversi ke norma resmi dan tidak boleh digunakan untuk klaim klinis kuat.' },
   ];
 
   return { validitySummary, clinicalSummary, dominantScales, elevatedScales, borderlineScales, recommendations, limitations, appendix };

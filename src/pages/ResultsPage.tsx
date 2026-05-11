@@ -9,26 +9,28 @@ export const ResultsPage = ({ result, goHome }: { result: AssessmentResult; goHo
   const submittedAt = new Date(result.submittedAt);
   const submittedDateTime = submittedAt.toLocaleString('id-ID');
   const finishTime = submittedAt.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  const validityTone = result.validityStatus?.status === 'valid' ? 'teal' : result.validityStatus?.status === 'invalid' ? 'rose' : 'amber';
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
     <Card className="mb-6">
       <div className="flex flex-wrap justify-between gap-4">
         <div><p className="text-sm font-bold text-teal-600">Kesehatan Jiwa TNI Angkatan Udara</p><h1 className="text-2xl font-black sm:text-3xl">Laporan Hasil Asesmen</h1><p className="text-slate-500">Submit: {submittedDateTime}</p></div>
-        <Badge tone={result.status === 'Perlu Review' ? 'amber' : 'teal'}>{result.status}</Badge>
+        <div className="flex flex-col items-start gap-2 sm:items-end"><Badge tone={result.status === 'Perlu Review' ? 'amber' : 'teal'}>{result.status}</Badge><Badge tone={validityTone}>{result.validityStatus?.label ?? 'Validitas belum dinilai'}</Badge></div>
       </div>
       <div className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-        <Info label="Nama" value={result.identity.name} /><Info label="Tanggal lahir" value={result.identity.dateOfBirth || '-'} /><Info label="Usia" value={result.identity.age} />
-        <Info label="Jenis kelamin" value={result.identity.gender} /><Info label="Status perkawinan" value={result.identity.maritalStatus || '-'} /><Info label="Pendidikan" value={result.identity.education || '-'} />
-        <Info label="Pekerjaan" value={result.identity.occupation || '-'} /><Info label="Asal Satker" value={result.identity.originWorkUnit || '-'} /><Info label="Kesatuan" value={result.identity.unit} />
-        <Info label="Soal dijawab" value={`${result.answeredCount}/${result.totalQuestions}`} />
-        <Info label="Waktu selesai" value={finishTime} />
+        <Info label="Nama" value={result.identity.name} /><Info label="Nomor peserta" value={result.identity.participantNumber || '-'} /><Info label="Tanggal asesmen" value={result.identity.assessmentDate || submittedAt.toLocaleDateString('id-ID')} />
+        <Info label="Tanggal lahir" value={result.identity.dateOfBirth || '-'} /><Info label="Usia" value={result.identity.age} /><Info label="Jenis kelamin" value={result.identity.gender} />
+        <Info label="Status perkawinan" value={result.identity.maritalStatus || '-'} /><Info label="Pendidikan" value={result.identity.education || '-'} /><Info label="Pekerjaan" value={result.identity.occupation || '-'} />
+        <Info label="Asal Satker" value={result.identity.originWorkUnit || '-'} /><Info label="Kesatuan" value={result.identity.unit} /><Info label="Total soal" value={String(result.totalQuestions)} />
+        <Info label="Total terjawab" value={String(result.answeredCount)} /><Info label="Soal dijawab" value={`${result.answeredCount}/${result.totalQuestions}`} /><Info label="Waktu selesai" value={finishTime} />
       </div>
+      {result.validityStatus?.reasons?.length ? <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm dark:bg-slate-800"><p className="font-bold">Catatan validitas</p><ul className="mt-2 list-disc pl-5">{result.validityStatus.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></div> : null}
       <div className="mt-6 grid gap-3 no-print sm:flex sm:flex-wrap"><Button onClick={() => exportResultJson(result)}>Export JSON</Button><Button variant="ghost" onClick={() => exportResultsCsv([result])}>Export CSV</Button><Button variant="secondary" onClick={printReport}>Cetak / PDF</Button><Button variant="ghost" onClick={goHome}>Beranda</Button></div>
     </Card>
     <Card className="mb-6"><ScoreCharts scores={result.scores} /></Card>
     <Card className="mb-6"><h2 className="mb-4 text-xl font-black">Tabel Skor dan Interpretasi</h2><ScoreTable scores={result.scores} /></Card>
-    <Card className="mb-6"><InterpretationReport scores={result.scores} /></Card>
+    <Card className="mb-6"><InterpretationReport scores={result.scores} validityStatus={result.validityStatus} clinicalSummary={result.clinicalSummary} recommendations={result.recommendations} /></Card>
     </div>
   );
 };
