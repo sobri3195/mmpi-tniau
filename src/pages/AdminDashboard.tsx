@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { AssessmentResult, Question, ScoringConfig, SummaryAnalysisConfig } from '../types';
+import type { AccessToken, AssessmentResult, Question, ScoringConfig, SummaryAnalysisConfig } from '../types';
 import { Badge, Button, Card } from '../components/ui';
 import { StatCard } from '../components/admin/AdminCommon';
 import { ImportQuestionsPanel } from '../components/admin/ImportQuestionsPanel';
@@ -11,6 +11,9 @@ import { InterpretationConfigPanel } from '../components/admin/InterpretationCon
 import { SummaryAnalysisConfigPanel } from '../components/admin/SummaryAnalysisConfigPanel';
 import { ResultsManagementPanel } from '../components/admin/ResultsManagementPanel';
 import { SystemReadinessCheck } from '../components/admin/SystemReadinessCheck';
+import { SystemReadinessWizard } from '../components/admin/SystemReadinessWizard';
+import { ReadyForInterpretationBanner } from '../components/admin/ReadyForInterpretationBanner';
+import { ReviewStatsCard } from '../components/admin/ReviewStatsCard';
 import { AdminSettingsPanel } from '../components/admin/AdminSettingsPanel';
 import { BackupRestorePanel } from '../components/admin/BackupRestorePanel';
 import { TokenManagementPanel } from '../components/admin/TokenManagementPanel';
@@ -25,9 +28,8 @@ import { AccessDenied } from '../components/auth/ProtectedRoute';
 import { getCurrentUser, logoutUser } from '../utils/session';
 import { getUsers } from '../utils/userStorage';
 import { ADMIN_STORAGE_KEYS, loadAdminSettings, loadAuxConfig, readAdminJson } from '../utils/adminStorage';
-import { isDemoLikeConfig, validateInterpretationConfig, validateNormTable, validateScoringConfigAdmin } from '../utils/configValidation';
+import { calculateReviewStats, getSystemReadinessStatus } from '../utils/systemReadiness';
 import { getAuditLogs } from '../utils/auditLog';
-import type { AccessToken } from '../types';
 
 export const AdminDashboard = ({ questions, config, results, refresh, openResult, currentPath, navigate }: { questions: Question[]; config: ScoringConfig | null; results: AssessmentResult[]; refresh: () => void; openResult: (result: AssessmentResult) => void; currentPath: string; navigate: (path: string) => void }) => {
   const user = getCurrentUser();
@@ -45,16 +47,13 @@ export const AdminDashboard = ({ questions, config, results, refresh, openResult
   const logs = getAuditLogs();
 
   const summary = useMemo(() => {
-    const scoringValidation = validateScoringConfigAdmin(config, questions);
-    const normValidation = validateNormTable(normTable, config);
-    const interpretationValidation = validateInterpretationConfig(interpretationConfig);
+    const readiness = getSystemReadinessStatus();
+    const reviewStats = calculateReviewStats(results);
     const today = new Date().toISOString().slice(0, 10);
     return {
-      scoringValidation,
-      normValidation,
-      interpretationValidation,
+      readiness,
+      reviewStats,
       completed: results.filter((result) => result.status === 'Selesai').length,
-      reviewReports: results.filter((result) => result.status === 'Perlu Review' || !result.specialistReview || result.specialistReview.status === 'pending').length,
       finalReports: results.filter((result) => result.specialistReview?.status === 'finalized').length,
       tokensAvailable: tokens.filter((token) => token.status === 'unused').length,
       tokensActive: tokens.filter((token) => token.status === 'active').length,
@@ -65,13 +64,33 @@ export const AdminDashboard = ({ questions, config, results, refresh, openResult
       invalid: results.filter((result) => result.validityStatus?.status === 'invalid' || result.validityStatus?.requiresRetest).length,
       reviewed: results.filter((result) => result.specialistReview?.status === 'reviewed').length,
     };
-  }, [config, interpretationConfig, normTable, questions, results, tokens]);
+  }, [results, tokens]);
 
   if (!user) return <AccessDenied />;
 
-  const superadminDashboard = <div className="space-y-6"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><StatCard label="Jumlah user" value={users.length} /><StatCard label="Jumlah token" value={tokens.length} /><StatCard label="Peserta selesai" value={summary.completed} tone="teal" /><StatCard label="Status bank soal" value={questions.length === 567 ? 'Siap' : 'Belum siap'} tone={questions.length === 567 ? 'teal' : 'rose'} /><StatCard label="Status scoringConfig" value={summary.scoringValidation.valid ? 'Valid' : 'Belum valid'} tone={summary.scoringValidation.valid ? 'teal' : 'rose'} /><StatCard label="Status normTable" value={summary.normValidation.valid && normTable ? 'Ada' : 'Belum lengkap'} tone={summary.normValidation.valid && normTable ? 'teal' : 'amber'} /><StatCard label="Status interpretationConfig" value={summary.interpretationValidation.valid ? 'Ada' : 'Belum lengkap'} tone={summary.interpretationValidation.valid ? 'teal' : 'amber'} /><StatCard label="Perlu telaah" value={summary.reviewReports} tone="amber" /><StatCard label="Laporan final" value={summary.finalReports} tone="teal" /></div><SystemReadinessCheck questions={questions} scoringConfig={config} normTable={normTable} interpretationConfig={interpretationConfig} codeTypeConfig={codeTypeConfig} settings={settings} /><Card><h3 className="text-xl font-black">Audit log terbaru</h3><div className="mt-4 grid gap-2">{logs.slice(0, 5).map((log) => <div key={log.logId} className="rounded-2xl border border-slate-100 p-3 text-sm dark:border-slate-800"><strong>{log.action}</strong> — {log.description}<br /><span className="text-xs text-slate-500">{new Date(log.timestamp).toLocaleString('id-ID')} oleh {log.username}</span></div>)}{logs.length === 0 && <p className="text-sm text-slate-500">Belum ada audit log.</p>}</div></Card></div>;
-  const testerDashboard = <div className="space-y-6"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><StatCard label="Token tersedia" value={summary.tokensAvailable} /><StatCard label="Token aktif" value={summary.tokensActive} tone="teal" /><StatCard label="Peserta sedang tes" value={summary.testingNow} tone="amber" /><StatCard label="Peserta selesai hari ini" value={summary.completedToday} tone="teal" /><StatCard label="Peserta belum mulai" value={summary.notStarted} /><StatCard label="Hasil menunggu telaah" value={summary.reviewReports} tone="amber" /></div><Card><h2 className="text-xl font-black">Aksi cepat tester</h2><div className="mt-4 flex flex-wrap gap-3"><Button onClick={() => navigate('/admin/tokens')}>Buat token</Button><Button variant="ghost" onClick={() => navigate('/admin/tokens')}>Cetak kartu token</Button><Button variant="secondary" onClick={() => navigate('/admin/results')}>Lihat status peserta</Button></div></Card></div>;
-  const specialistDashboard = <div className="space-y-6"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"><StatCard label="Perlu telaah" value={summary.reviewReports} tone="amber" /><StatCard label="Perhatian" value={summary.caution} tone="amber" /><StatCard label="Invalid/tes ulang" value={summary.invalid} tone="rose" /><StatCard label="Sudah ditelaah" value={summary.reviewed} tone="teal" /><StatCard label="Laporan final" value={summary.finalReports} tone="teal" /></div><Card><h2 className="text-xl font-black">Aksi cepat spesialis</h2><div className="mt-4 flex flex-wrap gap-3"><Button onClick={() => navigate('/admin/review')}>Telaah hasil terbaru</Button><Button variant="secondary" onClick={() => navigate('/admin/review')}>Cetak laporan final</Button><Button variant="ghost" onClick={() => navigate('/admin/review')}>Tambah catatan klinis</Button></div></Card></div>;
+  const superadminDashboard = <div className="space-y-6">
+    <ReadyForInterpretationBanner status={summary.readiness} onOpenWizard={() => navigate('/admin/readiness-wizard')} />
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <StatCard label="Jumlah user" value={users.length} />
+      <StatCard label="Jumlah token" value={tokens.length} />
+      <StatCard label="Peserta selesai" value={summary.completed} tone="teal" />
+      <StatCard label="Bank Soal" value={summary.readiness.questionsReady ? 'Siap' : 'Perlu dilengkapi'} tone={summary.readiness.questionsReady ? 'teal' : 'amber'} />
+      <StatCard label="ScoringConfig" value={summary.readiness.scoringReady ? 'Siap Scoring' : 'Perlu dilengkapi'} tone={summary.readiness.scoringReady ? 'teal' : 'amber'} />
+      <StatCard label="NormTable" value={summary.readiness.normReady ? 'Siap T-score' : 'Perlu dilengkapi'} tone={summary.readiness.normReady ? 'teal' : 'amber'} />
+      <StatCard label="Interpretasi Rusdi Maslim" value={summary.readiness.rusdiInterpretationReady ? 'Siap' : 'Perlu dilengkapi'} tone={summary.readiness.rusdiInterpretationReady ? 'teal' : 'amber'} />
+      <StatCard label="Interpretasi Hubertus" value={summary.readiness.hubertusInterpretationReady ? 'Siap' : 'Perlu dilengkapi'} tone={summary.readiness.hubertusInterpretationReady ? 'teal' : 'amber'} />
+      <StatCard label="Analisa Ringkas TNI AU" value={summary.readiness.summaryAnalysisReady ? 'Siap' : 'Perlu dilengkapi'} tone={summary.readiness.summaryAnalysisReady ? 'teal' : 'amber'} />
+      <StatCard label="RH Skrining" value={summary.readiness.rhReady ? 'Siap' : 'Perlu dilengkapi'} tone={summary.readiness.rhReady ? 'teal' : 'amber'} />
+      <StatCard label="Laporan" value={summary.readiness.reportReady ? 'Siap' : 'Perlu dilengkapi'} tone={summary.readiness.reportReady ? 'teal' : 'amber'} />
+      <StatCard label="Spesialis" value={summary.readiness.specialistReady ? 'Siap' : 'Perlu dilengkapi'} tone={summary.readiness.specialistReady ? 'teal' : 'amber'} />
+    </div>
+    <ReviewStatsCard stats={summary.reviewStats} />
+    <SystemReadinessCheck questions={questions} scoringConfig={config} normTable={normTable} interpretationConfig={interpretationConfig} codeTypeConfig={codeTypeConfig} settings={settings} />
+    <Card><h3 className="text-xl font-black">Audit log terbaru</h3><div className="mt-4 grid gap-2">{logs.slice(0, 5).map((log) => <div key={log.logId} className="rounded-2xl border border-slate-100 p-3 text-sm dark:border-slate-800"><strong>{log.action}</strong> — {log.description}<br /><span className="text-xs text-slate-500">{new Date(log.timestamp).toLocaleString('id-ID')} oleh {log.username}</span></div>)}{logs.length === 0 && <p className="text-sm text-slate-500">Belum ada audit log.</p>}</div></Card>
+  </div>;
+
+  const testerDashboard = <div className="space-y-6"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><StatCard label="Token tersedia" value={summary.tokensAvailable} /><StatCard label="Token aktif" value={summary.tokensActive} tone="teal" /><StatCard label="Peserta sedang tes" value={summary.testingNow} tone="amber" /><StatCard label="Peserta selesai hari ini" value={summary.completedToday} tone="teal" /><StatCard label="Peserta belum mulai" value={summary.notStarted} /><StatCard label="Hasil menunggu telaah" value={summary.reviewStats.message} tone="amber" /></div><Card><h2 className="text-xl font-black">Aksi cepat tester</h2><div className="mt-4 flex flex-wrap gap-3"><Button onClick={() => navigate('/admin/tokens')}>Buat token</Button><Button variant="ghost" onClick={() => navigate('/admin/tokens')}>Cetak kartu token</Button><Button variant="secondary" onClick={() => navigate('/admin/results')}>Lihat status peserta</Button></div></Card></div>;
+  const specialistDashboard = <div className="space-y-6"><ReviewStatsCard stats={summary.reviewStats} /><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><StatCard label="Perhatian" value={summary.caution} tone="amber" /><StatCard label="Invalid/tes ulang" value={summary.invalid} tone="rose" /><StatCard label="Sudah ditelaah" value={summary.reviewed} tone="teal" /><StatCard label="Laporan final" value={summary.finalReports} tone="teal" /></div><Card><h2 className="text-xl font-black">Aksi cepat spesialis</h2><div className="mt-4 flex flex-wrap gap-3"><Button onClick={() => navigate('/admin/review')}>Telaah hasil terbaru</Button><Button variant="secondary" onClick={() => navigate('/admin/review')}>Cetak laporan final</Button><Button variant="ghost" onClick={() => navigate('/admin/review')}>Tambah catatan klinis</Button></div></Card></div>;
   const dashboard = user.role === 'superadmin' ? superadminDashboard : user.role === 'tester' ? testerDashboard : specialistDashboard;
   const configPage = <PermissionGuard permission="config.importQuestions"><div className="space-y-6"><ImportQuestionsPanel questions={questions} onRefresh={refresh} toast={() => undefined} /><ImportScoringPanel questions={questions} config={config} onRefresh={refresh} toast={() => undefined} /><ImportNormPanel normTable={normTable} config={config} onRefresh={refresh} toast={() => undefined} /><ImportInterpretationPanel config={interpretationConfig} onRefresh={refresh} toast={() => undefined} /><ImportCodeTypePanel config={codeTypeConfig} onRefresh={refresh} toast={() => undefined} /></div></PermissionGuard>;
   const interpretationConfigPage = <PermissionGuard permission="config.importQuestions"><InterpretationConfigPanel rusdiConfig={rusdiConfig} hubertusConfig={hubertusConfig} rusdiCodeTypeConfig={rusdiCodeTypeConfig} hubertusCodeTypeConfig={hubertusCodeTypeConfig} scoringConfig={config} onRefresh={refresh} toast={() => undefined} /></PermissionGuard>;
@@ -82,6 +101,7 @@ export const AdminDashboard = ({ questions, config, results, refresh, openResult
     : currentPath === '/admin/config' ? configPage
     : currentPath === '/admin/interpretations' ? interpretationConfigPage
     : currentPath === '/admin/summary-analysis' ? <PermissionGuard permission="config.importQuestions"><SummaryAnalysisConfigPanel config={summaryAnalysisConfig} scoringConfig={config} onRefresh={refresh} toast={() => undefined} /></PermissionGuard>
+    : currentPath === '/admin/readiness-wizard' ? <PermissionGuard permission="config.importQuestions"><SystemReadinessWizard onRefresh={refresh} navigate={navigate} /></PermissionGuard>
     : currentPath === '/admin/results' ? resultsPage
     : currentPath === '/admin/review' ? <PermissionGuard permission="review.create"><SpecialistReviewPage results={results} onRefresh={refresh} /></PermissionGuard>
     : currentPath === '/admin/rh' ? <PermissionGuard permission="results.readAdministrative"><AdminRHPage results={results} /></PermissionGuard>
