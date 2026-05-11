@@ -47,6 +47,8 @@ const readJsonWithLegacy = <T>(key: string, legacyKey: string, fallback: T): T =
 
 const writeJson = (key: string, value: unknown) => localStorage.setItem(key, JSON.stringify(value));
 
+const isIncompleteQuestionBank = (questions: Question[]) => questions.length !== BUNDLED_QUESTIONS.length;
+
 const isLegacyPlaceholderBank = (questions: Question[]) =>
   questions.length > 0 &&
   questions.length < BUNDLED_QUESTIONS.length &&
@@ -54,7 +56,7 @@ const isLegacyPlaceholderBank = (questions: Question[]) =>
 
 export const loadQuestions = (): Question[] => {
   const savedQuestions = readJsonWithLegacy<Question[] | null>(STORAGE_KEYS.questions, LEGACY_STORAGE_KEYS.questions, null);
-  if (!savedQuestions?.length || isLegacyPlaceholderBank(savedQuestions)) return [];
+  if (!savedQuestions?.length || isIncompleteQuestionBank(savedQuestions) || isLegacyPlaceholderBank(savedQuestions)) return BUNDLED_QUESTIONS;
   return savedQuestions;
 };
 export const saveQuestions = (questions: Question[]) => writeJson(STORAGE_KEYS.questions, questions);
