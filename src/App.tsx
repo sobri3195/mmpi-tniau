@@ -43,8 +43,15 @@ export default function App() {
   const resume = () => session ? setPage('test') : setPage('identity');
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-teal-950 dark:text-slate-100">
-      <nav className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur no-print dark:border-slate-800 dark:bg-slate-950/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3"><button onClick={() => setPage('landing')} className="font-black text-teal-700 dark:text-teal-300">MMPI TNI AU</button><div className="flex gap-2"><Button variant="ghost" onClick={() => setDark(!dark)}>{dark ? '☀️' : '🌙'}</Button><Button variant="ghost" onClick={resume}>{session ? 'Lanjutkan Draft' : 'Mulai Tes'}</Button><Button variant="secondary" onClick={() => { refresh(); setPage('admin'); }}>Admin</Button></div></div>
+      <nav className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur no-print dark:border-slate-800 dark:bg-slate-950/90">
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <button onClick={() => setPage('landing')} className="text-left text-lg font-black text-teal-700 dark:text-teal-300">MMPI TNI AU</button>
+          <div className="grid grid-cols-[auto_1fr_auto] gap-2 sm:flex sm:items-center">
+            <Button variant="ghost" className="px-3" aria-label="Toggle dark mode" onClick={() => setDark(!dark)}>{dark ? '☀️' : '🌙'}</Button>
+            <Button variant="ghost" className="whitespace-nowrap" onClick={resume}>{session ? 'Lanjutkan Draft' : 'Mulai Tes'}</Button>
+            <Button variant="secondary" onClick={() => { refresh(); setPage('admin'); }}>Admin</Button>
+          </div>
+        </div>
       </nav>
       {page === 'landing' && <LandingPage go={(p) => setPage(p as Page)} />}
       {page === 'identity' && <IdentityPage onSubmit={startIdentity} />}
