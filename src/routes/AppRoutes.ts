@@ -1,8 +1,4 @@
-import type { ReactNode } from 'react';
-import { Card } from '../components/ui';
 import { validateSessionToken } from '../utils/tokenAccess';
-import { validateParticipantAccess } from '../utils/tokenValidation';
-import { getParticipantAccessRedirect, ParticipantProtectedRoute } from '../components/auth/ParticipantProtectedRoute';
 
 export const ROUTES = {
   access: '/access',
@@ -29,14 +25,6 @@ export const ROUTES = {
 } as const;
 
 export const requireTokenSession = () => validateSessionToken();
-
-export const ProtectedTokenRoute = ({ children, fallback }: { children: ReactNode; fallback?: ReactNode }) => {
-  const validation = validateParticipantAccess({ currentRoute: typeof window !== 'undefined' ? window.location.pathname : '' });
-  if (!validation.allowed) return fallback || <Card><p className="font-semibold">{validation.message}</p></Card>;
-  return <>{children}</>;
-};
-
-export { ParticipantProtectedRoute, getParticipantAccessRedirect };
 
 export const requirePendingRHSession = () => {
   const validation = validateSessionToken();

@@ -14,7 +14,7 @@ export const ImportScoringPanel = ({ questions, config, onRefresh, toast }: { qu
   const [validation, setValidation] = useState<ValidationResult | null>(config ? validateScoringConfigAdmin(config, questions) : null);
   const active = draft ?? config;
   const autoStatus = validateAutoDefaultScoringConfig(active, questions);
-  const scales = active?.scales ?? [];
+  const scales = useMemo(() => active?.scales ?? [], [active]);
   const groups = useMemo(() => new Set(scales.map((scale) => String(scale.group ?? scale.type ?? 'other'))), [scales]);
 
   const importFile = async (file?: File) => {

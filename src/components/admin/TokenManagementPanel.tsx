@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { AccessToken, AssessmentResult } from '../../types';
-import { Button, Card } from '../ui';
+import { Card } from '../ui';
 import { StatCard } from './AdminCommon';
 import { TokenGenerator } from './TokenGenerator';
 import { TokenTable } from './TokenTable';

@@ -51,7 +51,7 @@ export const AdminDashboard = ({ questions, config, results, refresh, openResult
     const before = loadAuxConfig<SummaryAnalysisConfig>('summaryAnalysisConfig');
     const after = ensureSummaryAnalysisConfigExists(scoringEnsured.config);
     if (scoringEnsured.created || interpretationChanged || (!before && after)) refresh();
-  }, [config, questions]);
+  }, [config, questions, refresh]);
   const user = getCurrentUser();
   const normTable = loadAuxConfig('normTable');
   const interpretationConfig = loadAuxConfig('interpretationConfig');

@@ -332,7 +332,7 @@ export const buildDualInterpretations = (scores: ScoreRow[], validityStatus: Val
   return { rusdiMaslim, hubertus, comparison: generateInterpretationComparison(rusdiMaslim, hubertus) };
 };
 
-export const generateFinalSpecialistReview = (result: AssessmentResult, selectedMode: AssessmentResult['specialistReview'] extends infer R ? string : string) => ({
+export const generateFinalSpecialistReview = (result: AssessmentResult, selectedMode: string) => ({
   ...(result.specialistReview ?? {}),
   status: selectedMode === 'not_selected' ? 'pending' : 'reviewed',
   selectedFinalInterpretation: selectedMode,

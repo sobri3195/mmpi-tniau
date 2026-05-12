@@ -7,7 +7,8 @@ import { AUTO_DEFAULT_WARNING, ensureScoringConfigExists, initializeAutoDefaultS
 import { cleanupInvalidParticipantSession, getRHFormByResultId, loadAuxiliaryConfig, loadCurrentSession, loadQuestions, loadResults, loadScoringConfig, saveCurrentSession, saveResult, STORAGE_KEYS } from './utils/storage';
 import { touchTokenSession, validateSessionToken } from './utils/tokenAccess';
 import { canShowContinueDraft, validateParticipantAccess } from './utils/tokenValidation';
-import { ParticipantProtectedRoute, getParticipantAccessRedirect } from './components/auth/ParticipantProtectedRoute';
+import { ParticipantProtectedRoute } from './components/auth/ParticipantProtectedRoute';
+import { getParticipantAccessRedirect } from './components/auth/participantAccessRedirect';
 import { hasAnyUser } from './utils/userStorage';
 import { ADMIN_SESSION_EXPIRED_MESSAGE, validateSession } from './utils/session';
 import { writeAuditLog } from './utils/auditLog';

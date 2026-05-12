@@ -2,7 +2,7 @@ import { vi } from 'vitest';
 import type { AccessToken, CurrentSession } from '../types';
 import { disableToken, enableToken, TOKEN_STORAGE_KEYS } from './tokenAccess';
 import { canShowContinueDraft, createDemoTokensForDevelopmentOnly, validateParticipantAccess, validateTokenAccess } from './tokenValidation';
-import { getParticipantAccessRedirect } from '../components/auth/ParticipantProtectedRoute';
+import { getParticipantAccessRedirect } from '../components/auth/participantAccessRedirect';
 
 const baseToken = (overrides: Partial<AccessToken> = {}): AccessToken => ({
   tokenId: 'token-1',
