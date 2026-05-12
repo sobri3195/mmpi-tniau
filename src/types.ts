@@ -133,7 +133,14 @@ export interface AccessToken {
   completedAt?: string | null;
   resultId?: string | null;
   notes?: string;
+  batchId?: string;
+  singleActiveSessionOnly?: boolean;
+  activeSessionId?: string | null;
+  deviceHistory?: Array<{ at: string; userAgent: string; note: string }>;
+  revokedAt?: string;
+  revokedBy?: string;
 }
+
 
 export interface SourceInterpretationConfig {
   sourceName: 'Rusdi Maslim' | 'Hubertus' | string;
@@ -351,6 +358,19 @@ export interface SummaryAnalysisResult {
   basicPersonalityIndex: { variables: SummaryAnalysisVariableResult[]; total: number | null; category: string; warnings?: string[] };
   conclusionAndSuggestion: { conclusion: string; suggestion: string };
 }
+export interface ConfigVersionsUsed {
+  questionsVersionId: string;
+  scoringConfigVersionId: string;
+  normTableVersionId: string;
+  rusdiInterpretationVersionId: string;
+  hubertusInterpretationVersionId: string;
+  summaryAnalysisVersionId: string;
+  reportTemplateVersionId: string;
+}
+export type ReportWorkflowStatus = 'draft_result' | 'pending_scoring' | 'awaiting_rh' | 'awaiting_operator_verification' | 'awaiting_specialist_review' | 'needs_revision' | 'awaiting_final_approval' | 'finalized' | 'archived';
+export interface WorkflowState { status: ReportWorkflowStatus; operatorVerifiedBy: string; operatorVerifiedAt: string; specialistReviewedBy: string; specialistReviewedAt: string; finalApprovedBy: string; finalApprovedAt: string; revisionNotes: Array<{ by: string; at: string; note: string }>; history: Array<{ by: string; at: string; from: string; to: string; note: string }>; }
+export interface ClinicalFinalizationChecklist { identityVerified: boolean; answersComplete: boolean; durationReviewed: boolean; validityReviewed: boolean; redFlagsReviewed: boolean; rhCompared: boolean; rusdiReviewed: boolean; hubertusReviewed: boolean; summaryAnalysisReviewed: boolean; manualConclusionAdded: boolean; disclaimerIncluded: boolean; completedBy: string; completedAt: string; }
+export interface FinalSignatureMetadata { signedByUserId: string; signedByName: string; role: string; licenseNumber: string; signedAt: string; reportHash: string; signatureStatement: string; isLocked: boolean; }
 
 export interface AssessmentResult {
   id: string;
@@ -396,7 +416,12 @@ export interface AssessmentResult {
   rhCompleted?: boolean;
   rhSummary?: RHSummary;
   summaryAnalysis?: SummaryAnalysisResult;
+  configVersionsUsed?: ConfigVersionsUsed;
+  workflow?: WorkflowState;
+  clinicalFinalizationChecklist?: ClinicalFinalizationChecklist;
+  finalSignature?: FinalSignatureMetadata;
 }
+
 
 
 export type SessionWorkflowStatus = 'mmpi_in_progress' | 'mmpi_completed_pending_rh' | 'rh_in_progress' | 'rh_completed' | 'completed';

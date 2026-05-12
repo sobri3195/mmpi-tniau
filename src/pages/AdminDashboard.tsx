@@ -20,6 +20,16 @@ import { TokenManagementPanel } from '../components/admin/TokenManagementPanel';
 import { AdminSidebar } from '../components/admin/AdminSidebar';
 import { RoleBadge } from '../components/admin/RoleBadge';
 import { AuditLogPanel } from '../components/admin/AuditLogPanel';
+import { ConfigVersionPanel } from '../components/admin/ConfigVersionPanel';
+import { SessionMonitoringPanel } from '../components/admin/SessionMonitoringPanel';
+import { AdvancedTokenPanel } from '../components/admin/AdvancedTokenPanel';
+import { ReviewWorkflowPanel } from '../components/admin/ReviewWorkflowPanel';
+import { ReportTemplateEditor } from '../components/admin/ReportTemplateEditor';
+import { ArchiveExportPanel } from '../components/admin/ArchiveExportPanel';
+import { OperationalAnalyticsDashboard } from '../components/admin/OperationalAnalyticsDashboard';
+import { AnomalyAlertPanel } from '../components/admin/AnomalyAlertPanel';
+import { BackupRestoreAdvancedPanel } from '../components/admin/BackupRestoreAdvancedPanel';
+import { LockdownModeBanner } from '../components/admin/LockdownModeBanner';
 import { UserManagementPage } from './UserManagementPage';
 import { SpecialistReviewPage } from './SpecialistReviewPage';
 import { AdminRHPage } from './AdminRHPage';
@@ -114,9 +124,19 @@ export const AdminDashboard = ({ questions, config, results, refresh, openResult
     : currentPath === '/admin/review' ? <PermissionGuard permission="review.create"><SpecialistReviewPage results={results} onRefresh={refresh} /></PermissionGuard>
     : currentPath === '/admin/rh' ? <PermissionGuard permission="results.readAdministrative"><AdminRHPage results={results} /></PermissionGuard>
     : currentPath === '/admin/settings' ? <PermissionGuard permission="system.reset"><AdminSettingsPanel onRefresh={refresh} toast={() => undefined} /></PermissionGuard>
-    : currentPath === '/admin/backup' ? <PermissionGuard permission="backup.export"><BackupRestorePanel onRefresh={refresh} toast={() => undefined} /></PermissionGuard>
+    : currentPath === '/admin/backup' ? <PermissionGuard permission="backup.export"><div className="space-y-6"><BackupRestoreAdvancedPanel /><BackupRestorePanel onRefresh={refresh} toast={() => undefined} /></div></PermissionGuard>
+    : currentPath === '/admin/config-versions' ? <PermissionGuard permission="config.importQuestions"><ConfigVersionPanel /></PermissionGuard>
+    : currentPath === '/admin/session-monitoring' ? <PermissionGuard permission="results.readAdministrative"><SessionMonitoringPanel /></PermissionGuard>
+    : currentPath === '/admin/tokens-advanced' ? <PermissionGuard permission="tokens.create"><AdvancedTokenPanel /></PermissionGuard>
+    : currentPath === '/admin/operator-verification' ? <PermissionGuard permission="results.readAdministrative"><ReviewWorkflowPanel results={results} onRefresh={refresh} /></PermissionGuard>
+    : currentPath === '/admin/specialist-review' ? <PermissionGuard permission="review.create"><ReviewWorkflowPanel results={results} onRefresh={refresh} /></PermissionGuard>
+    : currentPath === '/admin/final-approval' ? <PermissionGuard permission="review.create"><ReviewWorkflowPanel results={results} onRefresh={refresh} /></PermissionGuard>
+    : currentPath === '/admin/report-template' ? <PermissionGuard permission="config.importQuestions"><ReportTemplateEditor /></PermissionGuard>
+    : currentPath === '/admin/archive' ? <PermissionGuard permission="backup.export"><ArchiveExportPanel results={results} /></PermissionGuard>
+    : currentPath === '/admin/analytics' ? <PermissionGuard permission="results.readAdministrative"><OperationalAnalyticsDashboard results={results} tokens={tokens} /></PermissionGuard>
+    : currentPath === '/admin/anomalies' ? <PermissionGuard permission="results.readAdministrative"><AnomalyAlertPanel /></PermissionGuard>
     : currentPath === '/admin/audit' ? <PermissionGuard permission="audit.read"><AuditLogPanel /></PermissionGuard>
     : dashboard;
 
-  return <div className="mx-auto max-w-7xl px-4 py-8"><div className="mb-6 space-y-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-bold uppercase tracking-wide text-teal-700">Admin Dashboard</p><h1 className="text-2xl font-black sm:text-3xl">Asesmen MMPI TNI AU / SPPG</h1><p className="text-slate-500">Akses terkelola untuk Superadmin, Tester, dan Spesialis.</p></div><div className="flex flex-wrap items-center gap-2"><Badge tone="teal">Admin Panel</Badge><RoleBadge role={user.role} /><span className="text-sm font-bold">{user.displayName}</span><Button variant="ghost" onClick={refresh}>Refresh</Button><Button variant="danger" onClick={() => { logoutUser(); navigate('/admin/login'); }}>Logout</Button></div></div></div><div className="grid gap-6 lg:grid-cols-[260px_1fr]"><AdminSidebar user={user} currentPath={currentPath} navigate={navigate} /><section className="min-w-0">{content}</section></div></div>;
+  return <div className="mx-auto max-w-7xl px-4 py-8"><div className="mb-6 space-y-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-bold uppercase tracking-wide text-teal-700">Admin Dashboard</p><h1 className="text-2xl font-black sm:text-3xl">Asesmen MMPI TNI AU / SPPG</h1><p className="text-slate-500">Akses terkelola untuk Superadmin, Tester, dan Spesialis.</p></div><div className="flex flex-wrap items-center gap-2"><Badge tone="teal">Admin Panel</Badge><RoleBadge role={user.role} /><span className="text-sm font-bold">{user.displayName}</span><Button variant="ghost" onClick={refresh}>Refresh</Button><Button variant="danger" onClick={() => { logoutUser(); navigate('/admin/login'); }}>Logout</Button></div></div></div><div className="grid gap-6 lg:grid-cols-[260px_1fr]"><AdminSidebar user={user} currentPath={currentPath} navigate={navigate} /><section className="min-w-0 space-y-4"><LockdownModeBanner />{content}</section></div></div>;
 };

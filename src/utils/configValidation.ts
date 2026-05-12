@@ -148,3 +148,28 @@ export const clinicalInterpretationReady = (args: { questions: Question[]; scori
   ];
   return { ready: errors.length === 0, errors };
 };
+
+export const validateBeforePublish = (configType: string, configData: unknown, context: { questions?: Question[]; scoringConfig?: ScoringConfig | null } = {}): ValidationResult => {
+  if (configType === 'questions') return validateQuestions(configData);
+  if (configType === 'scoringConfig') return validateScoringConfigAdmin(configData, context.questions ?? []);
+  const result = emptyResult();
+  const data = configData as Record<string, unknown> | null;
+  if (!data || typeof data !== 'object') result.errors.push(`${configType} harus berupa object JSON.`);
+  if (isDemoLikeConfig(configData)) result.warnings.push(`${configType} terdeteksi demo/placeholder; jangan aktifkan untuk laporan final resmi.`);
+  if (configType === 'normTable') {
+    const rows = Array.isArray(configData) ? configData : Array.isArray(data?.rows) ? data.rows : [];
+    if (!rows.length) result.errors.push('normTable harus berisi rows/array konversi.');
+    const seen = new Set<string>();
+    rows.forEach((row) => { const rec = row as Record<string, unknown>; const key = `${rec.scaleId ?? rec.code}:${rec.raw ?? rec.rawScore}`; if (seen.has(key)) result.errors.push(`Raw score duplikat: ${key}.`); seen.add(key); const t = Number(rec.tScore); if (Number.isFinite(t) && (t < 20 || t > 120)) result.warnings.push(`T-score di luar rentang wajar: ${t}.`); });
+  }
+  if (configType.includes('interpretation')) {
+    if (!data?.sourceName) result.errors.push('interpretationConfig wajib punya sourceName.');
+    ['validityInterpretations', 'scaleInterpretations', 'recommendationRules', 'appendix'].forEach((key) => { if (!(key in (data ?? {}))) result.errors.push(`interpretationConfig wajib punya ${key}.`); });
+  }
+  if (configType === 'summaryAnalysis') ['validityAttitude', 'mentalCapacityIndex', 'clinicalProfile', 'basicPersonalityIndex', 'conclusionTemplates'].forEach((key) => { if (!(key in (data ?? {}))) result.errors.push(`summaryAnalysisConfig wajib punya ${key}.`); });
+  result.valid = result.errors.length === 0;
+  return result;
+};
+export const getValidationErrors = (result: ValidationResult) => result.errors;
+export const getValidationWarnings = (result: ValidationResult) => result.warnings;
+export const canActivateConfig = (result: ValidationResult) => result.valid && result.errors.length === 0;
