@@ -1,6 +1,6 @@
 import sampleQuestions from '../data/sampleQuestions.json';
 import sampleScoringConfig from '../data/sampleScoringConfig.json';
-import type { AssessmentResult, CurrentSession, Question, RHForm, ScoringConfig } from '../types';
+import type { AccessToken, AssessmentResult, CurrentSession, Question, RHForm, ScoringConfig } from '../types';
 import { normalizeQuestions } from './questions';
 import { normalizeResultAnswers, normalizeScoringConfigResponses, normalizeSessionAnswers } from './answerFormat';
 
@@ -112,6 +112,38 @@ export const loadCurrentSession = (): CurrentSession | null => {
 };
 export const saveCurrentSession = (session: CurrentSession) => writeJson(STORAGE_KEYS.currentSession, normalizeSessionAnswers(session));
 export const clearCurrentSession = () => localStorage.removeItem(STORAGE_KEYS.currentSession);
+
+
+const PARTICIPANT_BLOCKING_TOKEN_STATUSES: AccessToken['status'][] = ['disabled', 'revoked', 'expired', 'completed'];
+const isProductionMode = () => Boolean(import.meta.env.PROD);
+const isSeededDemoToken = (token: AccessToken) => token.isSeededDemo === true || token.metadata?.isSeededDemo === true;
+
+export const cleanupInvalidParticipantSession = () => {
+  if (typeof window === 'undefined') return null;
+  const tokens = readJson<AccessToken[]>(STORAGE_KEYS.accessTokens, []);
+  const now = new Date().toISOString();
+  let tokensChanged = false;
+  const normalizedTokens = tokens.map((token) => {
+    if (!isProductionMode() || !isSeededDemoToken(token) || (token.status === 'disabled' && token.isEnabled === false)) return token;
+    tokensChanged = true;
+    return { ...token, status: 'disabled' as const, isEnabled: false, disabledAt: token.disabledAt ?? now, disabledBy: token.disabledBy ?? 'system', disableReason: token.disableReason || 'Demo token disabled in production mode', activeSessionId: null };
+  });
+  if (tokensChanged) writeJson(STORAGE_KEYS.accessTokens, normalizedTokens);
+
+  const session = readJsonWithLegacy<CurrentSession | null>(STORAGE_KEYS.currentSession, LEGACY_STORAGE_KEYS.currentSession, null);
+  if (!session) return null;
+  if (!session.tokenId) {
+    clearCurrentSession();
+    return null;
+  }
+  const token = normalizedTokens.find((item) => item.tokenId === session.tokenId);
+  const sessionCompleted = session.sessionStatus === 'completed' || session.status === 'completed';
+  if (!token || token.isEnabled !== true || PARTICIPANT_BLOCKING_TOKEN_STATUSES.includes(token.status) || session.sessionStatus === 'paused_token_disabled' || sessionCompleted) {
+    clearCurrentSession();
+    return null;
+  }
+  return normalizeSessionAnswers(session);
+};
 
 export const loadAccessibilitySettings = (): TestAccessibilitySettings => normalizeAccessibilitySettings(readJson<Partial<TestAccessibilitySettings> & { largeFont?: boolean }>(STORAGE_KEYS.accessibilitySettings, DEFAULT_ACCESSIBILITY_SETTINGS));
 export const saveAccessibilitySettings = (settings: TestAccessibilitySettings) => writeJson(STORAGE_KEYS.accessibilitySettings, normalizeAccessibilitySettings(settings));

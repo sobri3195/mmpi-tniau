@@ -120,10 +120,10 @@ const denied = (reason: ParticipantAccessDeniedReason, token: AccessToken | null
 };
 
 const denyTokenState = (token: AccessToken, session: CurrentSession | null, currentRoute?: string) => {
-  if (token.isEnabled !== true || token.status === 'disabled') return denied('token_disabled', token, session, 'Token tidak aktif. Hubungi petugas ujian.', currentRoute);
   if (token.status === 'revoked') return denied('token_revoked', token, session, 'Token telah dibatalkan.', currentRoute);
   if (token.status === 'completed') return denied('token_completed', token, session, 'Token sudah digunakan dan tes telah selesai.', currentRoute);
   if (token.status === 'expired' || new Date(token.expiresAt).getTime() < Date.now()) return denied('token_expired', token, session, 'Token sudah kedaluwarsa.', currentRoute);
+  if (token.isEnabled !== true || token.status === 'disabled') return denied('token_disabled', token, session, 'Token tidak aktif. Hubungi petugas ujian.', currentRoute);
   return null;
 };
 
