@@ -23,6 +23,7 @@ export const STORAGE_KEYS = {
   normTable: 'sppg_mmpi2_norm_table',
   codeTypeConfig: 'sppg_mmpi2_code_type_config',
   summaryAnalysisConfig: 'sppg_mmpi2_summary_analysis_config',
+  configValidationStatus: 'sppg_mmpi2_config_validation_status',
 } as const;
 
 const LEGACY_STORAGE_KEYS = {

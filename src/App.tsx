@@ -3,6 +3,7 @@ import type { AssessmentResult, CurrentSession, ParticipantIdentity } from './ty
 import { Button, Card } from './components/ui';
 import { BrandLogo } from './components/BrandLogo';
 import { calculateRawScores, determineValidity, generateClinicalSummary, generateRecommendations, isDemoScoringConfig, validateScoringConfig } from './utils/scoring';
+import { AUTO_DEFAULT_WARNING, ensureScoringConfigExists, initializeAutoDefaultScoringConfig, isAutoDefaultScoring } from './utils/autoDefaultScoring';
 import { getRHFormByResultId, loadAuxiliaryConfig, loadCurrentSession, loadQuestions, loadResults, loadScoringConfig, saveCurrentSession, saveResult, STORAGE_KEYS } from './utils/storage';
 import { touchTokenSession, validateSessionToken } from './utils/tokenAccess';
 import { hasAnyUser } from './utils/userStorage';
@@ -88,13 +89,13 @@ export default function App() {
   const setPage = (next: Page, path?: string) => { setPageState(next); if (path) { window.history.replaceState(null, '', path); setCurrentPath(path); } };
   const [dark, setDark] = useState(() => localStorage.getItem(STORAGE_KEYS.adminSettings)?.includes('dark'));
   const [session, setSession] = useState<CurrentSession | null>(() => loadCurrentSession());
-  const [questions, setQuestions] = useState(() => loadQuestions());
+  const [questions, setQuestions] = useState(() => { const loaded = loadQuestions(); initializeAutoDefaultScoringConfig(loaded); return loaded; });
   const [config, setConfig] = useState(() => loadScoringConfig());
   const [results, setResults] = useState(() => loadResults());
   const [activeResult, setActiveResult] = useState<AssessmentResult | null>(() => { const path = window.location.pathname; const id = path.startsWith('/result/') || path.startsWith('/report/') ? path.split('/').pop() : ''; return id ? loadResults().find((result) => result.id === id) ?? null : null; });
   const [submitError, setSubmitError] = useState('');
 
-  useEffect(() => { initializeDefaultInterpretationConfigs(config); initializeDefaultSummaryAnalysisConfig(config); }, [config]);
+  useEffect(() => { const ensured = ensureScoringConfigExists(questions); if (!config || ensured.config.version !== config.version) setConfig(loadScoringConfig()); initializeDefaultInterpretationConfigs(ensured.config); initializeDefaultSummaryAnalysisConfig(ensured.config); }, [config, questions]);
 
   useEffect(() => {
     if (page === 'rh-skrining' && currentPath.startsWith('/result/') && activeResult && !activeResult.rhCompleted) { setPage('rh-skrining', '/rh-skrining'); return; }
@@ -113,11 +114,12 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify({ ...currentSettings, dark }));
   }, [dark]);
   const refresh = () => { setQuestions(loadQuestions()); setConfig(loadScoringConfig()); setResults(loadResults()); };
-  const startIdentity = (identity: ParticipantIdentity) => { if (!canStartNewParticipantSession()) { setAccessMessage('Lockdown mode aktif. Peserta belum dapat memulai tes baru.'); setPage('access', '/access'); return; } const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } const s = newSession(identity, questions, session); setSession(s); saveCurrentSession(s); touchTokenSession(s); updateSessionMonitoring(s, questions.length); writeAuditLog({ action: 'Participant started test', targetType: 'token', targetId: s.tokenId ?? '', description: `Peserta ${identity.name} memulai tes.` }); setPage('instructions', '/participant'); };
+  const startIdentity = (identity: ParticipantIdentity) => { ensureScoringConfigExists(questions); refresh(); if (!canStartNewParticipantSession()) { setAccessMessage('Lockdown mode aktif. Peserta belum dapat memulai tes baru.'); setPage('access', '/access'); return; } const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } const s = newSession(identity, questions, session); setSession(s); saveCurrentSession(s); touchTokenSession(s); updateSessionMonitoring(s, questions.length); writeAuditLog({ action: 'Participant started test', targetType: 'token', targetId: s.tokenId ?? '', description: `Peserta ${identity.name} memulai tes.` }); setPage('instructions', '/participant'); };
   const submit = (s: CurrentSession) => {
     const tokenValidation = validateSessionToken(s);
     if (!tokenValidation.valid) { setSubmitError(tokenValidation.message); setPage('scoring-missing'); return; }
-    const latestConfig = loadScoringConfig();
+    const ensured = ensureScoringConfigExists(loadQuestions());
+    const latestConfig = ensured.config;
     ensureInterpretationConfigsExist(latestConfig);
     initializeDefaultSummaryAnalysisConfig(latestConfig);
     const latestQuestions = orderQuestionsForSession(loadQuestions(), s.questionOrder);
@@ -155,9 +157,10 @@ export default function App() {
       durationLabel: submitTiming.durationText,
       assessment: { instrument: 'MMPI', totalItems: latestQuestions.length, answerFormat: 'plus_minus', startedAt: s.startedAt, startedDate: s.startedDate, startedTime: s.startedTime, submittedAt: submitTiming.submittedAt, submittedDate: submitTiming.submittedDate, submittedTime: submitTiming.submittedTime, durationSeconds: submitTiming.durationSeconds, durationText: submitTiming.durationText, status: 'pending_rh' },
       scores,
-      status: validityStatus.status === 'invalid' || validityStatus.status === 'caution' || isDemoScoringConfig(latestConfig) ? 'Perlu Review' : 'Selesai',
+      status: validityStatus.status === 'invalid' || validityStatus.status === 'caution' || isDemoScoringConfig(latestConfig) || isAutoDefaultScoring(latestConfig) ? 'Perlu Review' : 'Selesai',
       validityStatus,
       isDemoConfig: isDemoScoringConfig(latestConfig),
+      scoringStatus: { status: isAutoDefaultScoring(latestConfig) ? 'scored_auto_default' : latestConfig?.isOfficial === true ? 'scored_official' : 'pending_scoring', scoringConfigVersion: latestConfig?.version ?? 'unknown', isAutoDefault: isAutoDefaultScoring(latestConfig), isOfficial: latestConfig?.isOfficial === true, calculatedAt: submitTiming.submittedAt, warning: isAutoDefaultScoring(latestConfig) ? AUTO_DEFAULT_WARNING : undefined },
       interpretations: buildDualInterpretations(scores, validityStatus, loadAuxiliaryConfig('interpretationRusdiMaslim'), loadAuxiliaryConfig('interpretationHubertus')),
       clinicalSummary: generateClinicalSummary(scores, validityStatus),
       recommendations: generateRecommendations(scores, validityStatus),
@@ -197,7 +200,7 @@ export default function App() {
         {page === 'landing' && <LandingPage go={(p) => p === 'identity' ? resume() : setPage(p as Page, p === 'admin' ? '/admin' : undefined)} questionsCount={questions.length} />}
         {page === 'access' && <TokenAccessPage reason={accessMessage} onVerified={() => { const next = loadCurrentSession(); setSession(next); setAccessMessage(''); setPage('identity', '/participant'); }} />}
         {page === 'identity' && <IdentityPage onSubmit={startIdentity} />}
-        {page === 'instructions' && <InstructionsPage onStart={() => { const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } setPage('test', '/test'); }} questionsCount={questions.length} />}
+        {page === 'instructions' && <InstructionsPage onStart={() => { ensureScoringConfigExists(questions); refresh(); const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } setPage('test', '/test'); }} questionsCount={questions.length} />}
         {page === 'test' && session && <TestPage session={session} questions={orderQuestionsForSession(questions, session.questionOrder)} onSubmit={submit} onExit={() => setPage('landing', '/')} onChange={(next) => { setSession(next); touchTokenSession(next); updateSessionMonitoring(next, questions.length); }} />}
         {page === 'scoring-missing' && <ScoringMissingPage message={submitError} goAdmin={() => { refresh(); setPage('admin', '/admin'); }} saveDraft={() => session && saveCurrentSession(session)} backToTest={() => setPage('test', '/test')} />}
         {page === 'result' && activeResult && (activeResult.rhCompleted ? <ResultsPage result={activeResult} scoringConfig={config} goHome={() => setPage('landing', '/')} /> : <RHSkriningPage result={activeResult} onDone={(completed) => { setActiveResult(completed); refresh(); setSession(null); setPage('result', `/result/${completed.id}`); }} onCancel={() => setPage('landing', '/')} />)}
@@ -221,9 +224,9 @@ export default function App() {
 const ScoringMissingPage = ({ message, goAdmin, saveDraft, backToTest }: { message: string; goAdmin: () => void; saveDraft: () => void; backToTest: () => void }) => (
   <div className="mx-auto max-w-3xl px-4 py-8 sm:py-10">
     <Card>
-      <p className="text-sm font-bold uppercase tracking-wide text-amber-600">Submit belum dapat dihitung</p>
-      <h1 className="mt-2 text-2xl font-black">Konfigurasi scoring belum tersedia</h1>
-      <p className="mt-3 leading-7 text-slate-700 dark:text-slate-200">Konfigurasi scoring belum tersedia. Admin harus mengimpor file scoringConfig terlebih dahulu sebelum hasil dapat dihitung.</p>
+      <p className="text-sm font-bold uppercase tracking-wide text-amber-600">Submit belum dapat dilanjutkan</p>
+      <h1 className="mt-2 text-2xl font-black">Perlu pemeriksaan teknis sebelum submit</h1>
+      <p className="mt-3 leading-7 text-slate-700 dark:text-slate-200">Sistem akan membuat scoringConfig auto-default bila konfigurasi kosong. Jika halaman ini muncul, periksa detail teknis atau validasi token/sesi peserta.</p>
       {message && <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"><strong>Detail teknis:</strong> {message}</div>}
       <p className="mt-4 text-sm text-slate-500">Jawaban peserta tetap tersimpan sebagai draft. Tidak ada jawaban yang dihapus.</p>
       <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap"><Button onClick={goAdmin}>Ke Admin Dashboard</Button><Button variant="secondary" onClick={saveDraft}>Simpan Draft</Button><Button variant="ghost" onClick={backToTest}>Kembali ke Tes</Button></div>

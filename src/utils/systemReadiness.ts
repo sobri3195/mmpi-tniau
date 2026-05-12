@@ -2,6 +2,7 @@ import type { AssessmentResult, Question, ScoringConfig, SourceInterpretationCon
 import { ADMIN_STORAGE_KEYS, loadAdminQuestions, loadAdminScoringConfig, loadAuxConfig, readAdminJson, writeAdminJson } from './adminStorage';
 import { ANSWER_VALUES, REQUIRED_TOTAL_QUESTIONS, isAnswerValue, normalizeAnswerValue, plusMinusOptions } from './answerFormat';
 import { getUsers } from './userStorage';
+import { isAutoDefaultScoring } from './autoDefaultScoring';
 import type { AdminUser } from './userStorage';
 
 export const SYSTEM_READINESS_KEYS = {
@@ -103,6 +104,12 @@ export const validateScoringConfig = (config: unknown = loadAdminScoringConfig()
   if (!Object.keys(cfg).length) {
     result.errors.push('ScoringConfig belum tersedia.');
     result.missing.push('Import template_scoringConfig.json yang sudah diisi kunci scoring resmi/berizin.');
+    return finish(result);
+  }
+  if (isAutoDefaultScoring(config as ScoringConfig)) {
+    result.status = 'ready';
+    result.warnings.push('ScoringConfig auto-default tersedia untuk scoring teknis. Bukan scoring resmi dan belum valid untuk laporan klinis final.');
+    result.details.push('Status: Siap scoring teknis. Keterangan: perlu diganti/verifikasi dengan scoringConfig resmi/berizin untuk laporan final.');
     return finish(result);
   }
   if (Number(cfg.totalItems) !== REQUIRED_TOTAL_QUESTIONS) result.errors.push(`totalItems wajib ${REQUIRED_TOTAL_QUESTIONS}.`);
