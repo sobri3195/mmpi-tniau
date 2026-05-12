@@ -2,6 +2,8 @@ import type { AccessToken, CurrentSession, TokenSessionBinding } from '../types'
 import { STORAGE_KEYS, loadCurrentSession, saveCurrentSession } from './storage';
 import { buildStartTiming } from './time';
 import { normalizeAnswers } from './answerFormat';
+import { writeAuditLog } from './auditLog';
+import { migrateLegacyTokenState, normalizeTokenState, validateParticipantAccess } from './tokenValidation';
 
 export const TOKEN_STORAGE_KEYS = {
   accessTokens: 'sppg_mmpi2_access_tokens',
@@ -22,10 +24,12 @@ const readJson = <T>(key: string, fallback: T): T => {
 
 const writeJson = (key: string, value: unknown) => localStorage.setItem(key, JSON.stringify(value));
 
-export const loadTokens = (): AccessToken[] => readJson<AccessToken[]>(TOKEN_STORAGE_KEYS.accessTokens, []);
-export const saveTokens = (tokens: AccessToken[]) => writeJson(TOKEN_STORAGE_KEYS.accessTokens, tokens);
+export const loadTokens = (): AccessToken[] => readJson<AccessToken[]>(TOKEN_STORAGE_KEYS.accessTokens, []).map(normalizeTokenState);
+export const saveTokens = (tokens: AccessToken[]) => writeJson(TOKEN_STORAGE_KEYS.accessTokens, tokens.map(normalizeTokenState));
 export const loadTokenSessions = (): TokenSessionBinding[] => readJson<TokenSessionBinding[]>(TOKEN_STORAGE_KEYS.tokenSessions, []).map((session) => ({ ...session, answers: normalizeAnswers(session.answers) }));
 export const saveTokenSessions = (sessions: TokenSessionBinding[]) => writeJson(TOKEN_STORAGE_KEYS.tokenSessions, sessions.map((session) => ({ ...session, answers: normalizeAnswers(session.answers) }))); 
+
+export { migrateLegacyTokenState };
 
 export const expireOldTokens = () => {
   const now = Date.now();
@@ -34,7 +38,7 @@ export const expireOldTokens = () => {
   const next = tokens.map((token) => {
     if ((token.status === 'unused' || token.status === 'active') && new Date(token.expiresAt).getTime() < now) {
       changed = true;
-      return { ...token, status: 'expired' as const };
+      return { ...token, status: 'expired' as const, isEnabled: false };
     }
     return token;
   });
@@ -57,29 +61,37 @@ const updateToken = (tokenId: string, updater: (token: AccessToken) => AccessTok
   return updated;
 };
 
-export const markTokenActive = (tokenId: string) => updateToken(tokenId, (token) => ({
+export const markTokenActive = (tokenId: string, activeSessionId?: string) => updateToken(tokenId, (token) => ({
   ...token,
+  isEnabled: true,
   status: 'active',
   usedAttempts: Math.min(token.maxAttempts ?? 1, (token.usedAttempts ?? 0) + 1),
   startedAt: token.startedAt || new Date().toISOString(),
+  activeSessionId: activeSessionId ?? token.activeSessionId ?? null,
 }));
 
 export const markTokenCompleted = (tokenId: string, resultId: string) => updateToken(tokenId, (token) => ({
   ...token,
+  isEnabled: false,
   status: 'completed',
   completedAt: new Date().toISOString(),
   resultId,
 }));
 
-export const revokeToken = (tokenId: string) => updateToken(tokenId, (token) => ({ ...token, status: 'revoked' }));
+export const revokeToken = (tokenId: string) => updateToken(tokenId, (token) => ({ ...token, isEnabled: false, status: 'revoked', activeSessionId: null, revokedAt: new Date().toISOString() }));
 
 export const resetToken = (tokenId: string) => updateToken(tokenId, (token) => ({
   ...token,
+  isEnabled: true,
   status: 'unused',
   usedAttempts: 0,
   startedAt: null,
   completedAt: null,
   resultId: null,
+  activeSessionId: null,
+  disabledAt: null,
+  disabledBy: null,
+  disableReason: '',
 }));
 
 export const bindTokenToSession = (tokenId: string) => {
@@ -112,6 +124,7 @@ export const bindTokenToSession = (tokenId: string) => {
     currentIndex: 0,
     mode: 'single',
     status: 'in_progress',
+    sessionStatus: 'in_progress',
     mmpiStatus: 'mmpi_in_progress',
     rhStatus: 'not_started',
     ...startTiming,
@@ -129,21 +142,42 @@ export const bindTokenToSession = (tokenId: string) => {
     startedAt: startTiming.startedAt,
     lastSavedAt: now,
     status: 'in_progress',
+    sessionStatus: 'in_progress',
   };
   saveTokenSessions([tokenSession, ...loadTokenSessions().filter((item) => item.tokenId !== tokenId)]);
+  markTokenActive(tokenId, session.sessionId || session.id);
   return session;
 };
 
 export const validateSessionToken = (session: CurrentSession | null = loadCurrentSession()) => {
-  if (!session?.tokenId) return { valid: false, message: 'Silakan masukkan token akses dan unique key terlebih dahulu.', token: null as AccessToken | null };
-  const token = getTokenById(session.tokenId);
-  if (!token) return { valid: false, message: 'Token tidak ditemukan.', token: null };
-  if (token.status === 'completed') return { valid: false, message: 'Token ini sudah digunakan dan tes sudah selesai.', token };
-  if (token.status === 'expired') return { valid: false, message: 'Token sudah kedaluwarsa. Hubungi admin.', token };
-  if (token.status === 'revoked') return { valid: false, message: 'Token dibatalkan admin.', token };
-  if (token.status !== 'active') return { valid: false, message: 'Silakan masukkan token akses dan unique key terlebih dahulu.', token };
-  if (session.token !== token.token || session.uniqueKey !== token.uniqueKey) return { valid: false, message: 'Session token tidak cocok.', token };
-  return { valid: true, message: '', token };
+  const validation = validateParticipantAccess({ session, currentRoute: typeof window !== 'undefined' ? window.location.pathname : '' });
+  return { valid: validation.allowed, message: validation.message, token: validation.token, reason: validation.reason, session: validation.session };
+};
+
+export const disableToken = (tokenId: string, disabledBy = 'admin', disableReason = 'Dinonaktifkan admin') => {
+  const now = new Date().toISOString();
+  const updated = updateToken(tokenId, (token) => ({ ...token, isEnabled: false, status: 'disabled', disabledAt: now, disabledBy, disableReason, activeSessionId: null }));
+  const current = loadCurrentSession();
+  if (current?.tokenId === tokenId) {
+    const paused = { ...current, sessionStatus: 'paused_token_disabled' as const, status: 'paused_token_disabled' as const, updatedAt: now, lastSavedAt: now };
+    saveCurrentSession(paused);
+  }
+  saveTokenSessions(loadTokenSessions().map((item) => item.tokenId === tokenId ? { ...item, status: 'paused_token_disabled' as const, sessionStatus: 'paused_token_disabled' as const, lastSavedAt: now } : item));
+  writeAuditLog('token_disabled', 'access_token', tokenId, `Token dinonaktifkan: ${disableReason}`, { disabledBy, disableReason }, 'warning');
+  return updated;
+};
+
+export const enableToken = (tokenId: string, enabledBy = 'admin') => {
+  const current = getTokenById(tokenId);
+  if (!current) return null;
+  if (current.status === 'revoked' || current.status === 'completed') return null;
+  if (current.status === 'expired' || new Date(current.expiresAt).getTime() < Date.now()) return null;
+  const sessions = loadTokenSessions();
+  const resumableSession = sessions.find((item) => item.tokenId === tokenId && item.status === 'in_progress' && item.sessionStatus !== 'paused_token_disabled');
+  const now = new Date().toISOString();
+  const updated = updateToken(tokenId, (token) => ({ ...token, isEnabled: true, status: resumableSession ? 'active' : 'unused', enabledAt: now, enabledBy, disabledAt: null, disabledBy: null, disableReason: '', activeSessionId: resumableSession?.sessionId ?? null }));
+  writeAuditLog('token_enabled', 'access_token', tokenId, 'Token diaktifkan kembali.', { enabledBy }, 'info');
+  return updated;
 };
 
 export const touchTokenSession = (session: CurrentSession) => {

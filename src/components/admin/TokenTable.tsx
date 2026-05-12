@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react';
 import type { AccessToken, AccessTokenStatus, AssessmentResult } from '../../types';
 import { Badge, Button, Card, Input, Select } from '../ui';
 import { resetToken, revokeToken, saveTokens } from '../../utils/tokenAccess';
+import { TokenToggleSwitch } from './TokenToggleSwitch';
 import { TokenPrintCard } from './TokenPrintCard';
 
-const statusTone = (status: AccessTokenStatus) => status === 'completed' ? 'teal' : status === 'revoked' || status === 'expired' ? 'rose' : status === 'active' ? 'amber' : 'slate';
+const statusTone = (status: AccessTokenStatus) => status === 'completed' ? 'teal' : status === 'revoked' || status === 'expired' || status === 'disabled' ? 'rose' : status === 'active' ? 'amber' : 'slate';
 const mask = (token: string) => token.replace(/-([A-Z0-9]{4})-/, '-****-');
 const csvEscape = (value: unknown) => `"${String(value ?? '').replaceAll('"', '""')}"`;
 
@@ -32,7 +33,7 @@ export const TokenTable = ({ tokens, results, onChange, toast }: { tokens: Acces
   const download = (name: string, content: string, type: string) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([content], { type })); a.download = name; a.click(); URL.revokeObjectURL(a.href); };
   return <Card>
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><h2 className="text-xl font-black">Daftar token peserta</h2><p className="text-sm text-slate-500">Token aktif disamarkan; gunakan tombol tampilkan untuk melihat token lengkap.</p></div><div className="flex flex-wrap gap-2"><Button variant="ghost" onClick={exportCsv}>Ekspor CSV</Button><Button variant="ghost" onClick={exportJson}>Ekspor JSON</Button></div></div>
-    <div className="mt-4 grid gap-3 sm:grid-cols-[220px_1fr]"><Select value={status} onChange={(e) => setStatus(e.target.value as 'all' | AccessTokenStatus)}><option value="all">Semua</option><option value="unused">Unused</option><option value="active">Active</option><option value="completed">Completed</option><option value="expired">Expired</option><option value="revoked">Revoked</option></Select><Input placeholder="Cari token, unique key, nama, nomor peserta, unit" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+    <div className="mt-4 grid gap-3 sm:grid-cols-[220px_1fr]"><Select value={status} onChange={(e) => setStatus(e.target.value as 'all' | AccessTokenStatus)}><option value="all">Semua</option><option value="unused">Unused</option><option value="active">Active</option><option value="completed">Completed</option><option value="expired">Expired</option><option value="revoked">Revoked</option><option value="disabled">Disabled</option></Select><Input placeholder="Cari token, unique key, nama, nomor peserta, unit" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
     <div className="mt-4 overflow-x-auto">
       <table className="min-w-full text-left text-sm">
         <thead>
@@ -48,7 +49,7 @@ export const TokenTable = ({ tokens, results, onChange, toast }: { tokens: Acces
                 <td>{token.participantName || '-'}</td>
                 <td>{token.participantNumber || '-'}</td>
                 <td>{token.unit || '-'}</td>
-                <td><Badge tone={statusTone(token.status)}>{token.status}</Badge></td>
+                <td><div className="space-y-1"><Badge tone={statusTone(token.status)}>{token.status}</Badge><Badge tone={token.isEnabled === true && token.status !== 'disabled' ? 'teal' : 'slate'}>{token.isEnabled === true && token.status !== 'disabled' ? 'Aktif' : 'Nonaktif'}</Badge></div></td>
                 <td>{new Date(token.createdAt).toLocaleDateString('id-ID')}</td>
                 <td>{new Date(token.expiresAt).toLocaleString('id-ID')}</td>
                 <td>{token.startedAt ? new Date(token.startedAt).toLocaleString('id-ID') : '-'}</td>
@@ -61,7 +62,7 @@ export const TokenTable = ({ tokens, results, onChange, toast }: { tokens: Acces
                     <Button variant="ghost" onClick={() => copy(token.uniqueKey, 'Unique key')}>Copy key</Button>
                     <Button variant="ghost" onClick={() => setDetail(token)}>Detail</Button>
                     <Button variant="ghost" onClick={() => linkResult(token)}>Hubungkan</Button>
-                    <Button variant="ghost" onClick={() => setPrintToken(token)}>Print kartu</Button>
+                    <TokenToggleSwitch token={token} onChange={onChange} toast={toast} /><Button variant="ghost" disabled={token.isEnabled !== true || token.status === 'disabled'} onClick={() => setPrintToken(token)}>Print kartu</Button>
                     <Button variant="danger" onClick={() => doRevoke(token)}>Revoke</Button>
                     <Button variant="secondary" onClick={() => doReset(token)}>Reset</Button>
                   </div>

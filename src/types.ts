@@ -140,7 +140,7 @@ export interface ParticipantIdentity {
 
 export type Answers = Record<string, AnswerValue>;
 
-export type AccessTokenStatus = 'unused' | 'active' | 'completed' | 'expired' | 'revoked';
+export type AccessTokenStatus = 'unused' | 'active' | 'completed' | 'expired' | 'revoked' | 'disabled';
 
 export interface AccessToken {
   tokenId: string;
@@ -164,6 +164,12 @@ export interface AccessToken {
   deviceHistory?: Array<{ at: string; userAgent: string; note: string }>;
   revokedAt?: string;
   revokedBy?: string;
+  isEnabled?: boolean;
+  disabledAt?: string | null;
+  disabledBy?: string | null;
+  disableReason?: string;
+  enabledAt?: string | null;
+  enabledBy?: string | null;
 }
 
 
@@ -235,7 +241,8 @@ export interface TokenSessionBinding {
   answers: Answers;
   startedAt: string;
   lastSavedAt: string;
-  status: 'in_progress' | 'completed' | SessionWorkflowStatus;
+  status: 'in_progress' | 'completed' | 'paused_token_disabled' | 'invalid_legacy_session' | SessionWorkflowStatus;
+  sessionStatus?: 'in_progress' | 'paused_token_disabled' | 'completed' | 'invalid_legacy_session';
 }
 
 export interface CurrentSession {
@@ -249,7 +256,8 @@ export interface CurrentSession {
   answers: Answers;
   currentIndex: number;
   mode: 'single' | 'list';
-  status: 'Draft' | 'Selesai' | 'Perlu Review' | 'in_progress' | SessionWorkflowStatus;
+  status: 'Draft' | 'Selesai' | 'Perlu Review' | 'in_progress' | 'paused_token_disabled' | 'invalid_legacy_session' | SessionWorkflowStatus;
+  sessionStatus?: 'in_progress' | 'paused_token_disabled' | 'completed' | 'invalid_legacy_session';
   mmpiStatus?: SessionWorkflowStatus;
   rhStatus?: RHStatus;
   rhStartedAt?: string;
@@ -457,7 +465,7 @@ export interface AssessmentResult {
 
 
 
-export type SessionWorkflowStatus = 'mmpi_in_progress' | 'mmpi_completed_pending_rh' | 'rh_in_progress' | 'rh_completed' | 'completed';
+export type SessionWorkflowStatus = 'mmpi_in_progress' | 'mmpi_completed_pending_rh' | 'rh_in_progress' | 'rh_completed' | 'completed' | 'paused_token_disabled';
 export type RHStatus = 'not_started' | 'in_progress' | 'completed';
 export type YesNo = '' | 'Ya' | 'Tidak';
 
