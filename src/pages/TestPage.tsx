@@ -5,11 +5,12 @@ import { QuestionCard } from '../components/QuestionCard';
 import { QuestionNavigator } from '../components/QuestionNavigator';
 import { Button, Card, Badge } from '../components/ui';
 import { loadAccessibilitySettings, saveAccessibilitySettings, saveCurrentSession } from '../utils/storage';
+import { validateParticipantAccess } from '../utils/tokenValidation';
 import type { TestAccessibilitySettings } from '../utils/storage';
 import { questionNumberPadded } from '../utils/questions';
 import { isAnswerValue, REQUIRED_TOTAL_QUESTIONS } from '../utils/answerFormat';
 
-export const TestPage = ({ session, questions, onSubmit, onExit, onChange }: { session: CurrentSession; questions: Question[]; onSubmit: (s: CurrentSession) => void; onExit: () => void; onChange: (s: CurrentSession) => void }) => {
+export const TestPage = ({ session, questions, onSubmit, onExit, onChange, onAccessDenied }: { session: CurrentSession; questions: Question[]; onSubmit: (s: CurrentSession) => void; onExit: () => void; onChange: (s: CurrentSession) => void; onAccessDenied?: () => void }) => {
   const [local, setLocal] = useState(session);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notice, setNotice] = useState('');
@@ -33,7 +34,23 @@ export const TestPage = ({ session, questions, onSubmit, onExit, onChange }: { s
     ? (question ? [{ q: question, index: local.currentIndex }] : [])
     : questions.slice(0, Math.min(questions.length, firstMissingIndex + 1)).map((q, index) => ({ q, index }));
 
+  const ensureAccess = () => {
+    const validation = validateParticipantAccess({ session: local, currentRoute: '/test' });
+    if (validation.allowed) return true;
+    if (validation.reason === 'token_disabled' || validation.reason === 'paused_token_disabled') {
+      const paused = { ...local, sessionStatus: 'paused_token_disabled' as const, status: 'paused_token_disabled' as const, updatedAt: new Date().toISOString() };
+      saveCurrentSession(paused);
+      setLocal(paused);
+      onChange(paused);
+      onAccessDenied?.();
+      return false;
+    }
+    setNotice(validation.message);
+    return false;
+  };
+
   const update = (patch: Partial<CurrentSession>) => {
+    if (!ensureAccess()) return;
     const next = { ...local, ...patch, updatedAt: new Date().toISOString() };
     setLocal(next);
     saveCurrentSession(next);
@@ -84,6 +101,7 @@ export const TestPage = ({ session, questions, onSubmit, onExit, onChange }: { s
   };
 
   const submit = () => {
+    if (!ensureAccess()) return;
     if (questions.length !== REQUIRED_TOTAL_QUESTIONS) {
       setNotice(`Belum bisa submit. Bank soal harus berisi ${REQUIRED_TOTAL_QUESTIONS} soal; saat ini ${questions.length}.`);
       return;

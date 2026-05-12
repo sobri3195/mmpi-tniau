@@ -6,6 +6,8 @@ import { calculateRawScores, determineValidity, generateClinicalSummary, generat
 import { AUTO_DEFAULT_WARNING, ensureScoringConfigExists, initializeAutoDefaultScoringConfig, isAutoDefaultScoring } from './utils/autoDefaultScoring';
 import { getRHFormByResultId, loadAuxiliaryConfig, loadCurrentSession, loadQuestions, loadResults, loadScoringConfig, saveCurrentSession, saveResult, STORAGE_KEYS } from './utils/storage';
 import { touchTokenSession, validateSessionToken } from './utils/tokenAccess';
+import { validateParticipantAccess } from './utils/tokenValidation';
+import { ParticipantProtectedRoute, getParticipantAccessRedirect } from './components/auth/ParticipantProtectedRoute';
 import { hasAnyUser } from './utils/userStorage';
 import { validateSession } from './utils/session';
 import { writeAuditLog } from './utils/auditLog';
@@ -29,11 +31,12 @@ const ResultsPage = lazy(() => import('./pages/ResultsPage').then((module) => ({
 const RHSkriningPage = lazy(() => import('./pages/RHSkriningPage').then((module) => ({ default: module.RHSkriningPage })));
 const RHReviewPage = lazy(() => import('./pages/RHReviewPage').then((module) => ({ default: module.RHReviewPage })));
 const TokenAccessPage = lazy(() => import('./pages/TokenAccessPage').then((module) => ({ default: module.TokenAccessPage })));
+const TokenDisabledPage = lazy(() => import('./pages/TokenDisabledPage').then((module) => ({ default: module.TokenDisabledPage })));
 const TestPage = lazy(() => import('./pages/TestPage').then((module) => ({ default: module.TestPage })));
 
 const PageLoader = () => <div className="mx-auto max-w-6xl px-4 py-8 text-sm font-semibold text-slate-600 dark:text-slate-300">Memuat halaman...</div>;
 
-export type Page = 'landing' | 'access' | 'identity' | 'instructions' | 'test' | 'result' | 'rh-skrining' | 'rh-review' | 'admin' | 'scoring-missing';
+export type Page = 'landing' | 'access' | 'token-disabled' | 'identity' | 'instructions' | 'test' | 'result' | 'rh-skrining' | 'rh-review' | 'admin' | 'scoring-missing';
 
 const newSession = (identity: ParticipantIdentity, questions: { id: number }[], existing?: CurrentSession | null): CurrentSession => {
   const startTiming = existing?.startedAt
@@ -52,6 +55,7 @@ const newSession = (identity: ParticipantIdentity, questions: { id: number }[], 
     currentIndex: existing?.currentIndex || 0,
     mode: existing?.mode || 'single',
     status: 'Draft',
+    sessionStatus: 'in_progress',
     mmpiStatus: 'mmpi_in_progress',
     rhStatus: 'not_started',
     ...startTiming,
@@ -68,13 +72,16 @@ const newSession = (identity: ParticipantIdentity, questions: { id: number }[], 
 
 export default function App() {
   const routeToPage = (pathname: string): Page => {
-    if (pathname === '/rh-skrining/review' || pathname === '/rh-review') return 'rh-review';
-    if (pathname === '/rh-skrining') return 'rh-skrining';
-    if (pathname.startsWith('/result/')) { const result = loadResults().find((item) => item.id === pathname.split('/').pop()); return result && !result.rhCompleted && !validateSession().valid ? 'rh-skrining' : 'admin'; }
+    const protectedPage = (target: Page) => { const validation = validateParticipantAccess({ currentRoute: pathname }); return validation.allowed ? target : getParticipantAccessRedirect(validation.reason) === '/token-disabled' ? 'token-disabled' : 'access'; };
+    if (pathname === '/rh-skrining/review' || pathname === '/rh-review') return protectedPage('rh-review');
+    if (pathname === '/rh-skrining') return protectedPage('rh-skrining');
+    if (pathname === '/token-disabled') return 'token-disabled';
+    if (pathname.startsWith('/result/')) { const result = loadResults().find((item) => item.id === pathname.split('/').pop()); return result ? protectedPage('result') : 'admin'; }
     if (pathname.startsWith('/admin') || pathname.startsWith('/report/')) return 'admin';
     if (pathname === '/access') return 'access';
-    if (pathname === '/participant') return validateSessionToken().valid ? 'identity' : 'access';
-    if (pathname === '/test') return validateSessionToken().valid ? 'test' : 'access';
+    if (pathname === '/participant') return protectedPage('identity');
+    if (pathname === '/instruction') return protectedPage('instructions');
+    if (pathname === '/test') return protectedPage('test');
     return 'landing';
   };
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
@@ -114,10 +121,11 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify({ ...currentSettings, dark }));
   }, [dark]);
   const refresh = () => { setQuestions(loadQuestions()); setConfig(loadScoringConfig()); setResults(loadResults()); };
-  const startIdentity = (identity: ParticipantIdentity) => { ensureScoringConfigExists(questions); refresh(); if (!canStartNewParticipantSession()) { setAccessMessage('Lockdown mode aktif. Peserta belum dapat memulai tes baru.'); setPage('access', '/access'); return; } const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } const s = newSession(identity, questions, session); setSession(s); saveCurrentSession(s); touchTokenSession(s); updateSessionMonitoring(s, questions.length); writeAuditLog({ action: 'Participant started test', targetType: 'token', targetId: s.tokenId ?? '', description: `Peserta ${identity.name} memulai tes.` }); setPage('instructions', '/participant'); };
+  const redirectDenied = (path: string, _reason?: string, message?: string) => { if (path === '/token-disabled') setPage('token-disabled', path); else { setAccessMessage(message || 'Silakan masukkan token akses dan unique key terlebih dahulu.'); setPage('access', path); } };
+  const startIdentity = (identity: ParticipantIdentity) => { ensureScoringConfigExists(questions); refresh(); if (!canStartNewParticipantSession()) { setAccessMessage('Lockdown mode aktif. Peserta belum dapat memulai tes baru.'); setPage('access', '/access'); return; } const validation = validateParticipantAccess({ session: loadCurrentSession(), currentRoute: '/participant' }); if (!validation.allowed) { redirectDenied(getParticipantAccessRedirect(validation.reason), validation.reason, validation.message); return; } const s = newSession(identity, questions, session); setSession(s); saveCurrentSession(s); touchTokenSession(s); updateSessionMonitoring(s, questions.length); writeAuditLog({ action: 'Participant started test', targetType: 'token', targetId: s.tokenId ?? '', description: `Peserta ${identity.name} memulai tes.` }); setPage('instructions', '/participant'); };
   const submit = (s: CurrentSession) => {
-    const tokenValidation = validateSessionToken(s);
-    if (!tokenValidation.valid) { setSubmitError(tokenValidation.message); setPage('scoring-missing'); return; }
+    const tokenValidation = validateParticipantAccess({ session: s, currentRoute: '/test' });
+    if (!tokenValidation.allowed) { if (tokenValidation.reason === 'token_disabled' || tokenValidation.reason === 'paused_token_disabled') { setSession(tokenValidation.session); setPage('token-disabled', '/token-disabled'); } else { setAccessMessage(tokenValidation.message); setPage('access', '/access'); } return; }
     const ensured = ensureScoringConfigExists(loadQuestions());
     const latestConfig = ensured.config;
     ensureInterpretationConfigsExist(latestConfig);
@@ -180,7 +188,9 @@ export default function App() {
     saveResult(result);
     writeAuditLog({ action: 'Participant submitted MMPI pending RH', targetType: 'result', targetId: result.id, description: `Peserta ${result.identity.name} submit MMPI dan wajib mengisi RH.` }); setActiveResult(result); refresh(); setPage('rh-skrining', '/rh-skrining');
   };
-  const resume = () => { if (session?.rhStatus === 'in_progress' || session?.mmpiStatus === 'mmpi_completed_pending_rh') { const pending = loadResults().find((result) => result.id === session.id); if (pending) { setActiveResult(pending); setPage('rh-skrining', '/rh-skrining'); return; } } const validation = validateSessionToken(session); if (validation.valid && session) setPage('test', '/test'); else { setAccessMessage(validation.message || 'Silakan masukkan token akses dan unique key terlebih dahulu.'); setPage('access', '/access'); } };
+  const resume = () => { const latestSession = loadCurrentSession(); const latestValidation = validateParticipantAccess({ session: latestSession, currentRoute: '/resume' }); if (!latestValidation.allowed) { setSession(latestValidation.session); const redirect = getParticipantAccessRedirect(latestValidation.reason); if (redirect === '/token-disabled') setPage('token-disabled', redirect); else { setAccessMessage(latestValidation.message); setPage('access', '/access'); } return; } const session = latestSession; if (session?.rhStatus === 'in_progress' || session?.mmpiStatus === 'mmpi_completed_pending_rh') { const pending = loadResults().find((result) => result.id === session.id); if (pending) { setActiveResult(pending); setPage('rh-skrining', '/rh-skrining'); return; } } const validation = validateParticipantAccess({ session, currentRoute: '/resume' }); if (validation.allowed && session) setPage('test', '/test'); else { setAccessMessage(validation.message || 'Silakan masukkan token akses dan unique key terlebih dahulu.'); setPage('access', '/access'); } };
+  const currentSessionValidation = validateParticipantAccess({ session: loadCurrentSession(), currentRoute: currentPath });
+  const canResumeDraft = currentSessionValidation.allowed;
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-teal-950 dark:text-slate-100">
       <nav className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur no-print dark:border-slate-800 dark:bg-slate-950/90">
@@ -191,21 +201,22 @@ export default function App() {
           </button>
           <div className="grid grid-cols-[auto_1fr_auto] gap-2 sm:flex sm:items-center">
             <Button variant="ghost" className="px-3" aria-label="Toggle dark mode" onClick={() => setDark(!dark)}>{dark ? '☀️' : '🌙'}</Button>
-            <Button variant="ghost" className="whitespace-nowrap" onClick={resume}>{session ? 'Lanjutkan Draft' : 'Mulai Tes'}</Button>
+            {canResumeDraft ? <Button variant="ghost" className="whitespace-nowrap" onClick={resume}>Lanjutkan Draft</Button> : currentSessionValidation.reason === 'token_disabled' || currentSessionValidation.reason === 'paused_token_disabled' ? <Button variant="ghost" className="whitespace-nowrap" onClick={() => setPage('token-disabled', '/token-disabled')}>Draft terkunci — token nonaktif</Button> : <Button variant="ghost" className="whitespace-nowrap" onClick={() => setPage('access', '/access')}>Mulai Tes</Button>}
             <Button variant="secondary" onClick={() => { refresh(); setPage('admin', '/admin'); }}>Admin</Button>
           </div>
         </div>
       </nav>
       <Suspense fallback={<PageLoader />}>
-        {page === 'landing' && <LandingPage go={(p) => p === 'identity' ? resume() : setPage(p as Page, p === 'admin' ? '/admin' : undefined)} questionsCount={questions.length} />}
+        {page === 'landing' && <LandingPage go={(p) => p === 'identity' ? setPage('access', '/access') : setPage(p as Page, p === 'admin' ? '/admin' : undefined)} questionsCount={questions.length} />}
+        {page === 'token-disabled' && <TokenDisabledPage goAccess={() => { setAccessMessage(''); setPage('access', '/access'); }} />}
         {page === 'access' && <TokenAccessPage reason={accessMessage} onVerified={() => { const next = loadCurrentSession(); setSession(next); setAccessMessage(''); setPage('identity', '/participant'); }} />}
-        {page === 'identity' && <IdentityPage onSubmit={startIdentity} />}
-        {page === 'instructions' && <InstructionsPage onStart={() => { ensureScoringConfigExists(questions); refresh(); const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } setPage('test', '/test'); }} questionsCount={questions.length} />}
-        {page === 'test' && session && <TestPage session={session} questions={orderQuestionsForSession(questions, session.questionOrder)} onSubmit={submit} onExit={() => setPage('landing', '/')} onChange={(next) => { setSession(next); touchTokenSession(next); updateSessionMonitoring(next, questions.length); }} />}
+        {page === 'identity' && <ParticipantProtectedRoute currentRoute="/participant" onRedirect={redirectDenied}><IdentityPage onSubmit={startIdentity} /></ParticipantProtectedRoute>}
+        {page === 'instructions' && <ParticipantProtectedRoute currentRoute="/instruction" onRedirect={redirectDenied}><InstructionsPage onStart={() => { ensureScoringConfigExists(questions); refresh(); const validation = validateParticipantAccess({ session: loadCurrentSession(), currentRoute: '/instruction' }); if (!validation.allowed) { redirectDenied(getParticipantAccessRedirect(validation.reason), validation.reason, validation.message); return; } setPage('test', '/test'); }} questionsCount={questions.length} /></ParticipantProtectedRoute>}
+        {page === 'test' && session && <ParticipantProtectedRoute currentRoute="/test" onRedirect={redirectDenied}><TestPage session={session} questions={orderQuestionsForSession(questions, session.questionOrder)} onSubmit={submit} onExit={() => setPage('landing', '/')} onAccessDenied={() => setPage('token-disabled', '/token-disabled')} onChange={(next) => { setSession(next); touchTokenSession(next); updateSessionMonitoring(next, questions.length); }} /></ParticipantProtectedRoute>}
         {page === 'scoring-missing' && <ScoringMissingPage message={submitError} goAdmin={() => { refresh(); setPage('admin', '/admin'); }} saveDraft={() => session && saveCurrentSession(session)} backToTest={() => setPage('test', '/test')} />}
-        {page === 'result' && activeResult && (activeResult.rhCompleted ? <ResultsPage result={activeResult} scoringConfig={config} goHome={() => setPage('landing', '/')} /> : <RHSkriningPage result={activeResult} onDone={(completed) => { setActiveResult(completed); refresh(); setSession(null); setPage('result', `/result/${completed.id}`); }} onCancel={() => setPage('landing', '/')} />)}
-        {page === 'rh-skrining' && activeResult && <RHSkriningPage result={activeResult} onDone={(completed) => { setActiveResult(completed); refresh(); setSession(null); setPage('result', `/result/${completed.id}`); }} onCancel={() => setPage('landing', '/')} />}
-        {page === 'rh-review' && activeResult && <RHReviewPage result={activeResult} form={getRHFormByResultId(activeResult.id)} goBack={() => setPage('result', `/result/${activeResult.id}`)} />}
+        {page === 'result' && activeResult && <ParticipantProtectedRoute currentRoute="/result" onRedirect={redirectDenied}>{activeResult.rhCompleted ? <ResultsPage result={activeResult} scoringConfig={config} goHome={() => setPage('landing', '/')} /> : <RHSkriningPage result={activeResult} onDone={(completed) => { setActiveResult(completed); refresh(); setSession(null); setPage('result', `/result/${completed.id}`); }} onCancel={() => setPage('landing', '/')} />}</ParticipantProtectedRoute>}
+        {page === 'rh-skrining' && activeResult && <ParticipantProtectedRoute currentRoute="/rh-skrining" onRedirect={redirectDenied}><RHSkriningPage result={activeResult} onDone={(completed) => { setActiveResult(completed); refresh(); setSession(null); setPage('result', `/result/${completed.id}`); }} onCancel={() => setPage('landing', '/')} /></ParticipantProtectedRoute>}
+        {page === 'rh-review' && activeResult && <ParticipantProtectedRoute currentRoute="/rh-review" onRedirect={redirectDenied}><RHReviewPage result={activeResult} form={getRHFormByResultId(activeResult.id)} goBack={() => setPage('result', `/result/${activeResult.id}`)} /></ParticipantProtectedRoute>}
         {page === 'admin' && (() => {
           if (!hasAnyUser()) return <AdminSetupPage onDone={() => navigate('/admin/login')} />;
           if (currentPath === '/admin/setup') return <AdminSetupPage onDone={() => navigate('/admin/login')} />;
