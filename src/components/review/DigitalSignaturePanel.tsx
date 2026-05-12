@@ -1,0 +1,3 @@
+import type { FinalSignatureMetadata } from '../../types';
+import { Card } from '../ui';
+export const DigitalSignaturePanel = ({ signature }: { signature?: FinalSignatureMetadata }) => <Card><h3 className="text-xl font-black">Tanda tangan digital internal</h3>{signature ? <div className="mt-3 grid gap-2 text-sm"><p><b>Pemeriksa:</b> {signature.signedByName}</p><p><b>Jabatan/role:</b> {signature.role}</p><p><b>Nomor izin/identitas:</b> {signature.licenseNumber || '-'}</p><p><b>Tanggal:</b> {new Date(signature.signedAt).toLocaleString('id-ID')}</p><p><b>Hash:</b> <code>{signature.reportHash}</code></p><p>{signature.signatureStatement}</p></div> : <p className="mt-3 text-sm text-slate-500">Belum ditandatangani/final.</p>}</Card>;

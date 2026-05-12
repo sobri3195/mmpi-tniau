@@ -13,6 +13,9 @@ import { orderQuestionsForSession } from './utils/questions';
 import { normalizeAnswers } from './utils/answerFormat';
 import { buildDualInterpretations, ensureInterpretationConfigsExist, initializeDefaultInterpretationConfigs } from './utils/sourceInterpretations';
 import { buildSummaryAnalysis, initializeDefaultSummaryAnalysisConfig, loadSummaryAnalysisConfig } from './utils/summaryAnalysis';
+import { attachConfigVersionsToResult } from './utils/configVersioning';
+import { updateSessionMonitoring } from './utils/sessionMonitoring';
+import { canStartNewParticipantSession } from './utils/lockdownMode';
 
 
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then((module) => ({ default: module.AdminDashboard })));
@@ -110,7 +113,7 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify({ ...currentSettings, dark }));
   }, [dark]);
   const refresh = () => { setQuestions(loadQuestions()); setConfig(loadScoringConfig()); setResults(loadResults()); };
-  const startIdentity = (identity: ParticipantIdentity) => { const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } const s = newSession(identity, questions, session); setSession(s); saveCurrentSession(s); touchTokenSession(s); writeAuditLog({ action: 'Participant started test', targetType: 'token', targetId: s.tokenId ?? '', description: `Peserta ${identity.name} memulai tes.` }); setPage('instructions', '/participant'); };
+  const startIdentity = (identity: ParticipantIdentity) => { if (!canStartNewParticipantSession()) { setAccessMessage('Lockdown mode aktif. Peserta belum dapat memulai tes baru.'); setPage('access', '/access'); return; } const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } const s = newSession(identity, questions, session); setSession(s); saveCurrentSession(s); touchTokenSession(s); updateSessionMonitoring(s, questions.length); writeAuditLog({ action: 'Participant started test', targetType: 'token', targetId: s.tokenId ?? '', description: `Peserta ${identity.name} memulai tes.` }); setPage('instructions', '/participant'); };
   const submit = (s: CurrentSession) => {
     const tokenValidation = validateSessionToken(s);
     if (!tokenValidation.valid) { setSubmitError(tokenValidation.message); setPage('scoring-missing'); return; }
@@ -132,7 +135,7 @@ export default function App() {
     const validityStatus = determineValidity(scores, latestConfig!);
     const submitTiming = buildSubmitTiming(s.startedAt);
     const summaryConfig = loadSummaryAnalysisConfig();
-    const result: AssessmentResult = {
+    const result: AssessmentResult = attachConfigVersionsToResult({
       id: s.id,
       resultId: s.id,
       tokenId: s.tokenId,
@@ -165,9 +168,12 @@ export default function App() {
       rhFormId: '',
       rhCompleted: false,
       rhSummary: { hasMedicalRedFlags: false, hasPsychiatricRedFlags: false, hasSubstanceHistory: false, hasLegalHistory: false, needsSpecialistReview: false },
-    };
+      workflow: { status: 'awaiting_rh', operatorVerifiedBy: '', operatorVerifiedAt: '', specialistReviewedBy: '', specialistReviewedAt: '', finalApprovedBy: '', finalApprovedAt: '', revisionNotes: [], history: [] },
+    } as AssessmentResult);
     result.summaryAnalysis = buildSummaryAnalysis(result, summaryConfig);
-    saveCurrentSession({ ...s, answers: normalizedAnswers, status: 'mmpi_completed_pending_rh', mmpiStatus: 'mmpi_completed_pending_rh', rhStatus: 'not_started', ...submitTiming, updatedAt: submitTiming.submittedAt });
+    const completedSession = { ...s, answers: normalizedAnswers, status: 'mmpi_completed_pending_rh' as const, mmpiStatus: 'mmpi_completed_pending_rh' as const, rhStatus: 'not_started' as const, ...submitTiming, updatedAt: submitTiming.submittedAt };
+    saveCurrentSession(completedSession);
+    updateSessionMonitoring(completedSession, latestQuestions.length);
     saveResult(result);
     writeAuditLog({ action: 'Participant submitted MMPI pending RH', targetType: 'result', targetId: result.id, description: `Peserta ${result.identity.name} submit MMPI dan wajib mengisi RH.` }); setActiveResult(result); refresh(); setPage('rh-skrining', '/rh-skrining');
   };
@@ -192,7 +198,7 @@ export default function App() {
         {page === 'access' && <TokenAccessPage reason={accessMessage} onVerified={() => { const next = loadCurrentSession(); setSession(next); setAccessMessage(''); setPage('identity', '/participant'); }} />}
         {page === 'identity' && <IdentityPage onSubmit={startIdentity} />}
         {page === 'instructions' && <InstructionsPage onStart={() => { const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } setPage('test', '/test'); }} questionsCount={questions.length} />}
-        {page === 'test' && session && <TestPage session={session} questions={orderQuestionsForSession(questions, session.questionOrder)} onSubmit={submit} onExit={() => setPage('landing', '/')} onChange={(next) => { setSession(next); touchTokenSession(next); }} />}
+        {page === 'test' && session && <TestPage session={session} questions={orderQuestionsForSession(questions, session.questionOrder)} onSubmit={submit} onExit={() => setPage('landing', '/')} onChange={(next) => { setSession(next); touchTokenSession(next); updateSessionMonitoring(next, questions.length); }} />}
         {page === 'scoring-missing' && <ScoringMissingPage message={submitError} goAdmin={() => { refresh(); setPage('admin', '/admin'); }} saveDraft={() => session && saveCurrentSession(session)} backToTest={() => setPage('test', '/test')} />}
         {page === 'result' && activeResult && (activeResult.rhCompleted ? <ResultsPage result={activeResult} scoringConfig={config} goHome={() => setPage('landing', '/')} /> : <RHSkriningPage result={activeResult} onDone={(completed) => { setActiveResult(completed); refresh(); setSession(null); setPage('result', `/result/${completed.id}`); }} onCancel={() => setPage('landing', '/')} />)}
         {page === 'rh-skrining' && activeResult && <RHSkriningPage result={activeResult} onDone={(completed) => { setActiveResult(completed); refresh(); setSession(null); setPage('result', `/result/${completed.id}`); }} onCancel={() => setPage('landing', '/')} />}

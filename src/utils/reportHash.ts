@@ -1,0 +1,2 @@
+const stableStringify = (value: unknown): string => JSON.stringify(value, Object.keys(value as Record<string, unknown> | {}).sort());
+export const generateReportHash = (reportData: unknown) => { const text = stableStringify(reportData); let hash = 0x811c9dc5; for (let i = 0; i < text.length; i += 1) { hash ^= text.charCodeAt(i); hash = Math.imul(hash, 0x01000193); } return `FNV1A-${(hash >>> 0).toString(16).toUpperCase().padStart(8, '0')}`; };

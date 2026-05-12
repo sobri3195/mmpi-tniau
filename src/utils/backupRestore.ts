@@ -43,3 +43,15 @@ export const resetKeys = (names: Array<keyof typeof ADMIN_STORAGE_KEYS>) => {
   names.forEach((name) => localStorage.removeItem(ADMIN_STORAGE_KEYS[name]));
   writeAuditLog({ action: 'Reset data', targetType: 'system', targetId: names.join(','), description: 'Reset data lokal terpilih.' });
 };
+
+export interface AdvancedBackup { backupId: string; createdAt: string; createdBy: string; type: 'full' | 'batch' | 'result' | 'pre_import_snapshot' | 'pre_reset_snapshot'; description: string; data: Record<string, unknown>; checksum: string; }
+export const BACKUPS_KEY = 'sppg_mmpi2_backups';
+export const SNAPSHOTS_KEY = 'sppg_mmpi2_snapshots';
+const checksum = (value: unknown) => { const text = JSON.stringify(value); let sum = 0; for (let i = 0; i < text.length; i += 1) sum = (sum + text.charCodeAt(i) * (i + 1)) % 1_000_000_007; return String(sum); };
+const readBackups = (key: string) => readAdminJson<AdvancedBackup[]>(key, []);
+const collectAppLocalStorage = () => Object.fromEntries(Object.keys(localStorage).filter((key) => key.startsWith('sppg_mmpi2_')).map((key) => [key, readAdminJson<unknown>(key, null)]));
+export const createAdvancedBackup = (type: AdvancedBackup['type'] = 'full', description = '', createdBy = '', filter?: { batchId?: string; resultId?: string }) => { const data = collectAppLocalStorage(); const backup: AdvancedBackup = { backupId: crypto.randomUUID(), createdAt: new Date().toISOString(), createdBy, type, description, data: filter ? { ...data, filter } : data, checksum: '' }; backup.checksum = checksum(backup.data); const key = type.startsWith('pre_') ? SNAPSHOTS_KEY : BACKUPS_KEY; writeAdminJson(key, [backup, ...readBackups(key)].slice(0, 50)); writeAuditLog('Backup', 'backup', backup.backupId, `Backup ${type} dibuat.`, { description, filter }, 'info'); return backup; };
+export const createPreImportSnapshot = (description = 'Snapshot otomatis sebelum import config') => createAdvancedBackup('pre_import_snapshot', description);
+export const createPreResetSnapshot = (description = 'Snapshot otomatis sebelum reset') => createAdvancedBackup('pre_reset_snapshot', description);
+export const restoreAdvancedBackup = (backup: AdvancedBackup) => { if (backup.checksum !== checksum(backup.data)) throw new Error('Checksum backup tidak cocok.'); Object.entries(backup.data).forEach(([key, value]) => { if (key.startsWith('sppg_mmpi2_')) writeAdminJson(key, value); }); writeAuditLog('Restore', 'backup', backup.backupId, `Restore backup ${backup.type}.`, {}, 'critical'); };
+export const getAdvancedBackups = () => ({ backups: readBackups(BACKUPS_KEY), snapshots: readBackups(SNAPSHOTS_KEY) });
