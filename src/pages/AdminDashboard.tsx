@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import type { AccessToken, AssessmentResult, Question, ScoringConfig, SummaryAnalysisConfig } from '../types';
-import { Badge, Button, Card } from '../components/ui';
+import { Button, Card } from '../components/ui';
 import { StatCard } from '../components/admin/AdminCommon';
 import { ImportQuestionsPanel } from '../components/admin/ImportQuestionsPanel';
 import { ImportScoringPanel } from '../components/admin/ImportScoringPanel';
@@ -18,7 +18,7 @@ import { AdminSettingsPanel } from '../components/admin/AdminSettingsPanel';
 import { BackupRestorePanel } from '../components/admin/BackupRestorePanel';
 import { TokenManagementPanel } from '../components/admin/TokenManagementPanel';
 import { AdminSidebar } from '../components/admin/AdminSidebar';
-import { RoleBadge } from '../components/admin/RoleBadge';
+import { AdminHeader } from '../components/admin/AdminHeader';
 import { AuditLogPanel } from '../components/admin/AuditLogPanel';
 import { ConfigVersionPanel } from '../components/admin/ConfigVersionPanel';
 import { SessionMonitoringPanel } from '../components/admin/SessionMonitoringPanel';
@@ -35,7 +35,7 @@ import { SpecialistReviewPage } from './SpecialistReviewPage';
 import { AdminRHPage } from './AdminRHPage';
 import { PermissionGuard } from '../components/auth/PermissionGuard';
 import { AccessDenied } from '../components/auth/ProtectedRoute';
-import { getCurrentUser, logoutUser } from '../utils/session';
+import { getCurrentUser } from '../utils/session';
 import { getUsers } from '../utils/userStorage';
 import { ADMIN_STORAGE_KEYS, loadAdminSettings, loadAuxConfig, readAdminJson } from '../utils/adminStorage';
 import { calculateReviewStats, getSystemReadinessStatus } from '../utils/systemReadiness';
@@ -112,21 +112,21 @@ export const AdminDashboard = ({ questions, config, results, refresh, openResult
   const testerDashboard = <div className="space-y-6"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><StatCard label="Token tersedia" value={summary.tokensAvailable} /><StatCard label="Token aktif" value={summary.tokensActive} tone="teal" /><StatCard label="Peserta sedang tes" value={summary.testingNow} tone="amber" /><StatCard label="Peserta selesai hari ini" value={summary.completedToday} tone="teal" /><StatCard label="Peserta belum mulai" value={summary.notStarted} /><StatCard label="Hasil menunggu telaah" value={summary.reviewStats.message} tone="amber" /></div><Card><h2 className="text-xl font-black">Aksi cepat tester</h2><div className="mt-4 flex flex-wrap gap-3"><Button onClick={() => navigate('/admin/tokens')}>Buat token</Button><Button variant="ghost" onClick={() => navigate('/admin/tokens')}>Cetak kartu token</Button><Button variant="secondary" onClick={() => navigate('/admin/results')}>Lihat status peserta</Button></div></Card></div>;
   const specialistDashboard = <div className="space-y-6"><ReviewStatsCard stats={summary.reviewStats} /><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><StatCard label="Perhatian" value={summary.caution} tone="amber" /><StatCard label="Invalid/tes ulang" value={summary.invalid} tone="rose" /><StatCard label="Sudah ditelaah" value={summary.reviewed} tone="teal" /><StatCard label="Laporan final" value={summary.finalReports} tone="teal" /></div><Card><h2 className="text-xl font-black">Aksi cepat spesialis</h2><div className="mt-4 flex flex-wrap gap-3"><Button onClick={() => navigate('/admin/review')}>Telaah hasil terbaru</Button><Button variant="secondary" onClick={() => navigate('/admin/review')}>Cetak laporan final</Button><Button variant="ghost" onClick={() => navigate('/admin/review')}>Tambah catatan klinis</Button></div></Card></div>;
   const dashboard = user.role === 'superadmin' ? superadminDashboard : user.role === 'tester' ? testerDashboard : specialistDashboard;
-  const configPage = <PermissionGuard permission="config.importQuestions"><div className="space-y-6"><ImportQuestionsPanel questions={questions} onRefresh={refresh} toast={() => undefined} /><ImportScoringPanel questions={questions} config={config} onRefresh={refresh} toast={() => undefined} /><ImportNormPanel normTable={normTable} config={config} onRefresh={refresh} toast={() => undefined} /><ImportInterpretationPanel config={interpretationConfig} onRefresh={refresh} toast={() => undefined} /><ImportCodeTypePanel config={codeTypeConfig} onRefresh={refresh} toast={() => undefined} /></div></PermissionGuard>;
+  const configPage = <PermissionGuard permission="config.manage"><div className="space-y-6"><ImportQuestionsPanel questions={questions} onRefresh={refresh} toast={() => undefined} /><ImportScoringPanel questions={questions} config={config} onRefresh={refresh} toast={() => undefined} /><ImportNormPanel normTable={normTable} config={config} onRefresh={refresh} toast={() => undefined} /><ImportInterpretationPanel config={interpretationConfig} onRefresh={refresh} toast={() => undefined} /><ImportCodeTypePanel config={codeTypeConfig} onRefresh={refresh} toast={() => undefined} /></div></PermissionGuard>;
   const interpretationConfigPage = <PermissionGuard permission="config.importQuestions"><InterpretationConfigPanel rusdiConfig={rusdiConfig} hubertusConfig={hubertusConfig} rusdiCodeTypeConfig={rusdiCodeTypeConfig} hubertusCodeTypeConfig={hubertusCodeTypeConfig} scoringConfig={config} onRefresh={refresh} toast={() => undefined} /></PermissionGuard>;
   const resultsPage = <PermissionGuard permission="results.readAdministrative"><ResultsManagementPanel results={user.role === 'tester' ? results.map((result) => ({ ...result, scores: [], interpretations: undefined, clinicalSummary: undefined, recommendations: [] })) : results} onRefresh={refresh} openResult={openResult} toast={() => undefined} /></PermissionGuard>;
 
-  const content = currentPath === '/admin/users' ? <PermissionGuard permission="users.read"><UserManagementPage /></PermissionGuard>
-    : currentPath === '/admin/tokens' ? <PermissionGuard permission="tokens.create"><TokenManagementPanel results={results} toast={() => undefined} /></PermissionGuard>
+  const content = currentPath === '/admin/users' ? <PermissionGuard permission="users.manage"><UserManagementPage /></PermissionGuard>
+    : currentPath === '/admin/tokens' ? <PermissionGuard permission="tokens.manage"><TokenManagementPanel results={results} toast={() => undefined} /></PermissionGuard>
     : currentPath === '/admin/config' ? configPage
     : currentPath === '/admin/interpretations' ? interpretationConfigPage
     : currentPath === '/admin/summary-analysis' ? <PermissionGuard permission="config.importQuestions"><SummaryAnalysisConfigPanel config={summaryAnalysisConfig} scoringConfig={config} onRefresh={refresh} toast={() => undefined} /></PermissionGuard>
     : currentPath === '/admin/readiness-wizard' ? <PermissionGuard permission="config.importQuestions"><SystemReadinessWizard onRefresh={refresh} navigate={navigate} /></PermissionGuard>
     : currentPath === '/admin/results' ? resultsPage
-    : currentPath === '/admin/review' ? <PermissionGuard permission="review.create"><SpecialistReviewPage results={results} onRefresh={refresh} /></PermissionGuard>
+    : currentPath === '/admin/review' ? <PermissionGuard permission="review.manage"><SpecialistReviewPage results={results} onRefresh={refresh} /></PermissionGuard>
     : currentPath === '/admin/rh' ? <PermissionGuard permission="results.readAdministrative"><AdminRHPage results={results} /></PermissionGuard>
-    : currentPath === '/admin/settings' ? <PermissionGuard permission="system.reset"><AdminSettingsPanel onRefresh={refresh} toast={() => undefined} /></PermissionGuard>
-    : currentPath === '/admin/backup' ? <PermissionGuard permission="backup.export"><div className="space-y-6"><BackupRestoreAdvancedPanel /><BackupRestorePanel onRefresh={refresh} toast={() => undefined} /></div></PermissionGuard>
+    : currentPath === '/admin/settings' ? <PermissionGuard permission="settings.manage"><AdminSettingsPanel onRefresh={refresh} toast={() => undefined} /></PermissionGuard>
+    : currentPath === '/admin/backup' ? <PermissionGuard permission="backup.manage"><div className="space-y-6"><BackupRestoreAdvancedPanel /><BackupRestorePanel onRefresh={refresh} toast={() => undefined} /></div></PermissionGuard>
     : currentPath === '/admin/config-versions' ? <PermissionGuard permission="config.importQuestions"><ConfigVersionPanel /></PermissionGuard>
     : currentPath === '/admin/session-monitoring' ? <PermissionGuard permission="results.readAdministrative"><SessionMonitoringPanel /></PermissionGuard>
     : currentPath === '/admin/tokens-advanced' ? <PermissionGuard permission="tokens.create"><AdvancedTokenPanel /></PermissionGuard>
@@ -140,5 +140,5 @@ export const AdminDashboard = ({ questions, config, results, refresh, openResult
     : currentPath === '/admin/audit' ? <PermissionGuard permission="audit.read"><AuditLogPanel /></PermissionGuard>
     : dashboard;
 
-  return <div className="mx-auto max-w-7xl px-4 py-8"><div className="mb-6 space-y-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-bold uppercase tracking-wide text-teal-700">Admin Dashboard</p><h1 className="text-2xl font-black sm:text-3xl">Asesmen MMPI TNI AU / SPPG</h1><p className="text-slate-500">Akses terkelola untuk Superadmin, Tester, dan Spesialis.</p></div><div className="flex flex-wrap items-center gap-2"><Badge tone="teal">Admin Panel</Badge><RoleBadge role={user.role} /><span className="text-sm font-bold">{user.displayName}</span><Button variant="ghost" onClick={refresh}>Refresh</Button><Button variant="danger" onClick={() => { logoutUser(); navigate('/admin/login'); }}>Logout</Button></div></div></div><div className="grid gap-6 lg:grid-cols-[260px_1fr]"><AdminSidebar user={user} currentPath={currentPath} navigate={navigate} /><section className="min-w-0 space-y-4"><LockdownModeBanner />{content}</section></div></div>;
+  return <div className="mx-auto max-w-7xl px-4 py-8"><AdminHeader user={user} onRefresh={refresh} onLogout={() => navigate('/admin/login')} /><div className="grid gap-6 lg:grid-cols-[260px_1fr]"><AdminSidebar user={user} currentPath={currentPath} navigate={navigate} /><section className="min-w-0 space-y-4"><LockdownModeBanner />{content}</section></div></div>;
 };

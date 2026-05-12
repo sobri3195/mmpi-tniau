@@ -1,7 +1,7 @@
 import { ADMIN_STORAGE_KEYS, readAdminJson, removeAdminKey, writeAdminJson } from './adminStorage';
 import type { AdminRole } from './roles';
 import type { AdminUser } from './userStorage';
-import { getUsers, touchUserLastLogin, verifyLocalSecret } from './userStorage';
+import { getUsers, isUserLocked, recordFailedLogin, touchUserLastLogin, verifyUserPassword } from './userStorage';
 import { writeAuditLog } from './auditLog';
 
 export interface AuthSession {
@@ -15,6 +15,7 @@ export interface AuthSession {
 }
 
 const SESSION_HOURS = 8;
+export const ADMIN_SESSION_EXPIRED_MESSAGE = 'Sesi admin berakhir. Silakan login kembali.';
 
 export const loadAuthSession = () => readAdminJson<AuthSession | null>(ADMIN_STORAGE_KEYS.authSession, null);
 export const saveAuthSession = (session: AuthSession) => writeAdminJson(ADMIN_STORAGE_KEYS.authSession, session);
@@ -22,30 +23,45 @@ export const clearAuthSession = () => removeAdminKey(ADMIN_STORAGE_KEYS.authSess
 
 export const validateSession = () => {
   const session = loadAuthSession();
-  if (!session) return { valid: false, message: 'Sesi admin belum tersedia.' };
+  if (!session) return { valid: false, message: ADMIN_SESSION_EXPIRED_MESSAGE };
   if (new Date(session.expiresAt).getTime() <= Date.now()) {
-    logoutUser('Session expired');
-    return { valid: false, message: 'Sesi admin sudah kedaluwarsa. Silakan login ulang.' };
+    writeAuditLog({ userId: session.userId, username: session.username, role: session.role, action: 'session_expired', targetType: 'auth_session', targetId: session.sessionId, description: 'Sesi admin kedaluwarsa.', severity: 'warning' });
+    clearAuthSession();
+    return { valid: false, message: ADMIN_SESSION_EXPIRED_MESSAGE };
   }
   const user = getUsers().find((item) => item.userId === session.userId);
-  if (!user?.isActive) {
+  if (!user || !user.isActive) {
     clearAuthSession();
-    return { valid: false, message: 'User tidak aktif atau tidak ditemukan.' };
+    return { valid: false, message: ADMIN_SESSION_EXPIRED_MESSAGE };
   }
   return { valid: true, session, user, message: 'Sesi valid.' };
 };
 
 export const getCurrentUser = (): AdminUser | null => {
-  const session = loadAuthSession();
-  if (!session || new Date(session.expiresAt).getTime() <= Date.now()) return null;
-  return getUsers().find((user) => user.userId === session.userId && user.isActive) ?? null;
+  const validation = validateSession();
+  return validation.valid ? (validation.user ?? null) : null;
 };
 
-export const loginUser = (username: string, password: string) => {
+export const getSessionRemainingMs = () => {
+  const session = loadAuthSession();
+  return session ? Math.max(0, new Date(session.expiresAt).getTime() - Date.now()) : 0;
+};
+
+export const loginUser = async (username: string, password: string) => {
   const normalized = username.trim().toLowerCase();
   const user = getUsers().find((item) => item.username === normalized);
-  if (!user || !user.isActive) throw new Error('User tidak ditemukan atau tidak aktif.');
-  if (!verifyLocalSecret(password, user.passwordHash) && !(user.pinHash && verifyLocalSecret(password, user.pinHash))) throw new Error('Username atau password/PIN salah.');
+  if (!user) {
+    writeAuditLog({ action: 'login_failed', targetType: 'user', targetId: normalized, description: 'Percobaan login gagal.', severity: 'warning', username: normalized, role: '' });
+    throw new Error('Username atau password salah.');
+  }
+  if (!user.isActive) throw new Error('Akun dinonaktifkan. Hubungi Superadmin.');
+  if (isUserLocked(user)) throw new Error('Akun terkunci sementara karena terlalu banyak percobaan login.');
+  const verified = await verifyUserPassword(user, password);
+  if (!verified) {
+    const locked = recordFailedLogin(user.userId);
+    writeAuditLog({ userId: user.userId, username: user.username, role: user.role, action: locked ? 'login_locked' : 'login_failed', targetType: 'user', targetId: user.userId, description: locked ? 'Akun terkunci karena terlalu banyak percobaan login.' : 'Percobaan login gagal.', severity: 'warning' });
+    throw new Error('Username atau password salah.');
+  }
   const loginAt = new Date();
   const session: AuthSession = {
     sessionId: crypto.randomUUID(),
@@ -58,12 +74,12 @@ export const loginUser = (username: string, password: string) => {
   };
   saveAuthSession(session);
   touchUserLastLogin(user.userId);
-  writeAuditLog({ userId: user.userId, username: user.username, role: user.role, action: 'Login', targetType: 'auth_session', targetId: session.sessionId, description: 'User login admin.' });
+  writeAuditLog({ userId: user.userId, username: user.username, role: user.role, action: 'login_success', targetType: 'auth_session', targetId: session.sessionId, description: 'Admin login berhasil.', severity: 'info' });
   return session;
 };
 
-export const logoutUser = (reason = 'User logout admin.') => {
+export const logoutUser = (reason = 'Admin logout.') => {
   const session = loadAuthSession();
-  if (session) writeAuditLog({ userId: session.userId, username: session.username, role: session.role, action: 'Logout', targetType: 'auth_session', targetId: session.sessionId, description: reason });
+  if (session) writeAuditLog({ userId: session.userId, username: session.username, role: session.role, action: 'logout', targetType: 'auth_session', targetId: session.sessionId, description: reason, severity: 'info' });
   clearAuthSession();
 };
