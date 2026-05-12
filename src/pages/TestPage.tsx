@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { AnswerValue, CurrentSession, Question } from '../types';
 import { AccessibilityControls } from '../components/AccessibilityControls';
 import { QuestionCard } from '../components/QuestionCard';
@@ -25,8 +25,8 @@ export const TestPage = ({ session, questions, onSubmit, onExit, onChange, onAcc
   const answered = Object.values(local.answers).filter(isAnswerValue).length;
   const progress = questions.length ? Math.round((answered / questions.length) * 100) : 0;
   const question = questions[local.currentIndex];
-  const isAnswered = (q: Question) => isAnswerValue(local.answers[String(q.id)]);
-  const missing = useMemo(() => questions.map((q, index) => ({ q, index })).filter(({ q }) => !isAnswered(q)), [questions, local.answers]);
+  const isAnswered = useCallback((q: Question) => isAnswerValue(local.answers[String(q.id)]), [local.answers]);
+  const missing = useMemo(() => questions.map((q, index) => ({ q, index })).filter(({ q }) => !isAnswered(q)), [questions, isAnswered]);
   const firstMissingIndex = missing[0]?.index ?? questions.length;
   const currentAnswered = question ? isAnswered(question) : false;
   const canOpenQuestion = (index: number) => index <= firstMissingIndex;

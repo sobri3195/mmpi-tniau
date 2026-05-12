@@ -59,9 +59,7 @@ const finish = (result: ConfigValidationResult) => {
   if (result.ready) result.status = 'ready';
   return result;
 };
-const scaleKey = (scale: Record<string, unknown>) => String(scale.code ?? scale.id ?? scale.scaleId ?? '').trim();
 const getMainScales = (config: ScoringConfig | null | undefined) => (config?.scales ?? []).filter((scale) => ['validity', 'clinical'].includes(String(scale.group ?? scale.type ?? '').toLowerCase()));
-const getClinicalScales = (config: ScoringConfig | null | undefined) => (config?.scales ?? []).filter((scale) => String(scale.group ?? scale.type ?? '').toLowerCase() === 'clinical');
 const getScaleCodes = (config: ScoringConfig | null | undefined) => new Set((config?.scales ?? []).flatMap((scale) => [scale.id, scale.code].filter(Boolean).map(String)));
 const objectHasAny = (record: Record<string, unknown>, keys: string[]) => keys.some((key) => record[key] !== undefined && record[key] !== null && (!Array.isArray(record[key]) || (record[key] as unknown[]).length > 0));
 

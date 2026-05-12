@@ -1,7 +1,18 @@
 import { useState } from 'react';
 import type { ClinicalFinalizationChecklist } from '../../types';
 import { Button, Card } from '../ui';
-const fields: Array<[keyof ClinicalFinalizationChecklist, string]> = [['identityVerified','Identitas peserta sudah sesuai'],['answersComplete','Jumlah jawaban MMPI lengkap'],['durationReviewed','Jam mulai, selesai, dan durasi wajar'],['validityReviewed','Skala validitas telah ditinjau'],['redFlagsReviewed','Red flag RH sudah ditinjau'],['rhCompared','RH Skrining dibandingkan dengan profil MMPI'],['rusdiReviewed','Interpretasi Rusdi Maslim sudah dibaca'],['hubertusReviewed','Interpretasi Hubertus sudah dibaca'],['summaryAnalysisReviewed','Analisa Ringkas TNI AU ditinjau'],['manualConclusionAdded','Kesimpulan tidak hanya otomatis dan rekomendasi profesional'],['disclaimerIncluded','Disclaimer tercantum']];
-export const defaultClinicalChecklist = (): ClinicalFinalizationChecklist => ({ identityVerified:false, answersComplete:false, durationReviewed:false, validityReviewed:false, redFlagsReviewed:false, rhCompared:false, rusdiReviewed:false, hubertusReviewed:false, summaryAnalysisReviewed:false, manualConclusionAdded:false, disclaimerIncluded:false, completedBy:'', completedAt:'' });
-export const isClinicalChecklistComplete = (checklist?: Partial<ClinicalFinalizationChecklist>) => fields.every(([key]) => Boolean(checklist?.[key]));
-export const ClinicalChecklist = ({ value, onChange, completedBy = '' }: { value?: ClinicalFinalizationChecklist; onChange: (next: ClinicalFinalizationChecklist) => void; completedBy?: string }) => { const [local, setLocal] = useState<ClinicalFinalizationChecklist>(value ?? defaultClinicalChecklist()); const update = (key: keyof ClinicalFinalizationChecklist, checked: boolean) => { const next = { ...local, [key]: checked }; if (isClinicalChecklistComplete(next)) { next.completedBy = completedBy; next.completedAt = new Date().toISOString(); } setLocal(next); onChange(next); }; return <Card><h3 className="text-xl font-black">Checklist validitas klinis wajib</h3><p className="text-sm text-slate-500">Finalisasi tidak aktif sebelum seluruh checklist lengkap.</p><div className="mt-4 grid gap-2">{fields.map(([key,label])=><label key={key} className="flex items-start gap-3 rounded-2xl border p-3 text-sm font-semibold"><input type="checkbox" checked={Boolean(local[key])} onChange={(e)=>update(key,e.target.checked)} />{label}</label>)}</div><div className="mt-4 text-sm font-bold">Status: {isClinicalChecklistComplete(local) ? 'Lengkap' : 'Belum lengkap'}</div><Button className="mt-3" variant="ghost" onClick={()=>onChange(local)}>Simpan checklist</Button></Card>; };
+import { clinicalChecklistFields, defaultClinicalChecklist, isClinicalChecklistComplete } from './clinicalChecklistUtils';
+
+export const ClinicalChecklist = ({ value, onChange, completedBy = '' }: { value?: ClinicalFinalizationChecklist; onChange: (next: ClinicalFinalizationChecklist) => void; completedBy?: string }) => {
+  const [local, setLocal] = useState<ClinicalFinalizationChecklist>(value ?? defaultClinicalChecklist());
+  const update = (key: keyof ClinicalFinalizationChecklist, checked: boolean) => {
+    const next = { ...local, [key]: checked };
+    if (isClinicalChecklistComplete(next)) {
+      next.completedBy = completedBy;
+      next.completedAt = new Date().toISOString();
+    }
+    setLocal(next);
+    onChange(next);
+  };
+  return <Card><h3 className="text-xl font-black">Checklist validitas klinis wajib</h3><p className="text-sm text-slate-500">Finalisasi tidak aktif sebelum seluruh checklist lengkap.</p><div className="mt-4 grid gap-2">{clinicalChecklistFields.map(([key, label]) => <label key={key} className="flex items-start gap-3 rounded-2xl border p-3 text-sm font-semibold"><input type="checkbox" checked={Boolean(local[key])} onChange={(event) => update(key, event.target.checked)} />{label}</label>)}</div><div className="mt-4 text-sm font-bold">Status: {isClinicalChecklistComplete(local) ? 'Lengkap' : 'Belum lengkap'}</div><Button className="mt-3" variant="ghost" onClick={() => onChange(local)}>Simpan checklist</Button></Card>;
+};

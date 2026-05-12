@@ -2,20 +2,12 @@ import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import { Card } from '../ui';
 import { validateParticipantAccess, type ParticipantAccessDeniedReason } from '../../utils/tokenValidation';
-
-const redirectPathByReason = (reason: ParticipantAccessDeniedReason) => {
-  if (reason === 'token_disabled' || reason === 'paused_token_disabled') return '/token-disabled';
-  if (reason === 'token_completed') return '/token-completed';
-  if (reason === 'token_expired') return '/token-expired';
-  return '/access';
-};
-
-export const getParticipantAccessRedirect = (reason: ParticipantAccessDeniedReason) => redirectPathByReason(reason);
+import { getParticipantAccessRedirect } from './participantAccessRedirect';
 
 export const ParticipantProtectedRoute = ({ children, currentRoute, onRedirect }: { children: ReactNode; currentRoute: string; onRedirect?: (path: string, reason: ParticipantAccessDeniedReason, message: string) => void }) => {
   const validation = validateParticipantAccess({ currentRoute });
   useEffect(() => {
-    if (!validation.allowed) onRedirect?.(redirectPathByReason(validation.reason), validation.reason, validation.message);
+    if (!validation.allowed) onRedirect?.(getParticipantAccessRedirect(validation.reason), validation.reason, validation.message);
   }, [validation.allowed, validation.message, validation.reason, onRedirect]);
 
   if (!validation.allowed) {

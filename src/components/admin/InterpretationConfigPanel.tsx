@@ -28,7 +28,7 @@ const meta = {
 } as const;
 
 export const InterpretationConfigPanel = ({ rusdiConfig, hubertusConfig, rusdiCodeTypeConfig, hubertusCodeTypeConfig, scoringConfig, onRefresh, toast }: { rusdiConfig: unknown; hubertusConfig: unknown; rusdiCodeTypeConfig: unknown; hubertusCodeTypeConfig: unknown; scoringConfig: ScoringConfig | null; onRefresh: () => void; toast: (message: string, tone?: 'teal' | 'amber' | 'rose') => void }) => {
-  useEffect(() => { if (ensureInterpretationConfigsExist(scoringConfig)) onRefresh(); }, [scoringConfig]);
+  useEffect(() => { if (ensureInterpretationConfigsExist(scoringConfig)) onRefresh(); }, [onRefresh, scoringConfig]);
   return <div className="space-y-6">
     <Card><PanelTitle title="Konfigurasi Interpretasi" subtitle="Interpretasi Rusdi Maslim dan Hubertus otomatis memiliki auto-default generik untuk preview teknis. Admin tetap dapat mengganti dengan konfigurasi resmi/berizin; auto-default bukan interpretasi resmi final." /></Card>
     <SourcePanel source="rusdi_maslim" config={rusdiConfig} codeTypeConfig={rusdiCodeTypeConfig} scoringConfig={scoringConfig} onRefresh={onRefresh} toast={toast} />
