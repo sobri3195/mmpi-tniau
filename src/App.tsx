@@ -1,16 +1,5 @@
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import type { AssessmentResult, CurrentSession, ParticipantIdentity } from './types';
-import { AdminDashboard } from './pages/AdminDashboard';
-import { AdminLoginPage } from './pages/AdminLoginPage';
-import { AdminSetupPage } from './pages/AdminSetupPage';
-import { IdentityPage } from './pages/IdentityPage';
-import { InstructionsPage } from './pages/InstructionsPage';
-import { LandingPage } from './pages/LandingPage';
-import { ResultsPage } from './pages/ResultsPage';
-import { RHSkriningPage } from './pages/RHSkriningPage';
-import { RHReviewPage } from './pages/RHReviewPage';
-import { TokenAccessPage } from './pages/TokenAccessPage';
-import { TestPage } from './pages/TestPage';
 import { Button, Card } from './components/ui';
 import { BrandLogo } from './components/BrandLogo';
 import { calculateRawScores, determineValidity, generateClinicalSummary, generateRecommendations, isDemoScoringConfig, validateScoringConfig } from './utils/scoring';
@@ -24,6 +13,21 @@ import { orderQuestionsForSession } from './utils/questions';
 import { normalizeAnswers } from './utils/answerFormat';
 import { buildDualInterpretations, ensureInterpretationConfigsExist, initializeDefaultInterpretationConfigs } from './utils/sourceInterpretations';
 import { buildSummaryAnalysis, initializeDefaultSummaryAnalysisConfig, loadSummaryAnalysisConfig } from './utils/summaryAnalysis';
+
+
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then((module) => ({ default: module.AdminDashboard })));
+const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage').then((module) => ({ default: module.AdminLoginPage })));
+const AdminSetupPage = lazy(() => import('./pages/AdminSetupPage').then((module) => ({ default: module.AdminSetupPage })));
+const IdentityPage = lazy(() => import('./pages/IdentityPage').then((module) => ({ default: module.IdentityPage })));
+const InstructionsPage = lazy(() => import('./pages/InstructionsPage').then((module) => ({ default: module.InstructionsPage })));
+const LandingPage = lazy(() => import('./pages/LandingPage').then((module) => ({ default: module.LandingPage })));
+const ResultsPage = lazy(() => import('./pages/ResultsPage').then((module) => ({ default: module.ResultsPage })));
+const RHSkriningPage = lazy(() => import('./pages/RHSkriningPage').then((module) => ({ default: module.RHSkriningPage })));
+const RHReviewPage = lazy(() => import('./pages/RHReviewPage').then((module) => ({ default: module.RHReviewPage })));
+const TokenAccessPage = lazy(() => import('./pages/TokenAccessPage').then((module) => ({ default: module.TokenAccessPage })));
+const TestPage = lazy(() => import('./pages/TestPage').then((module) => ({ default: module.TestPage })));
+
+const PageLoader = () => <div className="mx-auto max-w-6xl px-4 py-8 text-sm font-semibold text-slate-600 dark:text-slate-300">Memuat halaman...</div>;
 
 export type Page = 'landing' | 'access' | 'identity' | 'instructions' | 'test' | 'result' | 'rh-skrining' | 'rh-review' | 'admin' | 'scoring-missing';
 
@@ -183,25 +187,27 @@ export default function App() {
           </div>
         </div>
       </nav>
-      {page === 'landing' && <LandingPage go={(p) => p === 'identity' ? resume() : setPage(p as Page, p === 'admin' ? '/admin' : undefined)} questionsCount={questions.length} />}
-      {page === 'access' && <TokenAccessPage reason={accessMessage} onVerified={() => { const next = loadCurrentSession(); setSession(next); setAccessMessage(''); setPage('identity', '/participant'); }} />}
-      {page === 'identity' && <IdentityPage onSubmit={startIdentity} />}
-      {page === 'instructions' && <InstructionsPage onStart={() => { const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } setPage('test', '/test'); }} questionsCount={questions.length} />}
-      {page === 'test' && session && <TestPage session={session} questions={orderQuestionsForSession(questions, session.questionOrder)} onSubmit={submit} onExit={() => setPage('landing', '/')} onChange={(next) => { setSession(next); touchTokenSession(next); }} />}
-      {page === 'scoring-missing' && <ScoringMissingPage message={submitError} goAdmin={() => { refresh(); setPage('admin', '/admin'); }} saveDraft={() => session && saveCurrentSession(session)} backToTest={() => setPage('test', '/test')} />}
-      {page === 'result' && activeResult && (activeResult.rhCompleted ? <ResultsPage result={activeResult} scoringConfig={config} goHome={() => setPage('landing', '/')} /> : <RHSkriningPage result={activeResult} onDone={(completed) => { setActiveResult(completed); refresh(); setSession(null); setPage('result', `/result/${completed.id}`); }} onCancel={() => setPage('landing', '/')} />)}
-      {page === 'rh-skrining' && activeResult && <RHSkriningPage result={activeResult} onDone={(completed) => { setActiveResult(completed); refresh(); setSession(null); setPage('result', `/result/${completed.id}`); }} onCancel={() => setPage('landing', '/')} />}
-      {page === 'rh-review' && activeResult && <RHReviewPage result={activeResult} form={getRHFormByResultId(activeResult.id)} goBack={() => setPage('result', `/result/${activeResult.id}`)} />}
-      {page === 'admin' && (() => {
-        if (!hasAnyUser()) return <AdminSetupPage onDone={() => navigate('/admin/login')} />;
-        if (currentPath === '/admin/setup') return <AdminSetupPage onDone={() => navigate('/admin/login')} />;
-        if (currentPath === '/admin/login' || !validateSession().valid) return <AdminLoginPage onAuthenticated={() => navigate('/admin/dashboard')} />;
-        const reportRhId = currentPath.startsWith('/report/') && currentPath.endsWith('/rh') ? currentPath.split('/')[2] : '';
-        if (reportRhId) { const rhResult = results.find((result) => result.id === reportRhId); return <RHReviewPage result={rhResult} form={rhResult ? getRHFormByResultId(rhResult.id) : null} goBack={() => navigate('/admin/rh')} />; }
-        const routeResult = currentPath.startsWith('/result/') || currentPath.startsWith('/report/') ? results.find((result) => result.id === currentPath.split('/').pop()) : null;
-        if (routeResult) return routeResult.rhCompleted ? <ResultsPage result={routeResult} scoringConfig={config} goHome={() => navigate('/admin/results')} /> : <RHReviewPage result={routeResult} form={getRHFormByResultId(routeResult.id)} goBack={() => navigate('/admin/results')} />;
-        return <AdminDashboard questions={questions} config={config} results={results} refresh={refresh} currentPath={currentPath === '/admin' ? '/admin/dashboard' : currentPath} navigate={navigate} openResult={(r) => { setActiveResult(r); navigate(`/result/${r.id}`); }} />;
-      })()}
+      <Suspense fallback={<PageLoader />}>
+        {page === 'landing' && <LandingPage go={(p) => p === 'identity' ? resume() : setPage(p as Page, p === 'admin' ? '/admin' : undefined)} questionsCount={questions.length} />}
+        {page === 'access' && <TokenAccessPage reason={accessMessage} onVerified={() => { const next = loadCurrentSession(); setSession(next); setAccessMessage(''); setPage('identity', '/participant'); }} />}
+        {page === 'identity' && <IdentityPage onSubmit={startIdentity} />}
+        {page === 'instructions' && <InstructionsPage onStart={() => { const validation = validateSessionToken(session); if (!validation.valid) { setAccessMessage(validation.message); setPage('access', '/access'); return; } setPage('test', '/test'); }} questionsCount={questions.length} />}
+        {page === 'test' && session && <TestPage session={session} questions={orderQuestionsForSession(questions, session.questionOrder)} onSubmit={submit} onExit={() => setPage('landing', '/')} onChange={(next) => { setSession(next); touchTokenSession(next); }} />}
+        {page === 'scoring-missing' && <ScoringMissingPage message={submitError} goAdmin={() => { refresh(); setPage('admin', '/admin'); }} saveDraft={() => session && saveCurrentSession(session)} backToTest={() => setPage('test', '/test')} />}
+        {page === 'result' && activeResult && (activeResult.rhCompleted ? <ResultsPage result={activeResult} scoringConfig={config} goHome={() => setPage('landing', '/')} /> : <RHSkriningPage result={activeResult} onDone={(completed) => { setActiveResult(completed); refresh(); setSession(null); setPage('result', `/result/${completed.id}`); }} onCancel={() => setPage('landing', '/')} />)}
+        {page === 'rh-skrining' && activeResult && <RHSkriningPage result={activeResult} onDone={(completed) => { setActiveResult(completed); refresh(); setSession(null); setPage('result', `/result/${completed.id}`); }} onCancel={() => setPage('landing', '/')} />}
+        {page === 'rh-review' && activeResult && <RHReviewPage result={activeResult} form={getRHFormByResultId(activeResult.id)} goBack={() => setPage('result', `/result/${activeResult.id}`)} />}
+        {page === 'admin' && (() => {
+          if (!hasAnyUser()) return <AdminSetupPage onDone={() => navigate('/admin/login')} />;
+          if (currentPath === '/admin/setup') return <AdminSetupPage onDone={() => navigate('/admin/login')} />;
+          if (currentPath === '/admin/login' || !validateSession().valid) return <AdminLoginPage onAuthenticated={() => navigate('/admin/dashboard')} />;
+          const reportRhId = currentPath.startsWith('/report/') && currentPath.endsWith('/rh') ? currentPath.split('/')[2] : '';
+          if (reportRhId) { const rhResult = results.find((result) => result.id === reportRhId); return <RHReviewPage result={rhResult} form={rhResult ? getRHFormByResultId(rhResult.id) : null} goBack={() => navigate('/admin/rh')} />; }
+          const routeResult = currentPath.startsWith('/result/') || currentPath.startsWith('/report/') ? results.find((result) => result.id === currentPath.split('/').pop()) : null;
+          if (routeResult) return routeResult.rhCompleted ? <ResultsPage result={routeResult} scoringConfig={config} goHome={() => navigate('/admin/results')} /> : <RHReviewPage result={routeResult} form={getRHFormByResultId(routeResult.id)} goBack={() => navigate('/admin/results')} />;
+          return <AdminDashboard questions={questions} config={config} results={results} refresh={refresh} currentPath={currentPath === '/admin' ? '/admin/dashboard' : currentPath} navigate={navigate} openResult={(r) => { setActiveResult(r); navigate(`/result/${r.id}`); }} />;
+        })()}
+      </Suspense>
     </main>
   );
 }
