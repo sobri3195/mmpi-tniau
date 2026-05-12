@@ -11,6 +11,7 @@ import { SummaryAnalysisSection } from '../components/report/SummaryAnalysisSect
 import { AppendixSection } from '../components/AppendixSection';
 import { getRHFormByResultId, loadAuxiliaryConfig } from '../utils/storage';
 import { buildDualInterpretations } from '../utils/sourceInterpretations';
+import { AUTO_DEFAULT_REPORT_BADGE, AUTO_DEFAULT_REPORT_DISCLAIMER, isAutoDefaultScoring } from '../utils/autoDefaultScoring';
 
 const DISCLAIMER = 'Interpretasi Rusdi Maslim dan Hubertus ditampilkan sebagai bahan telaah profesional. Perbedaan hasil atau penekanan interpretasi harus ditinjau oleh spesialis/dokter jiwa/psikolog klinis. Laporan otomatis ini bukan diagnosis final dan tidak boleh menjadi satu-satunya dasar keputusan klinis, administratif, atau personel. Interpretasi auto-default menggunakan konfigurasi generik dan bukan kutipan manual. Kesimpulan final wajib ditetapkan oleh spesialis/dokter jiwa/psikolog klinis.';
 
@@ -28,19 +29,21 @@ export const ResultsPage = ({ result, scoringConfig, goHome }: { result: Assessm
   const dual = buildDualInterpretations(result.scores, result.validityStatus ?? { status: 'caution', label: 'Validitas belum dinilai', reasons: [], flags: [] }, loadAuxiliaryConfig('interpretationRusdiMaslim'), loadAuxiliaryConfig('interpretationHubertus'));
   const rhForm = getRHFormByResultId(result.id);
   const summaryAnalysisConfig = loadAuxiliaryConfig<SummaryAnalysisConfig>('summaryAnalysisConfig');
-  const canPrintFinal = Boolean(result.rhCompleted && rhForm?.status === 'completed');
+  const isAutoDefaultResult = Boolean(result.scoringStatus?.isAutoDefault || isAutoDefaultScoring(scoringConfig));
+  const canPrintFinal = Boolean(result.rhCompleted && rhForm?.status === 'completed' && !isAutoDefaultResult);
   const tabs = [
     ['summary', 'Ringkasan Skor dan Grafik'], ['rusdi', dual.rusdiMaslim?.isAutoDefault ? 'Interpretasi format Rusdi Maslim — auto-default' : 'Interpretasi Rusdi Maslim'], ['hubertus', dual.hubertus?.isAutoDefault ? 'Interpretasi format Hubertus — auto-default' : 'Interpretasi Hubertus'], ['summaryAnalysis', 'Analisa Ringkas TNI AU'], ['rh', 'RH Skrining'], ['review', 'Catatan Spesialis'], ['appendix', 'Lampiran'],
   ] as const;
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
       <Card className="mb-6 report-header">
-        <div className="flex flex-wrap justify-between gap-4"><div><p className="text-sm font-bold text-teal-600">TNI AU / SPPG</p><h1 className="text-2xl font-black sm:text-3xl">Laporan hasil asesmen MMPI TNI AU/SPPG</h1><p className="text-slate-500">Bagian kepala laporan TNI AU/SPPG — asesmen satu kali, interpretasi ditampilkan di halaman hasil.</p></div><div className="flex flex-col items-start gap-2 sm:items-end"><Badge tone={result.status === 'Perlu Review' ? 'amber' : 'teal'}>{statusLabel}</Badge><Badge tone={validityTone}>{result.validityStatus?.label ?? 'Validitas belum dinilai'}</Badge></div></div>
+        <div className="flex flex-wrap justify-between gap-4"><div><p className="text-sm font-bold text-teal-600">TNI AU / SPPG</p><h1 className="text-2xl font-black sm:text-3xl">Laporan hasil asesmen MMPI TNI AU/SPPG</h1><p className="text-slate-500">Bagian kepala laporan TNI AU/SPPG — asesmen satu kali, interpretasi ditampilkan di halaman hasil.</p></div><div className="flex flex-col items-start gap-2 sm:items-end"><Badge tone={result.status === 'Perlu Review' ? 'amber' : 'teal'}>{statusLabel}</Badge><Badge tone={validityTone}>{result.validityStatus?.label ?? 'Validitas belum dinilai'}</Badge>{isAutoDefaultResult && <Badge tone="rose">{AUTO_DEFAULT_REPORT_BADGE}</Badge>}</div></div>
+        {isAutoDefaultResult && <div className="mt-5 rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 text-sm font-bold text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100"><p>Scoring auto-default — bukan scoring resmi</p><p className="mt-2 font-semibold">{AUTO_DEFAULT_REPORT_DISCLAIMER}</p><p className="mt-2 text-rose-700 dark:text-rose-200">Jangan tampilkan atau gunakan sebagai hasil klinis final, laporan final resmi, interpretasi klinis final, atau keputusan layak/tidak layak sebelum scoringConfig resmi/berizin diverifikasi admin/spesialis.</p></div>}
         <AdministrativeSummary result={result} submittedDateTime={submittedDateTime} startedDate={startedDate} startedTime={startedTime} submittedDate={submittedDate} submittedTime={submittedTime} />
         {result.validityStatus?.reasons?.length ? <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm dark:bg-slate-800"><p className="font-bold">Catatan validitas</p><ul className="mt-2 list-disc pl-5">{result.validityStatus.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></div> : null}
         <div className="mt-6 grid gap-3 no-print sm:flex sm:flex-wrap"><Button onClick={() => exportResultJson(result)}>Ekspor JSON</Button><Button variant="ghost" onClick={() => exportResultsCsv([result])}>Ekspor CSV</Button><Button variant="secondary" disabled={!canPrintFinal} onClick={printReport}>Cetak / PDF</Button><Button variant="ghost" onClick={goHome}>Beranda</Button></div>
       </Card>
-      {!canPrintFinal && <Card className="mb-6 border-rose-200"><p className="font-bold text-rose-700">Laporan final belum dapat dicetak karena RH Skrining belum lengkap.</p></Card>}
+      {!canPrintFinal && <Card className="mb-6 border-rose-200"><p className="font-bold text-rose-700">{isAutoDefaultResult ? 'Laporan final resmi belum dapat dicetak karena scoring masih auto-default dan belum resmi.' : 'Laporan final belum dapat dicetak karena RH Skrining belum lengkap.'}</p></Card>}
       <div className="no-print mb-6 flex flex-wrap gap-2">{tabs.map(([id, label]) => <button key={id} type="button" onClick={() => setTab(id)} className={`rounded-2xl px-4 py-2 text-sm font-bold ${tab === id ? 'bg-teal-600 text-white' : 'bg-white shadow-sm hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800'}`}>TAB {tabs.findIndex(([key]) => key === id) + 1}: {label}</button>)}</div>
 
       <section className={tab === 'summary' ? 'space-y-6' : 'hidden print:block print:space-y-6'}>

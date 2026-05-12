@@ -42,14 +42,16 @@ import { calculateReviewStats, getSystemReadinessStatus } from '../utils/systemR
 import { getAuditLogs } from '../utils/auditLog';
 import { ensureInterpretationConfigsExist } from '../utils/sourceInterpretations';
 import { ensureSummaryAnalysisConfigExists } from '../utils/summaryAnalysis';
+import { ensureScoringConfigExists } from '../utils/autoDefaultScoring';
 
 export const AdminDashboard = ({ questions, config, results, refresh, openResult, currentPath, navigate }: { questions: Question[]; config: ScoringConfig | null; results: AssessmentResult[]; refresh: () => void; openResult: (result: AssessmentResult) => void; currentPath: string; navigate: (path: string) => void }) => {
   useEffect(() => {
+    const scoringEnsured = ensureScoringConfigExists(questions);
     const interpretationChanged = ensureInterpretationConfigsExist(config);
     const before = loadAuxConfig<SummaryAnalysisConfig>('summaryAnalysisConfig');
-    const after = ensureSummaryAnalysisConfigExists(config);
-    if (interpretationChanged || (!before && after)) refresh();
-  }, [config]);
+    const after = ensureSummaryAnalysisConfigExists(scoringEnsured.config);
+    if (scoringEnsured.created || interpretationChanged || (!before && after)) refresh();
+  }, [config, questions]);
   const user = getCurrentUser();
   const normTable = loadAuxConfig('normTable');
   const interpretationConfig = loadAuxConfig('interpretationConfig');

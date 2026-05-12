@@ -1,12 +1,14 @@
 import type { Answers, Question, ScaleConfig, ScoreRow, ScoringConfig, ValidityStatus } from '../types';
 import { determineProtocolValidity } from './validity';
 import { isAnswerValue, normalizeAnswerValue, REQUIRED_TOTAL_QUESTIONS } from './answerFormat';
+import { AUTO_DEFAULT_WARNING, isAutoDefaultScoring } from './autoDefaultScoring';
 
 export const getScaleGroup = (scale: ScaleConfig) => (scale.group ?? scale.type ?? 'other').toString().toLowerCase();
 const getNorms = (scale: ScaleConfig) => scale.tScoreConversion ?? scale.norms ?? [];
 
 export const isDemoScoringConfig = (config?: ScoringConfig | null) => {
   if (!config) return false;
+  if (isAutoDefaultScoring(config)) return false;
   const haystack = [config.instrumentName, config.version, String(config.notice ?? ''), ...config.scales.flatMap((scale) => [scale.id, scale.code ?? '', scale.name, scale.description ?? ''])].join(' ').toLowerCase();
   return /clinical_demo|validity_?demo|demo|dummy|sample|placeholder/.test(haystack);
 };
@@ -58,10 +60,10 @@ export const calculateRawScores = (answers: Answers, scoringConfig: ScoringConfi
     category: category.label,
     elevationLevel: category.elevationLevel,
     interpretation: tScore === undefined ? 'Belum dapat diinterpretasikan secara klinis karena belum dikonversi ke norma resmi.' : (rule?.description ?? category.description),
-    normStatus: tScore === undefined ? 'Norma belum tersedia' : 'Menggunakan tabel norma konfigurasi resmi/berizin yang diimpor admin',
+    normStatus: isAutoDefaultScoring(scoringConfig) ? 'Auto-default synthetic conversion, bukan norma resmi' : tScore === undefined ? 'Norma belum tersedia' : 'Menggunakan tabel norma konfigurasi resmi/berizin yang diimpor admin',
     type: getScaleGroup(scale),
     group: getScaleGroup(scale),
-    note: tScore === undefined ? 'Badge: Norma belum tersedia; gunakan raw score secara terbatas.' : 'Interpretasi otomatis perlu konfirmasi profesional.',
+    note: isAutoDefaultScoring(scoringConfig) ? AUTO_DEFAULT_WARNING : tScore === undefined ? 'Badge: Norma belum tersedia; gunakan raw score secara terbatas.' : 'Interpretasi otomatis perlu konfirmasi profesional.',
   };
 });
 
@@ -91,6 +93,10 @@ export const generateRecommendations = (scores: ScoreRow[], validityStatus: Vali
 
 export const validateScoringConfig = (config: ScoringConfig | null, questions?: Question[], options?: { requireOfficial?: boolean }) => {
   if (!config) return 'Konfigurasi scoring belum tersedia.';
+  if (isAutoDefaultScoring(config)) {
+    if (!Array.isArray(config.scales) || config.scales.length === 0) return 'Konfigurasi scoring harus memiliki minimal satu skala.';
+    return options?.requireOfficial ? 'ScoringConfig auto-default tersedia untuk scoring teknis. Belum valid untuk laporan klinis final.' : '';
+  }
   if (!Array.isArray(config.scales) || config.scales.length === 0) return 'Konfigurasi scoring harus memiliki minimal satu skala.';
   if (options?.requireOfficial && isDemoScoringConfig(config)) return 'Konfigurasi perlu diverifikasi sebelum dipakai untuk laporan final klinis/personel.';
   if (questions && questions.length !== REQUIRED_TOTAL_QUESTIONS) return `Total item harus ${REQUIRED_TOTAL_QUESTIONS} untuk MMPI-2; saat ini ${questions.length}.`;
@@ -120,7 +126,7 @@ export const summarizeScoringConfig = (config: ScoringConfig | null, questions: 
   const clinicalScales = scales.filter((scale) => getScaleGroup(scale) === 'clinical');
   const questionIds = new Set(questions.map((question) => question.id));
   const connectedItems = scales.flatMap((scale) => scale.items).filter((item) => questionIds.has(item.questionId)).length;
-  return { validationMessage, finalValidationMessage, isValid: !validationMessage, isFinalReady: !finalValidationMessage, isDemo: isDemoScoringConfig(config), scaleCount: scales.length, validityScales, clinicalScales, connectedItems };
+  return { validationMessage, finalValidationMessage, isValid: !validationMessage, isFinalReady: !finalValidationMessage, isDemo: isDemoScoringConfig(config), isAutoDefault: isAutoDefaultScoring(config), scaleCount: scales.length, validityScales, clinicalScales, connectedItems };
 };
 
 export const generateChartData = (scores: ScoreRow[]) => scores.map((score) => ({
