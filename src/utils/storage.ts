@@ -24,6 +24,7 @@ export const STORAGE_KEYS = {
   codeTypeConfig: 'sppg_mmpi2_code_type_config',
   summaryAnalysisConfig: 'sppg_mmpi2_summary_analysis_config',
   configValidationStatus: 'sppg_mmpi2_config_validation_status',
+  accessibilitySettings: 'sppg_mmpi2_accessibility_settings',
 } as const;
 
 const LEGACY_STORAGE_KEYS = {
@@ -55,6 +56,24 @@ const readJsonWithLegacy = <T>(key: string, legacyKey: string, fallback: T): T =
 };
 
 const writeJson = (key: string, value: unknown) => localStorage.setItem(key, JSON.stringify(value));
+
+export interface TestAccessibilitySettings {
+  fontSize: 'normal' | 'large' | 'extra_large';
+  highContrast: boolean;
+  largeAnswerButtons: boolean;
+}
+
+const DEFAULT_ACCESSIBILITY_SETTINGS: TestAccessibilitySettings = {
+  fontSize: 'normal',
+  highContrast: false,
+  largeAnswerButtons: true,
+};
+
+const normalizeAccessibilitySettings = (settings: Partial<TestAccessibilitySettings> & { largeFont?: boolean } = {}): TestAccessibilitySettings => ({
+  fontSize: settings.fontSize ?? (settings.largeFont ? 'large' : DEFAULT_ACCESSIBILITY_SETTINGS.fontSize),
+  highContrast: settings.highContrast ?? DEFAULT_ACCESSIBILITY_SETTINGS.highContrast,
+  largeAnswerButtons: settings.largeAnswerButtons ?? DEFAULT_ACCESSIBILITY_SETTINGS.largeAnswerButtons,
+});
 
 const isIncompleteQuestionBank = (questions: Question[]) => questions.length !== BUNDLED_QUESTIONS.length;
 
@@ -93,6 +112,9 @@ export const loadCurrentSession = (): CurrentSession | null => {
 };
 export const saveCurrentSession = (session: CurrentSession) => writeJson(STORAGE_KEYS.currentSession, normalizeSessionAnswers(session));
 export const clearCurrentSession = () => localStorage.removeItem(STORAGE_KEYS.currentSession);
+
+export const loadAccessibilitySettings = (): TestAccessibilitySettings => normalizeAccessibilitySettings(readJson<Partial<TestAccessibilitySettings> & { largeFont?: boolean }>(STORAGE_KEYS.accessibilitySettings, DEFAULT_ACCESSIBILITY_SETTINGS));
+export const saveAccessibilitySettings = (settings: TestAccessibilitySettings) => writeJson(STORAGE_KEYS.accessibilitySettings, normalizeAccessibilitySettings(settings));
 
 export const loadResults = (): AssessmentResult[] => {
   const results = readJsonWithLegacy<AssessmentResult[]>(STORAGE_KEYS.results, LEGACY_STORAGE_KEYS.results, []).map(normalizeResultAnswers);

@@ -1,15 +1,26 @@
 import { useMemo, useState } from 'react';
 import type { AnswerValue, CurrentSession, Question } from '../types';
+import { AccessibilityControls } from '../components/AccessibilityControls';
+import { QuestionCard } from '../components/QuestionCard';
+import { QuestionNavigator } from '../components/QuestionNavigator';
 import { Button, Card, Badge } from '../components/ui';
-import { saveCurrentSession } from '../utils/storage';
-import { questionNumber, questionNumberPadded } from '../utils/questions';
+import { loadAccessibilitySettings, saveAccessibilitySettings, saveCurrentSession } from '../utils/storage';
+import type { TestAccessibilitySettings } from '../utils/storage';
+import { questionNumberPadded } from '../utils/questions';
 import { isAnswerValue, REQUIRED_TOTAL_QUESTIONS } from '../utils/answerFormat';
 
 export const TestPage = ({ session, questions, onSubmit, onExit, onChange }: { session: CurrentSession; questions: Question[]; onSubmit: (s: CurrentSession) => void; onExit: () => void; onChange: (s: CurrentSession) => void }) => {
   const [local, setLocal] = useState(session);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notice, setNotice] = useState('');
-  const [accessibility, setAccessibility] = useState(() => { try { return JSON.parse(sessionStorage.getItem('sppg_mmpi2_accessibility_settings') || localStorage.getItem('sppg_mmpi2_accessibility_settings') || '{}') as { largeFont?: boolean; highContrast?: boolean; focusMode?: boolean }; } catch { return {}; } });
+  const [focusMode, setFocusMode] = useState(() => {
+    try {
+      return Boolean(JSON.parse(sessionStorage.getItem('sppg_mmpi2_accessibility_settings') || '{}').focusMode);
+    } catch {
+      return false;
+    }
+  });
+  const [accessibility, setAccessibility] = useState<TestAccessibilitySettings>(() => loadAccessibilitySettings());
   const answered = Object.values(local.answers).filter(isAnswerValue).length;
   const progress = questions.length ? Math.round((answered / questions.length) * 100) : 0;
   const question = questions[local.currentIndex];
@@ -18,15 +29,33 @@ export const TestPage = ({ session, questions, onSubmit, onExit, onChange }: { s
   const firstMissingIndex = missing[0]?.index ?? questions.length;
   const currentAnswered = question ? isAnswered(question) : false;
   const canOpenQuestion = (index: number) => index <= firstMissingIndex;
-  const visibleQuestions = accessibility.focusMode ? (question ? [question] : []) : questions.slice(0, Math.min(questions.length, firstMissingIndex + 1));
+  const visibleQuestions = focusMode
+    ? (question ? [{ q: question, index: local.currentIndex }] : [])
+    : questions.slice(0, Math.min(questions.length, firstMissingIndex + 1)).map((q, index) => ({ q, index }));
+
   const update = (patch: Partial<CurrentSession>) => {
     const next = { ...local, ...patch, updatedAt: new Date().toISOString() };
-    setLocal(next); saveCurrentSession(next); onChange(next);
+    setLocal(next);
+    saveCurrentSession(next);
+    onChange(next);
   };
+
+  const updateAccessibility = (settings: TestAccessibilitySettings) => {
+    setAccessibility(settings);
+    saveAccessibilitySettings(settings);
+  };
+
+  const toggleFocusMode = () => {
+    const next = !focusMode;
+    setFocusMode(next);
+    sessionStorage.setItem('sppg_mmpi2_accessibility_settings', JSON.stringify({ ...accessibility, focusMode: next }));
+  };
+
   const showRequiredNotice = (index = local.currentIndex) => {
     const target = questions[index];
-    setNotice(`Wajib jawab dulu soal nomor ${target ? questionNumberPadded(target, index) : String(index + 1).padStart(3, '0')} sebelum melanjutkan.`);
+    setNotice(`Pilih + atau - terlebih dahulu. Soal nomor ${target ? questionNumberPadded(target, index) : String(index + 1).padStart(3, '0')} wajib dijawab sebelum melanjutkan.`);
   };
+
   const goToQuestion = (index: number) => {
     if (!canOpenQuestion(index)) {
       showRequiredNotice(firstMissingIndex);
@@ -36,20 +65,24 @@ export const TestPage = ({ session, questions, onSubmit, onExit, onChange }: { s
     setNotice('');
     update({ currentIndex: index });
   };
+
   const answer = (id: number, value: AnswerValue) => {
     if (!isAnswerValue(value)) return;
     setNotice('Jawaban otomatis tersimpan di perangkat ini.');
     update({ answers: { ...local.answers, [String(id)]: value } });
   };
+
   const nextQuestion = () => {
-    if (!question || local.currentIndex >= questions.length - 1) return;
+    if (!question) return;
     if (!currentAnswered) {
       showRequiredNotice();
       return;
     }
+    if (local.currentIndex >= questions.length - 1) return;
     setNotice('');
     update({ currentIndex: Math.min(questions.length - 1, local.currentIndex + 1) });
   };
+
   const submit = () => {
     if (questions.length !== REQUIRED_TOTAL_QUESTIONS) {
       setNotice(`Belum bisa submit. Bank soal harus berisi ${REQUIRED_TOTAL_QUESTIONS} soal; saat ini ${questions.length}.`);
@@ -68,36 +101,45 @@ export const TestPage = ({ session, questions, onSubmit, onExit, onChange }: { s
     setNotice('');
     setTimeout(() => { onSubmit(local); setIsSubmitting(false); }, 0);
   };
-  const renderQuestion = (q: Question, index: number) => {
-    const displayNumber = questionNumber(q, index);
-    const paddedNumber = questionNumberPadded(q, index);
-    return (
-    <div key={q.id} className="rounded-2xl border border-slate-200 p-4 sm:rounded-3xl sm:p-5 dark:border-slate-800">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex flex-wrap gap-2"><Badge>Soal {displayNumber} dari {questions.length}</Badge><Badge tone="amber">Nomor soal: {paddedNumber}</Badge></div><span className="font-mono text-xs text-slate-500">{q.code}</span></div>
-      <p className={`mt-4 font-semibold leading-7 ${accessibility.largeFont ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'}`}>{q.text}</p>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        {q.options.map((opt) => <button key={String(opt.value)} onClick={() => answer(q.id, opt.value)} className={`min-h-14 rounded-2xl border p-4 text-left font-bold transition ${local.answers[String(q.id)] === opt.value ? 'border-teal-500 bg-teal-50 text-teal-800 ring-4 ring-teal-100 dark:bg-teal-950 dark:text-teal-100 dark:ring-teal-900' : 'border-slate-200 hover:border-teal-300 dark:border-slate-700'}`}>{opt.label}</button>)}
-      </div>
-    </div>
-    );
-  };
-  if (!questions.length) return <div className="mx-auto max-w-3xl px-4 py-8 sm:py-10"><Card><h1 className="text-2xl font-black">Bank soal belum tersedia</h1><p className="mt-2">Admin harus mengimpor bank soal JSON/CSV resmi/berizin atau memuat data demo untuk pengujian.</p><Button className="mt-4" onClick={onExit}>Kembali</Button></Card></div>;
+
+  if (!questions.length) return <div className="mx-auto max-w-3xl px-4 py-8 sm:py-10"><Card><h1 className="text-2xl font-black">Bank soal belum tersedia</h1><p className="mt-2 text-lg">Admin harus mengimpor bank soal JSON/CSV resmi/berizin atau memuat data demo untuk pengujian.</p><Button className="mt-4" onClick={onExit}>Kembali</Button></Card></div>;
+
   return (
     <div className={`mx-auto max-w-6xl px-4 py-6 sm:py-8 ${accessibility.highContrast ? 'contrast-125' : ''}`}>
       <Card className="mb-6 no-print">
-        <div className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-black">Tes berlangsung</h1><p className="text-sm text-slate-500">Autosave aktif • {answered}/{questions.length} terjawab • Soal aktif {question ? questionNumberPadded(question, local.currentIndex) : '-'}</p></div><Badge tone="amber">Draft</Badge></div>
-        <div className="mt-4 h-3 rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-3 rounded-full bg-teal-500" style={{ width: `${progress}%` }} /></div>
-        <div className="mt-3 flex flex-wrap gap-3 text-xs font-semibold text-slate-500"><span>Ring biru: soal aktif</span><span>Hijau: sudah dijawab</span><span>Abu-abu: belum dijawab</span><span>Redup: belum bisa dibuka</span></div><div className="mt-4 flex gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible sm:pb-0">{questions.map((q, i) => <button key={q.id} title={`Nomor soal: ${questionNumberPadded(q, i)}`} onClick={() => goToQuestion(i)} aria-disabled={!canOpenQuestion(i)} aria-label={`Soal ${questionNumber(q, i)} dari ${questions.length}, nomor soal ${questionNumberPadded(q, i)}${i === local.currentIndex ? ', aktif' : ''}${isAnswerValue(local.answers[String(q.id)]) ? ', sudah dijawab' : ', belum dijawab'}`} className={`h-11 min-w-11 shrink-0 rounded-xl px-2 text-xs font-black ${isAnswerValue(local.answers[String(q.id)]) ? 'bg-teal-600 text-white' : 'bg-slate-100 dark:bg-slate-800'} ${i === local.currentIndex ? 'ring-4 ring-blue-500' : ''} ${!canOpenQuestion(i) ? 'cursor-not-allowed opacity-45' : ''}`}>{questionNumberPadded(q, i)}</button>)}</div>
-        <div className="mt-4 grid gap-3 sm:flex sm:flex-wrap"><Button variant="ghost" onClick={() => update({ mode: local.mode === 'single' ? 'list' : 'single' })}>Mode: {local.mode === 'single' ? 'Satu soal' : 'Daftar'}</Button><Button variant="ghost" onClick={() => { const next = { ...accessibility, largeFont: !accessibility.largeFont }; setAccessibility(next); sessionStorage.setItem('sppg_mmpi2_accessibility_settings', JSON.stringify(next)); localStorage.setItem('sppg_mmpi2_accessibility_settings', JSON.stringify(next)); }}>Font besar: {accessibility.largeFont ? 'ON' : 'OFF'}</Button><Button variant="ghost" onClick={() => { const next = { ...accessibility, highContrast: !accessibility.highContrast }; setAccessibility(next); sessionStorage.setItem('sppg_mmpi2_accessibility_settings', JSON.stringify(next)); localStorage.setItem('sppg_mmpi2_accessibility_settings', JSON.stringify(next)); }}>Kontras tinggi: {accessibility.highContrast ? 'ON' : 'OFF'}</Button><Button variant="ghost" onClick={() => { const next = { ...accessibility, focusMode: !accessibility.focusMode }; setAccessibility(next); sessionStorage.setItem('sppg_mmpi2_accessibility_settings', JSON.stringify(next)); localStorage.setItem('sppg_mmpi2_accessibility_settings', JSON.stringify(next)); }}>Fokus satu soal: {accessibility.focusMode ? 'ON' : 'OFF'}</Button><Button variant="ghost" onClick={onExit}>Simpan & lanjutkan nanti</Button></div>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-black sm:text-4xl">Tes MMPI berlangsung</h1>
+            <p className="mt-2 text-base font-semibold text-slate-600 dark:text-slate-300 sm:text-lg">Autosave aktif • {answered}/{questions.length} terjawab • Soal aktif {question ? questionNumberPadded(question, local.currentIndex) : '-'}</p>
+          </div>
+          <Badge tone="amber">Draft</Badge>
+        </div>
+        <div className="mt-5 h-4 rounded-full bg-slate-100 dark:bg-slate-800"><div className="h-4 rounded-full bg-teal-500" style={{ width: `${progress}%` }} /></div>
+        <div className="mt-3 flex flex-wrap gap-3 text-base font-semibold text-slate-600 dark:text-slate-300"><span>Ring biru: soal aktif</span><span>Hijau: sudah dijawab</span><span>Abu-abu: belum dijawab</span><span>Redup: belum bisa dibuka</span></div>
+        <QuestionNavigator questions={questions} answers={local.answers} currentIndex={local.currentIndex} canOpenQuestion={canOpenQuestion} onGoToQuestion={goToQuestion} />
+        <div className="mt-5">
+          <AccessibilityControls settings={accessibility} onChange={updateAccessibility} focusMode={focusMode} onToggleFocusMode={toggleFocusMode} />
+        </div>
+        <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap">
+          <Button variant="ghost" className="min-h-12 text-base" onClick={() => update({ mode: local.mode === 'single' ? 'list' : 'single' })}>Mode: {local.mode === 'single' ? 'Satu soal' : 'Daftar'}</Button>
+          <Button variant="ghost" className="min-h-12 text-base" onClick={onExit}>Simpan & lanjutkan nanti</Button>
+        </div>
       </Card>
       <Card>
-        {local.mode === 'single' ? renderQuestion(question, local.currentIndex) : <div className="space-y-4">{visibleQuestions.map((q, index) => renderQuestion(q, index))}</div>}
-        {notice && <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">{notice}</div>}
-        <div className="mt-6 grid gap-3 no-print sm:flex sm:flex-wrap sm:justify-between">
-          <Button variant="ghost" disabled={local.currentIndex === 0} onClick={() => goToQuestion(Math.max(0, local.currentIndex - 1))}>Sebelumnya</Button>
-          <div className="grid gap-3 sm:flex"><Button variant="ghost" disabled={local.currentIndex === questions.length - 1 || !currentAnswered} aria-disabled={!currentAnswered} className={!currentAnswered ? 'opacity-50' : ''} onClick={nextQuestion}>Berikutnya</Button><Button disabled={isSubmitting} onClick={submit}>{isSubmitting ? 'Memproses...' : 'Kirim hasil'}</Button></div>
+        {local.mode === 'single' && question ? (
+          <QuestionCard question={question} index={local.currentIndex} totalQuestions={questions.length} selectedAnswer={local.answers[String(question.id)]} settings={accessibility} onAnswer={answer} />
+        ) : (
+          <div className="space-y-6">{visibleQuestions.map(({ q, index }) => <QuestionCard key={q.id} question={q} index={index} totalQuestions={questions.length} selectedAnswer={local.answers[String(q.id)]} settings={accessibility} onAnswer={answer} />)}</div>
+        )}
+        {notice && <div className="mt-5 rounded-3xl border-2 border-amber-300 bg-amber-50 p-5 text-lg font-black text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-50 sm:text-xl">{notice}</div>}
+        <div className="mt-7 grid gap-3 no-print sm:flex sm:flex-wrap sm:justify-between">
+          <Button variant="ghost" className="min-h-12 text-base" disabled={local.currentIndex === 0} onClick={() => goToQuestion(Math.max(0, local.currentIndex - 1))}>Sebelumnya</Button>
+          <div className="grid gap-3 sm:flex">
+            <Button variant="ghost" aria-disabled={!currentAnswered} className={`min-h-12 text-base ${!currentAnswered ? 'opacity-60' : ''}`} onClick={nextQuestion}>Berikutnya</Button>
+            <Button className="min-h-12 text-base" disabled={isSubmitting} onClick={submit}>{isSubmitting ? 'Memproses...' : 'Kirim hasil'}</Button>
+          </div>
         </div>
-        {missing.length > 0 && <p className="mt-4 text-sm font-semibold text-amber-700">Belum bisa submit: {missing.length} dari {questions.length} soal belum dijawab. Daftar nomor soal belum dijawab: {missing.slice(0, 30).map(({ q, index }) => questionNumberPadded(q, index)).join(', ')}{missing.length > 30 ? ' ...' : ''}</p>}
+        {missing.length > 0 && <p className="mt-5 text-base font-bold text-amber-800 dark:text-amber-200 sm:text-lg">Belum bisa submit: {missing.length} dari {questions.length} soal belum dijawab. Daftar nomor soal belum dijawab: {missing.slice(0, 30).map(({ q, index }) => questionNumberPadded(q, index)).join(', ')}{missing.length > 30 ? ' ...' : ''}</p>}
       </Card>
     </div>
   );
