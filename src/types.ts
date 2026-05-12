@@ -170,7 +170,10 @@ export interface AccessToken {
   disableReason?: string;
   enabledAt?: string | null;
   enabledBy?: string | null;
+  metadata?: { isSeededDemo?: boolean; [key: string]: unknown };
+  isSeededDemo?: boolean;
 }
+
 
 
 export interface SourceInterpretationConfig {

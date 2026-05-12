@@ -1,6 +1,7 @@
+import { vi } from 'vitest';
 import type { AccessToken, CurrentSession } from '../types';
 import { disableToken, enableToken, TOKEN_STORAGE_KEYS } from './tokenAccess';
-import { validateParticipantAccess, validateTokenAccess } from './tokenValidation';
+import { canShowContinueDraft, createDemoTokensForDevelopmentOnly, validateParticipantAccess, validateTokenAccess } from './tokenValidation';
 import { getParticipantAccessRedirect } from '../components/auth/ParticipantProtectedRoute';
 
 const baseToken = (overrides: Partial<AccessToken> = {}): AccessToken => ({
@@ -43,7 +44,7 @@ const saveTokens = (tokens: AccessToken[]) => localStorage.setItem(TOKEN_STORAGE
 const saveSession = (value: CurrentSession) => localStorage.setItem(TOKEN_STORAGE_KEYS.currentSession, JSON.stringify(value));
 
 describe('critical participant token validation', () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => { localStorage.clear(); vi.unstubAllEnvs(); });
 
   it('Token OFF tidak bisa login', () => {
     saveTokens([baseToken({ status: 'disabled', isEnabled: false })]);
@@ -99,5 +100,23 @@ describe('critical participant token validation', () => {
     saveTokens([baseToken()]);
     saveSession(session({ tokenId: undefined }));
     expect(validateParticipantAccess({ currentRoute: '/test' })).toMatchObject({ allowed: false, reason: 'missing_token' });
+  });
+
+  it('Token demo tidak dibuat otomatis di production', () => {
+    vi.stubEnv('PROD', true);
+
+    expect(createDemoTokensForDevelopmentOnly()).toHaveLength(0);
+    expect(localStorage.getItem(TOKEN_STORAGE_KEYS.accessTokens)).toBeNull();
+  });
+
+  it('Lanjutkan Draft tidak muncul tanpa session valid', () => {
+    saveTokens([baseToken()]);
+    expect(canShowContinueDraft()).toBe(false);
+  });
+
+  it('Lanjutkan Draft tidak muncul jika token disabled', () => {
+    saveTokens([baseToken({ status: 'disabled', isEnabled: false })]);
+    saveSession(session());
+    expect(canShowContinueDraft()).toBe(false);
   });
 });
