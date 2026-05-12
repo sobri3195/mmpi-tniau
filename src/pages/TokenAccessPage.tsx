@@ -33,6 +33,7 @@ export const TokenAccessPage = ({ reason, onVerified }: { reason?: string; onVer
       </div>
       {message && <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">{message}</div>}
       <Button className="mt-6 w-full" disabled={!tokenReady || !uniqueKeyReady} onClick={verify}>Verifikasi token</Button>
+      <a className="mt-5 block text-center text-xs font-semibold text-slate-500 hover:text-teal-700 hover:underline" href="/admin/login" onClick={(event) => { event.preventDefault(); window.history.replaceState(null, '', '/admin/login'); window.dispatchEvent(new PopStateEvent('popstate')); }}>Admin Login</a>
     </Card>
   </div>;
 };

@@ -9,7 +9,7 @@ import { touchTokenSession, validateSessionToken } from './utils/tokenAccess';
 import { canShowContinueDraft, validateParticipantAccess } from './utils/tokenValidation';
 import { ParticipantProtectedRoute, getParticipantAccessRedirect } from './components/auth/ParticipantProtectedRoute';
 import { hasAnyUser } from './utils/userStorage';
-import { validateSession } from './utils/session';
+import { ADMIN_SESSION_EXPIRED_MESSAGE, validateSession } from './utils/session';
 import { writeAuditLog } from './utils/auditLog';
 import { buildStartTiming, buildSubmitTiming } from './utils/time';
 import { orderQuestionsForSession } from './utils/questions';
@@ -232,9 +232,15 @@ export default function App() {
         {page === 'rh-skrining' && activeResult && <ParticipantProtectedRoute currentRoute="/rh-skrining" onRedirect={redirectDenied}><RHSkriningPage result={activeResult} onDone={(completed) => { setActiveResult(completed); refresh(); setSession(null); setPage('result', `/result/${completed.id}`); }} onCancel={() => setPage('landing', '/')} /></ParticipantProtectedRoute>}
         {page === 'rh-review' && activeResult && <ParticipantProtectedRoute currentRoute="/rh-review" onRedirect={redirectDenied}><RHReviewPage result={activeResult} form={getRHFormByResultId(activeResult.id)} goBack={() => setPage('result', `/result/${activeResult.id}`)} /></ParticipantProtectedRoute>}
         {page === 'admin' && (() => {
-          if (!hasAnyUser()) return <AdminSetupPage onDone={() => navigate('/admin/login')} />;
-          if (currentPath === '/admin/setup') return <AdminSetupPage onDone={() => navigate('/admin/login')} />;
-          if (currentPath === '/admin/login' || !validateSession().valid) return <AdminLoginPage onAuthenticated={() => navigate('/admin/dashboard')} />;
+          const usersExist = hasAnyUser();
+          const sessionValidation = validateSession();
+          if (!usersExist && currentPath !== '/admin/setup') { window.setTimeout(() => navigate('/admin/setup'), 0); return <AdminSetupPage onDone={() => navigate('/admin/login')} />; }
+          if (!usersExist || currentPath === '/admin/setup') {
+            if (usersExist) window.setTimeout(() => navigate(sessionValidation.valid ? '/admin/dashboard' : '/admin/login'), 0);
+            return <AdminSetupPage onDone={() => navigate('/admin/login')} />;
+          }
+          if (currentPath === '/admin/login') return <AdminLoginPage onAuthenticated={(path = '/admin/dashboard') => navigate(path)} />;
+          if (!sessionValidation.valid) { sessionStorage.setItem('sppg_mmpi2_session_message', ADMIN_SESSION_EXPIRED_MESSAGE); window.setTimeout(() => navigate('/admin/login'), 0); return <AdminLoginPage message={ADMIN_SESSION_EXPIRED_MESSAGE} onAuthenticated={(path = '/admin/dashboard') => navigate(path)} />; }
           const reportRhId = currentPath.startsWith('/report/') && currentPath.endsWith('/rh') ? currentPath.split('/')[2] : '';
           if (reportRhId) { const rhResult = results.find((result) => result.id === reportRhId); return <RHReviewPage result={rhResult} form={rhResult ? getRHFormByResultId(rhResult.id) : null} goBack={() => navigate('/admin/rh')} />; }
           const routeResult = currentPath.startsWith('/result/') || currentPath.startsWith('/report/') ? results.find((result) => result.id === currentPath.split('/').pop()) : null;
