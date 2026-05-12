@@ -4,7 +4,7 @@ import { Button, Card } from './components/ui';
 import { BrandLogo } from './components/BrandLogo';
 import { calculateRawScores, determineValidity, generateClinicalSummary, generateRecommendations, isDemoScoringConfig, validateScoringConfig } from './utils/scoring';
 import { AUTO_DEFAULT_WARNING, ensureScoringConfigExists, initializeAutoDefaultScoringConfig, isAutoDefaultScoring } from './utils/autoDefaultScoring';
-import { getRHFormByResultId, loadAuxiliaryConfig, loadCurrentSession, loadQuestions, loadResults, loadScoringConfig, saveCurrentSession, saveResult, STORAGE_KEYS } from './utils/storage';
+import { cleanupInvalidParticipantSession, getRHFormByResultId, loadAuxiliaryConfig, loadCurrentSession, loadQuestions, loadResults, loadScoringConfig, saveCurrentSession, saveResult, STORAGE_KEYS } from './utils/storage';
 import { touchTokenSession, validateSessionToken } from './utils/tokenAccess';
 import { canShowContinueDraft, validateParticipantAccess } from './utils/tokenValidation';
 import { ParticipantProtectedRoute, getParticipantAccessRedirect } from './components/auth/ParticipantProtectedRoute';
@@ -84,6 +84,7 @@ export default function App() {
     if (pathname === '/test') return protectedPage('test');
     return 'landing';
   };
+  useEffect(() => { cleanupInvalidParticipantSession(); }, []);
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
   const [page, setPageState] = useState<Page>(() => routeToPage(window.location.pathname));
   const [accessMessage, setAccessMessage] = useState(() => window.location.pathname === '/test' && !validateSessionToken().valid ? 'Silakan masukkan token akses dan kunci unik terlebih dahulu.' : '');
@@ -201,21 +202,21 @@ export default function App() {
     writeAuditLog({ action: 'Participant submitted MMPI pending RH', targetType: 'result', targetId: result.id, description: `Peserta ${result.identity.name} submit MMPI dan wajib mengisi RH.` }); setActiveResult(result); refresh(); setPage('rh-skrining', '/rh-skrining');
   };
   const resume = () => { const latestSession = loadCurrentSession(); const latestValidation = validateParticipantAccess({ session: latestSession, currentRoute: '/resume' }); if (!latestValidation.allowed) { setSession(latestValidation.session); const redirect = getParticipantAccessRedirect(latestValidation.reason); if (redirect === '/token-disabled') setPage('token-disabled', redirect); else { setAccessMessage(latestValidation.message); setPage('access', '/access'); } return; } const session = latestSession; if (session?.rhStatus === 'in_progress' || session?.mmpiStatus === 'mmpi_completed_pending_rh') { const pending = loadResults().find((result) => result.id === session.id); if (pending) { setActiveResult(pending); setPage('rh-skrining', '/rh-skrining'); return; } } const validation = validateParticipantAccess({ session, currentRoute: '/resume' }); if (validation.allowed && session) setPage('test', '/test'); else { setAccessMessage(validation.message || 'Silakan masukkan token akses dan kunci unik terlebih dahulu.'); setPage('access', '/access'); } };
-  const currentSessionValidation = validateParticipantAccess({ session: loadCurrentSession(), currentRoute: currentPath });
-  const canResumeDraft = canShowContinueDraft();
+  const isAccessPage = page === 'access';
+  const canResumeDraft = !isAccessPage && canShowContinueDraft();
   const adminSessionValid = validateSession().valid;
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-teal-950 dark:text-slate-100">
       <nav className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur no-print dark:border-slate-800 dark:bg-slate-950/90">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className={`mx-auto flex ${isAccessPage ? 'max-w-xl' : 'max-w-6xl'} flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between`}>
           <button onClick={() => setPage('landing', '/')} className="inline-flex items-center gap-3 text-left text-lg font-black text-teal-700 dark:text-teal-300">
             <BrandLogo className="h-11 w-11" />
             <span>MMPI TNI AU</span>
           </button>
           <div className="grid grid-cols-[auto_1fr_auto] gap-2 sm:flex sm:items-center">
             <Button variant="ghost" className="px-3" aria-label="Toggle dark mode" onClick={() => setDark(!dark)}>{dark ? '☀️' : '🌙'}</Button>
-            {canResumeDraft ? <Button variant="ghost" className="whitespace-nowrap" onClick={resume}>Lanjutkan Draft</Button> : currentSessionValidation.reason === 'token_disabled' || currentSessionValidation.reason === 'paused_token_disabled' ? <Button variant="ghost" className="whitespace-nowrap" disabled>Draft tidak tersedia</Button> : <Button variant="ghost" className="whitespace-nowrap" onClick={() => setPage('access', '/access')}>Mulai Tes</Button>}
-            {adminSessionValid && <Button variant="secondary" onClick={() => { refresh(); setPage('admin', '/admin'); }}>Dashboard Admin</Button>}
+            {!isAccessPage && (canResumeDraft ? <Button variant="ghost" className="whitespace-nowrap" onClick={resume}>Lanjutkan Draft</Button> : <Button variant="ghost" className="whitespace-nowrap" onClick={() => setPage('access', '/access')}>Mulai Tes</Button>)}
+            {!isAccessPage && adminSessionValid && <Button variant="secondary" onClick={() => { refresh(); setPage('admin', '/admin'); }}>Dashboard Admin</Button>}
           </div>
         </div>
       </nav>

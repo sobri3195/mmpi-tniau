@@ -37,11 +37,13 @@ describe('TokenAccessPage', () => {
     expect(screen.getByLabelText(/kunci unik/i)).toHaveValue('');
   });
 
-  it('menampilkan token contoh sebagai placeholder tetapi value tetap kosong', () => {
+  it('tidak menampilkan contoh token realistis dan placeholder aman tetap kosong', () => {
     render(<TokenAccessPage onVerified={() => undefined} />);
 
-    expect(screen.getByPlaceholderText('Contoh: TNI-AU-AB12-CD34')).toHaveValue('');
-    expect(screen.getByPlaceholderText('Contoh: PESERTA-2026-0001')).toHaveValue('');
+    expect(screen.queryByText('TNI-AU-AB12-CD34')).not.toBeInTheDocument();
+    expect(screen.queryByText('PESERTA-2026-0001')).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Masukkan token akses')).toHaveValue('');
+    expect(screen.getByPlaceholderText('Masukkan kunci unik')).toHaveValue('');
   });
 
   it('disable tombol Verifikasi token saat input kosong atau hanya spasi', async () => {
@@ -54,6 +56,17 @@ describe('TokenAccessPage', () => {
     await user.type(screen.getByLabelText(/token akses/i), '   ');
     await user.type(screen.getByLabelText(/kunci unik/i), '   ');
     expect(verifyButton).toBeDisabled();
+  });
+
+
+
+  it('menghapus session lama tanpa tokenId saat halaman akses dibuka', () => {
+    localStorage.setItem(TOKEN_STORAGE_KEYS.currentSession, JSON.stringify({ id: 'legacy-session', answers: {}, status: 'Draft' }));
+
+    render(<TokenAccessPage onVerified={() => undefined} />);
+
+    expect(localStorage.getItem(TOKEN_STORAGE_KEYS.currentSession)).toBeNull();
+    expect(screen.queryByText(/lanjutkan draft/i)).not.toBeInTheDocument();
   });
 
   it('menolak token disabled meskipun token dan kunci unik benar', async () => {

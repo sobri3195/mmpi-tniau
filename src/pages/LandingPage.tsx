@@ -1,7 +1,14 @@
+import { useEffect } from 'react';
 import { BrandLogo } from '../components/BrandLogo';
 import { Button, Card, Disclaimer, PrivacyNotice } from '../components/ui';
+import { cleanupInvalidParticipantSession } from '../utils/storage';
 
-export const LandingPage = ({ go, questionsCount }: { go: (page: string) => void; questionsCount: number }) => (
+export const LandingPage = ({ go, questionsCount }: { go: (page: string) => void; questionsCount: number }) => {
+  useEffect(() => {
+    cleanupInvalidParticipantSession();
+  }, []);
+
+  return (
   <div className="mx-auto max-w-6xl px-4 py-8 sm:py-12">
     <div className="grid items-center gap-8 lg:grid-cols-[1.2fr_.8fr]">
       <div>
@@ -32,4 +39,5 @@ export const LandingPage = ({ go, questionsCount }: { go: (page: string) => void
     </div>
     <div className="mt-8 grid gap-4 lg:grid-cols-2"><Disclaimer /><PrivacyNotice /></div>
   </div>
-);
+  );
+};
