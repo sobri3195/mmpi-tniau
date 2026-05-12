@@ -15,7 +15,6 @@ export const LandingPage = ({ go, questionsCount }: { go: (page: string) => void
         </div>
         <div className="mt-8 grid gap-3 no-print sm:flex sm:flex-wrap">
           <Button onClick={() => go('identity')}>Mulai tes</Button>
-          <Button variant="secondary" onClick={() => go('admin')}>Admin</Button>
         </div>
       </div>
       <Card className="space-y-4">

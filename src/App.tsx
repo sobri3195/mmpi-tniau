@@ -6,7 +6,7 @@ import { calculateRawScores, determineValidity, generateClinicalSummary, generat
 import { AUTO_DEFAULT_WARNING, ensureScoringConfigExists, initializeAutoDefaultScoringConfig, isAutoDefaultScoring } from './utils/autoDefaultScoring';
 import { getRHFormByResultId, loadAuxiliaryConfig, loadCurrentSession, loadQuestions, loadResults, loadScoringConfig, saveCurrentSession, saveResult, STORAGE_KEYS } from './utils/storage';
 import { touchTokenSession, validateSessionToken } from './utils/tokenAccess';
-import { validateParticipantAccess } from './utils/tokenValidation';
+import { canShowContinueDraft, validateParticipantAccess } from './utils/tokenValidation';
 import { ParticipantProtectedRoute, getParticipantAccessRedirect } from './components/auth/ParticipantProtectedRoute';
 import { hasAnyUser } from './utils/userStorage';
 import { validateSession } from './utils/session';
@@ -86,12 +86,24 @@ export default function App() {
   };
   const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
   const [page, setPageState] = useState<Page>(() => routeToPage(window.location.pathname));
-  const [accessMessage, setAccessMessage] = useState(() => window.location.pathname === '/test' && !validateSessionToken().valid ? 'Silakan masukkan token akses dan unique key terlebih dahulu.' : '');
+  const [accessMessage, setAccessMessage] = useState(() => window.location.pathname === '/test' && !validateSessionToken().valid ? 'Silakan masukkan token akses dan kunci unik terlebih dahulu.' : '');
   useEffect(() => {
     const onPopState = () => { setCurrentPath(window.location.pathname); setPageState(routeToPage(window.location.pathname)); };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
+  useEffect(() => {
+    const protectedPaths = ['/participant', '/instruction', '/test', '/rh-skrining', '/result', '/report'];
+    const isProtectedPath = protectedPaths.some((path) => currentPath === path || currentPath.startsWith(`${path}/`));
+    if (isProtectedPath && page === 'access' && currentPath !== '/access') {
+      window.history.replaceState(null, '', '/access');
+      setCurrentPath('/access');
+    }
+    if (isProtectedPath && page === 'token-disabled' && currentPath !== '/token-disabled') {
+      window.history.replaceState(null, '', '/token-disabled');
+      setCurrentPath('/token-disabled');
+    }
+  }, [currentPath, page]);
   const navigate = (path: string) => { window.history.replaceState(null, '', path); setCurrentPath(path); setPageState(routeToPage(path)); };
   const setPage = (next: Page, path?: string) => { setPageState(next); if (path) { window.history.replaceState(null, '', path); setCurrentPath(path); } };
   const [dark, setDark] = useState(() => localStorage.getItem(STORAGE_KEYS.adminSettings)?.includes('dark'));
@@ -121,7 +133,7 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.adminSettings, JSON.stringify({ ...currentSettings, dark }));
   }, [dark]);
   const refresh = () => { setQuestions(loadQuestions()); setConfig(loadScoringConfig()); setResults(loadResults()); };
-  const redirectDenied = (path: string, _reason?: string, message?: string) => { if (path === '/token-disabled') setPage('token-disabled', path); else { setAccessMessage(message || 'Silakan masukkan token akses dan unique key terlebih dahulu.'); setPage('access', path); } };
+  const redirectDenied = (path: string, _reason?: string, message?: string) => { if (path === '/token-disabled') setPage('token-disabled', path); else { setAccessMessage(message || 'Silakan masukkan token akses dan kunci unik terlebih dahulu.'); setPage('access', path); } };
   const startIdentity = (identity: ParticipantIdentity) => { ensureScoringConfigExists(questions); refresh(); if (!canStartNewParticipantSession()) { setAccessMessage('Lockdown mode aktif. Peserta belum dapat memulai tes baru.'); setPage('access', '/access'); return; } const validation = validateParticipantAccess({ session: loadCurrentSession(), currentRoute: '/participant' }); if (!validation.allowed) { redirectDenied(getParticipantAccessRedirect(validation.reason), validation.reason, validation.message); return; } const s = newSession(identity, questions, session); setSession(s); saveCurrentSession(s); touchTokenSession(s); updateSessionMonitoring(s, questions.length); writeAuditLog({ action: 'Participant started test', targetType: 'token', targetId: s.tokenId ?? '', description: `Peserta ${identity.name} memulai tes.` }); setPage('instructions', '/participant'); };
   const submit = (s: CurrentSession) => {
     const tokenValidation = validateParticipantAccess({ session: s, currentRoute: '/test' });
@@ -188,9 +200,10 @@ export default function App() {
     saveResult(result);
     writeAuditLog({ action: 'Participant submitted MMPI pending RH', targetType: 'result', targetId: result.id, description: `Peserta ${result.identity.name} submit MMPI dan wajib mengisi RH.` }); setActiveResult(result); refresh(); setPage('rh-skrining', '/rh-skrining');
   };
-  const resume = () => { const latestSession = loadCurrentSession(); const latestValidation = validateParticipantAccess({ session: latestSession, currentRoute: '/resume' }); if (!latestValidation.allowed) { setSession(latestValidation.session); const redirect = getParticipantAccessRedirect(latestValidation.reason); if (redirect === '/token-disabled') setPage('token-disabled', redirect); else { setAccessMessage(latestValidation.message); setPage('access', '/access'); } return; } const session = latestSession; if (session?.rhStatus === 'in_progress' || session?.mmpiStatus === 'mmpi_completed_pending_rh') { const pending = loadResults().find((result) => result.id === session.id); if (pending) { setActiveResult(pending); setPage('rh-skrining', '/rh-skrining'); return; } } const validation = validateParticipantAccess({ session, currentRoute: '/resume' }); if (validation.allowed && session) setPage('test', '/test'); else { setAccessMessage(validation.message || 'Silakan masukkan token akses dan unique key terlebih dahulu.'); setPage('access', '/access'); } };
+  const resume = () => { const latestSession = loadCurrentSession(); const latestValidation = validateParticipantAccess({ session: latestSession, currentRoute: '/resume' }); if (!latestValidation.allowed) { setSession(latestValidation.session); const redirect = getParticipantAccessRedirect(latestValidation.reason); if (redirect === '/token-disabled') setPage('token-disabled', redirect); else { setAccessMessage(latestValidation.message); setPage('access', '/access'); } return; } const session = latestSession; if (session?.rhStatus === 'in_progress' || session?.mmpiStatus === 'mmpi_completed_pending_rh') { const pending = loadResults().find((result) => result.id === session.id); if (pending) { setActiveResult(pending); setPage('rh-skrining', '/rh-skrining'); return; } } const validation = validateParticipantAccess({ session, currentRoute: '/resume' }); if (validation.allowed && session) setPage('test', '/test'); else { setAccessMessage(validation.message || 'Silakan masukkan token akses dan kunci unik terlebih dahulu.'); setPage('access', '/access'); } };
   const currentSessionValidation = validateParticipantAccess({ session: loadCurrentSession(), currentRoute: currentPath });
-  const canResumeDraft = currentSessionValidation.allowed;
+  const canResumeDraft = canShowContinueDraft();
+  const adminSessionValid = validateSession().valid;
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-teal-50 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-teal-950 dark:text-slate-100">
       <nav className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur no-print dark:border-slate-800 dark:bg-slate-950/90">
@@ -201,8 +214,8 @@ export default function App() {
           </button>
           <div className="grid grid-cols-[auto_1fr_auto] gap-2 sm:flex sm:items-center">
             <Button variant="ghost" className="px-3" aria-label="Toggle dark mode" onClick={() => setDark(!dark)}>{dark ? '☀️' : '🌙'}</Button>
-            {canResumeDraft ? <Button variant="ghost" className="whitespace-nowrap" onClick={resume}>Lanjutkan Draft</Button> : currentSessionValidation.reason === 'token_disabled' || currentSessionValidation.reason === 'paused_token_disabled' ? <Button variant="ghost" className="whitespace-nowrap" onClick={() => setPage('token-disabled', '/token-disabled')}>Draft terkunci — token nonaktif</Button> : <Button variant="ghost" className="whitespace-nowrap" onClick={() => setPage('access', '/access')}>Mulai Tes</Button>}
-            <Button variant="secondary" onClick={() => { refresh(); setPage('admin', '/admin'); }}>Admin</Button>
+            {canResumeDraft ? <Button variant="ghost" className="whitespace-nowrap" onClick={resume}>Lanjutkan Draft</Button> : currentSessionValidation.reason === 'token_disabled' || currentSessionValidation.reason === 'paused_token_disabled' ? <Button variant="ghost" className="whitespace-nowrap" disabled>Draft tidak tersedia</Button> : <Button variant="ghost" className="whitespace-nowrap" onClick={() => setPage('access', '/access')}>Mulai Tes</Button>}
+            {adminSessionValid && <Button variant="secondary" onClick={() => { refresh(); setPage('admin', '/admin'); }}>Dashboard Admin</Button>}
           </div>
         </div>
       </nav>
