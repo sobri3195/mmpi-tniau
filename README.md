@@ -127,3 +127,17 @@ Jika `norms` tidak tersedia, aplikasi hanya menampilkan raw score dan label “B
 ## Catatan Privasi
 
 Tidak ada backend dan tidak ada data yang dikirim ke server. Data peserta berada di browser yang sama dan dapat dihapus melalui dashboard Admin atau mekanisme pembersihan cache browser.
+
+## Quality Check
+
+Jalankan quality gate berikut sebelum merge/deploy:
+
+```bash
+npm run typecheck
+npm run lint
+npm test
+npm run build
+npm run quality
+```
+
+Dokumentasi lengkap quality check, troubleshooting `npm audit --audit-level=high` yang gagal `403 Forbidden`, warning `http-proxy`, dan warning ukuran bundle tersedia di [`docs/QUALITY_CHECK.md`](docs/QUALITY_CHECK.md).
